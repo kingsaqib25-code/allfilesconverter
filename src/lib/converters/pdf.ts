@@ -128,6 +128,19 @@ export async function pdfToImages(
 // Images -> PDF (one image per page, fit to page)
 // ---------------------------------------------------------------------------
 
+/** Decode any supported image file to an ImageBitmap (HEIC/HEIF via heic2any). */
+async function decodeImageFile(file: File): Promise<ImageBitmap> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  let blob: Blob = file;
+  if (ext === 'heic' || ext === 'heif') {
+    const { convertHeic } = await import('./heic');
+    blob = (await convertHeic(file, 'png')).blob;
+  }
+  return createImageBitmap(blob).catch(() => {
+    throw new Error(`We could not read "${file.name}". It may be corrupt or an unsupported image.`);
+  });
+}
+
 export async function imagesToPdf(
   files: File[],
   opts?: { quality?: number }
@@ -137,9 +150,7 @@ export async function imagesToPdf(
   const quality = opts?.quality ?? 92;
   const pdf = await PDFDocument.create();
   for (const file of files) {
-    const bitmap = await createImageBitmap(file).catch(() => {
-      throw new Error(`We could not read "${file.name}". It may be corrupt or an unsupported image.`);
-    });
+    const bitmap = await decodeImageFile(file);
     try {
       const canvas = document.createElement('canvas');
       canvas.width = bitmap.width;
@@ -851,4 +862,271 @@ export async function renderEditedDocx(pages: FinalPage[], outName: string): Pro
   const doc = new Document({ sections: [{ children }] });
   const blob = await Packer.toBlob(doc);
   return { blob, filename: outName };
+}
+
+// ---------------------------------------------------------------------------
+// Text / Markdown / CSV -> PDF (styled document rendering, A4)
+// ---------------------------------------------------------------------------
+
+const TPW = 595; // A4 width (pt)
+const TPH = 842; // A4 height (pt)
+const TM = 56; // margin (pt)
+
+function pdfOutName(file: File): string {
+  return `${baseName(file)}.pdf`;
+}
+
+function pdfBlob(bytes: Uint8Array): Blob {
+  return new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' });
+}
+
+/** Plain text -> simple paginated PDF. */
+export async function textToPdf(file: File): Promise<ConvertResult> {
+  const src = await file.text();
+  if (!src.trim()) throw new Error('That text file looks empty.');
+  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const black = rgb(0, 0, 0);
+  const size = 11;
+  const maxW = TPW - 2 * TM;
+  let page = doc.addPage([TPW, TPH]);
+  let y = TPH - TM;
+  for (const ln of wrapLines(src, font, size, maxW)) {
+    if (y < TM + size) {
+      page = doc.addPage([TPW, TPH]);
+      y = TPH - TM;
+    }
+    if (ln) page.drawText(safeWinAnsi(ln), { x: TM, y: y - size, size, font, color: black });
+    y -= size * 1.5;
+  }
+  const bytes = await doc.save();
+  return { blob: pdfBlob(bytes), filename: pdfOutName(file) };
+}
+
+/** Markdown -> styled PDF: headings, lists, code blocks, bold/italic/code runs. */
+export async function markdownToPdf(file: File): Promise<ConvertResult> {
+  const src = await file.text();
+  if (!src.trim()) throw new Error('That Markdown file looks empty.');
+  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+  const doc = await PDFDocument.create();
+  const helv = await doc.embedFont(StandardFonts.Helvetica);
+  const helvB = await doc.embedFont(StandardFonts.HelveticaBold);
+  const helvO = await doc.embedFont(StandardFonts.HelveticaOblique);
+  const courier = await doc.embedFont(StandardFonts.Courier);
+  const black = rgb(0, 0, 0);
+  const gray = rgb(0.42, 0.42, 0.42);
+  const codeBg = rgb(0.95, 0.95, 0.95);
+  const maxW = TPW - 2 * TM;
+
+  type Run = { text: string; font: typeof helv };
+  const parseRuns = (s: string): Run[] => {
+    const runs: Run[] = [];
+    const re = /(\*\*.+?\*\*|\*[^*\n]+?\*|`[^`\n]+?`)/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(s))) {
+      if (m.index > last) runs.push({ text: s.slice(last, m.index), font: helv });
+      const tok = m[0];
+      if (tok.startsWith('**')) runs.push({ text: tok.slice(2, -2), font: helvB });
+      else if (tok.startsWith('`')) runs.push({ text: tok.slice(1, -1), font: courier });
+      else runs.push({ text: tok.slice(1, -1), font: helvO });
+      last = m.index + tok.length;
+    }
+    if (last < s.length) runs.push({ text: s.slice(last), font: helv });
+    return runs.filter((r) => r.text);
+  };
+
+  let page = doc.addPage([TPW, TPH]);
+  let y = TPH - TM;
+  const ensure = (need: number) => {
+    if (y - need < TM) {
+      page = doc.addPage([TPW, TPH]);
+      y = TPH - TM;
+    }
+  };
+
+  // Draw rich-text runs with word wrap; returns nothing (tracks page/y in closure).
+  const drawRuns = (runs: Run[], x0: number, size: number, color: ReturnType<typeof rgb>) => {
+    const words: Run[] = [];
+    for (const r of runs) {
+      const parts = r.text.split(/(\s+)/);
+      for (const p of parts) if (p) words.push({ text: p, font: r.font });
+    }
+    let cx = x0;
+    for (const w of words) {
+      const safe = safeWinAnsi(w.text);
+      const ww = w.font.widthOfTextAtSize(safe, size);
+      if (cx + ww > x0 + maxW && cx > x0) {
+        cx = x0;
+        y -= size * 1.55;
+        ensure(size * 1.55);
+      }
+      page.drawText(safe, { x: cx, y: y - size, size, font: w.font, color });
+      cx += ww;
+    }
+    y -= size * 1.55;
+  };
+
+  const lines = src.split('\n');
+  let inCode = false;
+  let codeBuf: string[] = [];
+  const flushCode = () => {
+    if (!codeBuf.length) return;
+    const size = 10;
+    const lh = size * 1.6;
+    ensure(lh + 8);
+    const blockH = codeBuf.length * lh + 10;
+    if (y - blockH < TM) {
+      page = doc.addPage([TPW, TPH]);
+      y = TPH - TM;
+    }
+    page.drawRectangle({ x: TM - 6, y: y - blockH, width: maxW + 12, height: blockH, color: codeBg });
+    y -= 5;
+    for (const ln of codeBuf) {
+      y -= lh;
+      page.drawText(safeWinAnsi(ln.slice(0, 120)), { x: TM, y, size, font: courier, color: black });
+    }
+    y -= 10;
+    codeBuf = [];
+  };
+
+  for (const raw of lines) {
+    const ln = raw.replace(/\s+$/, '');
+    if (/^```/.test(ln)) {
+      if (inCode) flushCode();
+      inCode = !inCode;
+      continue;
+    }
+    if (inCode) {
+      codeBuf.push(ln);
+      continue;
+    }
+    const h = /^(#{1,6})\s+(.*)$/.exec(ln);
+    if (h) {
+      const level = h[1].length;
+      const size = level === 1 ? 20 : level === 2 ? 16 : level === 3 ? 13 : 12;
+      ensure(size * 2.2);
+      y -= 4;
+      drawRuns(parseRuns(h[2]).map((r) => ({ ...r, font: level <= 2 ? helvB : r.font })), TM, size, black);
+      y -= 4;
+      continue;
+    }
+    const li = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/.exec(ln);
+    if (li) {
+      const bullet = /^\d/.test(li[2]) ? `${li[2]} ` : '• ';
+      ensure(14 * 2);
+      drawRuns([{ text: bullet, font: helv }, ...parseRuns(li[3])], TM + (li[1].length > 0 ? 18 : 0), 11, black);
+      continue;
+    }
+    const bq = /^>\s?(.*)$/.exec(ln);
+    if (bq) {
+      ensure(14 * 2);
+      drawRuns(parseRuns(bq[1]), TM + 14, 11, gray);
+      continue;
+    }
+    if (!ln.trim()) {
+      y -= 7;
+      continue;
+    }
+    ensure(14 * 2);
+    drawRuns(parseRuns(ln), TM, 11, black);
+  }
+  flushCode();
+
+  const bytes = await doc.save();
+  return { blob: pdfBlob(bytes), filename: pdfOutName(file) };
+}
+
+/** CSV -> PDF table: header row, grid lines, auto-sized columns. */
+export async function csvToPdf(file: File): Promise<ConvertResult> {
+  const { parseCsv } = await import('./text');
+  const src = await file.text();
+  const rows = parseCsv(src);
+  if (!rows.length) throw new Error('That CSV looks empty.');
+  const MAXR = 500;
+  const data = rows.slice(0, MAXR).map((r) => r.map((c) => (c.length > 220 ? c.slice(0, 220) : c)));
+  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+  const doc = await PDFDocument.create();
+  const helv = await doc.embedFont(StandardFonts.Helvetica);
+  const helvB = await doc.embedFont(StandardFonts.HelveticaBold);
+  const black = rgb(0, 0, 0);
+  const headBg = rgb(0.94, 0.94, 0.94);
+  const grid = rgb(0.78, 0.78, 0.78);
+
+  const cols = Math.max(...data.map((r) => r.length));
+  const table = data.map((r) => {
+    const n = [...r];
+    while (n.length < cols) n.push('');
+    return n;
+  });
+
+  const avail = TPW - 72;
+  let size = 10;
+  const measure = (s: number): number[] => {
+    const w = new Array<number>(cols).fill(0);
+    table.forEach((r, ri) => {
+      r.forEach((c, i) => {
+        const f = ri === 0 ? helvB : helv;
+        w[i] = Math.max(w[i], f.widthOfTextAtSize(safeWinAnsi(c), s));
+      });
+    });
+    return w;
+  };
+  let widths = measure(size);
+  let totalPad = (cols + 1) * 6;
+  let total = widths.reduce((a, b) => a + b, 0) + totalPad;
+  while (total > avail && size > 7) {
+    size -= 1;
+    widths = measure(size);
+    total = widths.reduce((a, b) => a + b, 0) + totalPad;
+  }
+  if (total > avail) {
+    const k = avail / total;
+    widths = widths.map((w) => w * k);
+    total = avail;
+  }
+  const boundaries: number[] = [0];
+  widths.forEach((w) => boundaries.push(boundaries[boundaries.length - 1] + w + 6));
+  const rowH = size * 2.1;
+  const x0 = 36 + (avail - total) / 2;
+
+  let page = doc.addPage([TPW, TPH]);
+  let y = TPH - 56;
+  page.drawText(safeWinAnsi(baseName(file)), { x: 36, y: y - 14, size: 14, font: helvB, color: black });
+  y -= 36;
+
+  table.forEach((r, ri) => {
+    const header = ri === 0;
+    if (y - rowH < 40) {
+      page = doc.addPage([TPW, TPH]);
+      y = TPH - 56;
+    }
+    if (header) {
+      page.drawRectangle({ x: x0, y: y - rowH, width: total, height: rowH, color: headBg });
+    }
+    const font = header ? helvB : helv;
+    r.forEach((c, i) => {
+      let txt = safeWinAnsi(c);
+      const cw = widths[i];
+      while (font.widthOfTextAtSize(txt, size) > cw && txt.length > 4) txt = txt.slice(0, -2);
+      if (txt.length < c.length && txt.length > 4) txt = txt.slice(0, -1) + '…';
+      page.drawText(txt, {
+        x: x0 + boundaries[i] + 3,
+        y: y - rowH + (rowH - size) / 2 - 1,
+        size,
+        font,
+        color: black,
+      });
+    });
+    page.drawLine({ start: { x: x0, y }, end: { x: x0 + total, y }, thickness: 0.75, color: grid });
+    page.drawLine({ start: { x: x0, y: y - rowH }, end: { x: x0 + total, y: y - rowH }, thickness: 0.75, color: grid });
+    boundaries.forEach((b) => {
+      page.drawLine({ start: { x: x0 + b, y }, end: { x: x0 + b, y: y - rowH }, thickness: 0.75, color: grid });
+    });
+    y -= rowH;
+  });
+
+  const bytes = await doc.save();
+  return { blob: pdfBlob(bytes), filename: pdfOutName(file) };
 }

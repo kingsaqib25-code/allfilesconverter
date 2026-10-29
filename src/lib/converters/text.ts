@@ -75,7 +75,7 @@ export async function htmlToTxt(file: File) {
 
 /* ---------------- CSV <-> JSON ---------------- */
 
-function parseCsv(src: string): string[][] {
+export function parseCsv(src: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = '';

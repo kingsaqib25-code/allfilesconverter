@@ -20,7 +20,7 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-const MULTI_IDS = new Set(['jpg-to-pdf', 'png-to-pdf', 'merge-pdf']);
+const MULTI_IDS = new Set(['jpg-to-pdf', 'png-to-pdf', 'webp-to-pdf', 'gif-to-pdf', 'bmp-to-pdf', 'heic-to-pdf', 'merge-pdf']);
 
 export default function PdfWidget({ entryId }: Props) {
   const entry = getConverter(entryId) as ConverterEntry;
@@ -111,8 +111,27 @@ export default function PdfWidget({ entryId }: Props) {
           break;
         }
         case 'jpg-to-pdf':
-        case 'png-to-pdf': {
+        case 'png-to-pdf':
+        case 'webp-to-pdf':
+        case 'gif-to-pdf':
+        case 'bmp-to-pdf':
+        case 'heic-to-pdf': {
           const r = await mod.imagesToPdf(files, { quality });
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'txt-to-pdf': {
+          const r = await mod.textToPdf(files[0]);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'md-to-pdf': {
+          const r = await mod.markdownToPdf(files[0]);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'csv-to-pdf': {
+          const r = await mod.csvToPdf(files[0]);
           outs.push({ blob: r.blob, filename: r.filename });
           break;
         }
@@ -181,7 +200,13 @@ export default function PdfWidget({ entryId }: Props) {
 
   const showRange = entry.id === 'split-pdf';
   const showCompress = entry.id === 'compress-pdf';
-  const showQuality = entry.id === 'jpg-to-pdf' || entry.id === 'png-to-pdf';
+  const showQuality =
+    entry.id === 'jpg-to-pdf' ||
+    entry.id === 'png-to-pdf' ||
+    entry.id === 'webp-to-pdf' ||
+    entry.id === 'gif-to-pdf' ||
+    entry.id === 'bmp-to-pdf' ||
+    entry.id === 'heic-to-pdf';
   const showReorder = entry.id === 'merge-pdf';
   const hasOptions = showRange || showCompress || showQuality;
   const showSidebar = hasOptions && outputs.length === 0;

@@ -107,6 +107,8 @@ export interface ConverterEntry {
   options?: OptionDef[];
   /** Which widget renders this entry: default single-file, pdf (custom PDF UI), merge (multi-file). */
   widget?: 'default' | 'pdf' | 'merge' | 'edit';
+  /** Extra categories this converter is listed under (one page, linked from each). */
+  alsoIn?: Category[];
   /** Shown while a heavy engine (ffmpeg.wasm) initializes. */
   loadingNote?: string;
   /** "When to use this conversion" section (every page). */
@@ -137,28 +139,28 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'PDF Converters',
     tagline: 'Convert PDF to JPG, JPG to PDF, merge, split and compress PDFs.',
     description:
-      'Free online PDF tools that run entirely in your browser. Convert PDF to JPG or PNG images, turn JPG/PNG images into a PDF, merge multiple PDFs into one, split pages out of a PDF, compress a PDF to a smaller size, and extract text — your documents are never uploaded anywhere.',
+      'Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GIF, BMP and HEIC images, TXT, Markdown and CSV files into PDF documents — or convert PDF to JPG/PNG images, merge, split, compress and edit PDFs, and extract text — your documents are never uploaded anywhere.',
   },
   {
     id: 'image',
     name: 'Image Converters',
     tagline: 'Convert photos and graphics between PNG, JPG, WebP, AVIF, HEIC and more.',
     description:
-      'Free online image converters that run entirely in your browser. Change PNG to JPG, WebP to PNG, HEIC to JPG and more — your photos are never uploaded anywhere.',
+      'Free online image converters that run entirely in your browser. Change PNG to JPG, WebP to PNG, HEIC to JPG and more — including PNG to PDF, JPG to PDF, WebP to PDF, GIF to PDF, BMP to PDF and HEIC to PDF for documents — your photos are never uploaded anywhere.',
   },
   {
     id: 'text',
     name: 'Text Converters',
     tagline: 'Turn Markdown into HTML, strip HTML to plain text, and more.',
     description:
-      'Free online text converters. Convert Markdown to a styled HTML page, extract clean text from HTML, or turn plain text into Markdown — all on your device.',
+      'Free online text converters. Convert Markdown to a styled HTML page, extract clean text from HTML, turn plain text into Markdown — or save TXT and Markdown files as PDF documents — all on your device.',
   },
   {
     id: 'data',
     name: 'Data Converters',
     tagline: 'Swap between JSON, CSV, YAML, TOML and XML in one click.',
     description:
-      'Free online data-format converters for developers and analysts. Convert JSON to CSV, CSV to JSON, JSON to YAML, YAML to JSON, TOML to JSON and XML to JSON — parsed locally, never uploaded.',
+      'Free online data-format converters for developers and analysts. Convert JSON to CSV, CSV to JSON, JSON to YAML, YAML to JSON, TOML to JSON and XML to JSON — or turn a CSV spreadsheet into a printable PDF table — parsed locally, never uploaded.',
   },
   {
     id: 'subtitle',
@@ -206,6 +208,8 @@ interface PairSpec {
   convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
   options?: OptionDef[];
   widget?: 'default' | 'pdf' | 'merge' | 'edit';
+  /** Extra categories this converter is listed under (one page, linked from each). */
+  alsoIn?: Category[];
   loadingNote?: string;
   /** 1-2 lines: what the SOURCE format is (unique per page). */
   aboutFrom: string;
@@ -1932,6 +1936,7 @@ const PAIRS: PairSpec[] = [
   {
     id: 'jpg-to-pdf', from: 'JPG', to: 'PDF', fromExts: ['jpg', 'jpeg'], toExt: 'pdf', category: 'pdf',
     widget: 'pdf',
+    alsoIn: ['image'],
     options: [IMAGE_QUALITY_OPTION],
     blurb: 'Turn JPG photos and scans into a single PDF document — one image per page, in the order you choose. The classic fix for "please send it as a PDF".',
     faqQ: 'How do I combine JPG images into one PDF?',
@@ -1971,6 +1976,7 @@ const PAIRS: PairSpec[] = [
   {
     id: 'png-to-pdf', from: 'PNG', to: 'PDF', fromExts: ['png'], toExt: 'pdf', category: 'pdf',
     widget: 'pdf',
+    alsoIn: ['image'],
     options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert PNG screenshots and graphics into a clean PDF — one image per page. Ideal when a form or office asks for PDF but all you have are PNGs.',
     faqQ: 'Why would I convert PNG to PDF?',
@@ -1991,6 +1997,221 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Will transparency in my PNGs survive?',
         a: 'Transparent areas become white in the PDF, since PDF pages have a white background.',
+      },
+    ],
+  },
+  {
+    id: 'webp-to-pdf', from: 'WebP', to: 'PDF', fromExts: ['webp'], toExt: 'pdf', category: 'image',
+    widget: 'pdf',
+    alsoIn: ['pdf'],
+    options: [IMAGE_QUALITY_OPTION],
+    blurb: 'Convert WebP images into a PDF document — one image per page. Handy when a form or office demands PDF but your images are modern WebPs.',
+    faqQ: 'Why convert WebP to PDF?',
+    faqA: 'Many official forms, universities and offices only accept PDF uploads. If your screenshots or downloads are WebP, this wraps them into a proper PDF in seconds — each image on its own page.',
+    aboutFrom: 'WebP is the modern, super-efficient image format — a third smaller than JPG or PNG. But officialdom moves slowly: plenty of upload forms still reject anything that is not a PDF.',
+    aboutTo: 'PDF is the document format every institution accepts: printable, unchangeable-looking, and identical on every screen.',
+    useCases: [
+      'Submitting WebP screenshots as a PDF for a support ticket or application',
+      'Turning downloaded WebP images into a printable document',
+      'Combining several WebP graphics into one PDF portfolio page set',
+    ],
+    tip: 'Drop several WebPs at once — each becomes a page in order, so a folder of screenshots becomes a document in one go.',
+    extraFaqs: [
+      {
+        q: 'Can I add multiple WebP images to one PDF?',
+        a: 'Yes — select several at once and each becomes a page, in the order shown. Perfect for turning a set of screenshots into one file.',
+      },
+      {
+        q: 'Will the PDF keep the WebP quality?',
+        a: 'Yes — images are embedded at high quality, so what you see in the WebP is what lands in the PDF.',
+      },
+      {
+        q: 'What about WebP transparency?',
+        a: 'Transparent areas become white, since PDF pages have a white background. If transparency matters, keep the WebP as-is.',
+      },
+    ],
+  },
+  {
+    id: 'gif-to-pdf', from: 'GIF', to: 'PDF', fromExts: ['gif'], toExt: 'pdf', category: 'image',
+    widget: 'pdf',
+    alsoIn: ['pdf'],
+    options: [IMAGE_QUALITY_OPTION],
+    blurb: 'Turn GIFs into a PDF — the first frame of each GIF becomes a page. Useful for archiving memes, reaction images or animated diagrams as a document.',
+    faqQ: 'Does the PDF keep the animation?',
+    faqA: 'No — PDF is a document format, so each GIF contributes its first frame as a still image on its own page. The result is perfect for archiving and printing.',
+    aboutFrom: 'GIFs are the internet’s flip-books — short loops everyone recognizes. But try attaching one to a formal application and you will be asked for a PDF.',
+    aboutTo: 'PDF freezes each GIF’s representative frame into a clean, printable page — the archivable version of your animations.',
+    useCases: [
+      'Archiving a set of GIFs as a single document',
+      'Printing animated diagrams as stills for a report',
+      'Converting meme GIFs into shareable PDF pages',
+    ],
+    tip: 'Each GIF becomes one page using its first frame — for most GIFs that is the intended still image.',
+    extraFaqs: [
+      {
+        q: 'Which frame of the GIF ends up in the PDF?',
+        a: 'The first frame — for the vast majority of GIFs, that is the representative image the creator intended.',
+      },
+      {
+        q: 'Can I convert several GIFs at once?',
+        a: 'Yes — drop multiple GIFs and each becomes its own page in the PDF, in order.',
+      },
+      {
+        q: 'Will the PDF be big?',
+        a: 'No — a single still frame per GIF keeps the PDF small. Lower the quality slider if you need it tiny for uploads.',
+      },
+    ],
+  },
+  {
+    id: 'bmp-to-pdf', from: 'BMP', to: 'PDF', fromExts: ['bmp', 'dib'], toExt: 'pdf', category: 'image',
+    widget: 'pdf',
+    alsoIn: ['pdf'],
+    options: [IMAGE_QUALITY_OPTION],
+    blurb: 'Convert bulky BMP files into a compact PDF — one image per page. The fastest way to make ancient BMP scans emailable and printable.',
+    faqQ: 'Why convert BMP to PDF instead of JPG?',
+    faqA: 'When the destination is a form, an office or a printer, PDF is what they ask for. This skips the middleman: your BMPs go straight into a proper document, dramatically smaller than the BMPs themselves.',
+    aboutFrom: 'BMP is Windows’ ancient uncompressed bitmap — every pixel stored raw. A single scan can be tens of megabytes, far too heavy to email.',
+    aboutTo: 'PDF wraps your images into the universal document format — and because the images are re-encoded, the PDF is a fraction of the BMP’s size.',
+    useCases: [
+      'Turning old BMP scans into an emailable PDF',
+      'Submitting legacy BMP images to forms that require PDF',
+      'Archiving BMP screenshots as a compact document',
+    ],
+    tip: 'BMPs are enormous, so this conversion shrinks them dramatically — a 20 MB BMP often becomes a 1–2 MB PDF page.',
+    extraFaqs: [
+      {
+        q: 'How much smaller will the PDF be than my BMP?',
+        a: 'Dramatically — BMP stores pixels uncompressed, so expect 80–95% smaller files with no visible difference for scans and screenshots.',
+      },
+      {
+        q: 'Can I combine several BMPs into one PDF?',
+        a: 'Yes — each BMP becomes a page in order, so a folder of scans becomes one document.',
+      },
+      {
+        q: 'Will text in my BMP scans stay readable?',
+        a: 'Yes — images are embedded at high quality, keeping scanned text crisp. For the sharpest text, keep quality at 92.',
+      },
+    ],
+  },
+  {
+    id: 'heic-to-pdf', from: 'HEIC', to: 'PDF', fromExts: ['heic', 'heif'], toExt: 'pdf', category: 'image',
+    widget: 'pdf',
+    alsoIn: ['pdf'],
+    options: [IMAGE_QUALITY_OPTION],
+    loadingNote: 'Loading the image decoder… (one-time download)',
+    blurb: 'Convert iPhone HEIC photos directly into a PDF — one photo per page. Skip the JPG middleman when what you need is a document.',
+    faqQ: 'Can I put iPhone photos straight into a PDF?',
+    faqA: 'Yes — drop your HEIC files and each becomes a full page in the PDF. No need to convert to JPG first; the HEIC decoding happens right in your browser.',
+    aboutFrom: 'HEIC is how iPhones save photos — half the size of JPG, but unreadable by most Windows apps, forms and printers.',
+    aboutTo: 'PDF is the format forms and offices actually accept. This puts your iPhone shots straight into a proper document.',
+    useCases: [
+      'Turning iPhone photos of documents into a single PDF for email',
+      'Submitting HEIC photos to applications that demand PDF',
+      'Combining iPhone shots into a printable PDF album',
+    ],
+    tip: 'Drop several HEICs at once — each becomes a page in order. Your originals are never modified.',
+    extraFaqs: [
+      {
+        q: 'Do I need to convert HEIC to JPG first?',
+        a: 'No — this tool decodes HEIC directly in your browser and builds the PDF in one step. One less conversion, one less quality loss.',
+      },
+      {
+        q: 'Will my iPhone photos keep their quality?',
+        a: 'Yes — photos are decoded at full resolution and embedded at high quality in the PDF.',
+      },
+      {
+        q: 'Does it work with HEIF files too?',
+        a: 'Yes — both .heic and .heif files are accepted and handled identically.',
+      },
+    ],
+  },
+  {
+    id: 'txt-to-pdf', from: 'TXT', to: 'PDF', fromExts: ['txt'], toExt: 'pdf', category: 'text',
+    widget: 'pdf',
+    alsoIn: ['pdf'],
+    blurb: 'Turn a plain text file into a clean, paginated PDF document. Perfect for notes, logs and drafts that need to look like a real document.',
+    faqQ: 'What does the PDF look like?',
+    faqA: 'Clean A4 pages with comfortable margins and readable type — your text flows across pages automatically. Simple, professional, printable.',
+    aboutFrom: 'Plain text is where writing starts — notes, logs, drafts. But a .txt file looks unfinished when you need to share or print it.',
+    aboutTo: 'PDF gives your text the document treatment: paginated A4 pages, proper margins, ready to email, print or archive.',
+    useCases: [
+      'Turning meeting notes into a shareable PDF',
+      'Converting log files or reports for printing',
+      'Making a plain-text draft look presentable for submission',
+    ],
+    tip: 'Long files paginate automatically — a 50-page text file becomes a 50-page PDF with no extra work.',
+    extraFaqs: [
+      {
+        q: 'Does it preserve my line breaks?',
+        a: 'Yes — your paragraphs and line breaks are kept, and long lines wrap neatly within the page margins.',
+      },
+      {
+        q: 'What page size is used?',
+        a: 'A4 with comfortable margins — the standard for documents worldwide, and it prints perfectly.',
+      },
+      {
+        q: 'Can I convert a huge text file?',
+        a: 'Yes — pagination is automatic, so even very long files convert into a proper multi-page PDF.',
+      },
+    ],
+  },
+  {
+    id: 'md-to-pdf', from: 'Markdown', to: 'PDF', fromExts: ['md', 'markdown'], toExt: 'pdf', category: 'text',
+    widget: 'pdf',
+    alsoIn: ['pdf'],
+    blurb: 'Convert Markdown into a styled PDF — headings, lists, bold, italic and code blocks all render properly. Your README, notes or docs as a real document.',
+    faqQ: 'Does the PDF keep my Markdown formatting?',
+    faqA: 'Yes — headings render large and bold, lists get bullets, **bold** and *italic* are styled, and code blocks appear in monospace on a shaded background.',
+    aboutFrom: 'Markdown is the writer-friendly format: # headings, **bold**, lists — readable as plain text, but not a finished document.',
+    aboutTo: 'PDF renders your Markdown as a styled, paginated document — the version you can email, print or hand to anyone.',
+    useCases: [
+      'Turning a README or documentation file into a PDF handout',
+      'Converting Markdown notes into a printable document',
+      'Sharing a styled spec with people who do not use Markdown tools',
+    ],
+    tip: 'Use proper # headings in your Markdown — they become the styled section titles that make the PDF look professional.',
+    extraFaqs: [
+      {
+        q: 'Are code blocks supported?',
+        a: 'Yes — fenced code blocks render in monospace on a light shaded background, just like documentation sites.',
+      },
+      {
+        q: 'What about tables?',
+        a: 'Simple text tables convert as plain text lines. For real formatted tables, convert your data from CSV to PDF instead.',
+      },
+      {
+        q: 'Markdown to PDF or Markdown to HTML?',
+        a: 'PDF for printing, emailing and archiving; HTML for publishing on the web. Pick the one your audience needs.',
+      },
+    ],
+  },
+  {
+    id: 'csv-to-pdf', from: 'CSV', to: 'PDF', fromExts: ['csv'], toExt: 'pdf', category: 'data',
+    widget: 'pdf',
+    alsoIn: ['pdf'],
+    blurb: 'Turn a CSV spreadsheet into a printable PDF table — header row highlighted, grid lines, columns auto-sized. Your data as a proper document.',
+    faqQ: 'How does the table look?',
+    faqA: 'A clean A4 table: bold header row on a shaded background, thin grid lines, and columns automatically sized to their content. Multi-page for long spreadsheets.',
+    aboutFrom: 'CSV is the universal spreadsheet exchange format — but raw CSV is not something you print or email to a client.',
+    aboutTo: 'PDF turns your spreadsheet into a formatted, printable table document that looks deliberate and professional.',
+    useCases: [
+      'Printing a CSV export as a readable report',
+      'Emailing spreadsheet data to someone without Excel',
+      'Archiving data exports as fixed-layout documents',
+    ],
+    tip: 'The first row becomes the header — make sure your CSV has a clean header row before converting.',
+    extraFaqs: [
+      {
+        q: 'What if my CSV has many columns?',
+        a: 'Columns shrink automatically to fit the page, down to a readable minimum. Very wide sheets stay legible; extremely wide ones may need fewer columns.',
+      },
+      {
+        q: 'Are commas inside cells handled?',
+        a: 'Yes — quoted fields with commas or quotes inside parse correctly, so your data lands in the right columns.',
+      },
+      {
+        q: 'How many rows can it handle?',
+        a: 'Up to 500 rows per conversion, flowing across as many pages as needed. Larger exports: split the CSV first.',
       },
     ],
   },
@@ -2352,6 +2573,7 @@ function buildEntry(spec: PairSpec): ConverterEntry {
     convert: spec.convert,
     options: spec.options,
     widget: spec.widget,
+    alsoIn: spec.alsoIn,
     loadingNote: spec.loadingNote,
     useCases: spec.useCases,
     flagship: spec.flagship,
@@ -2368,7 +2590,7 @@ export function getConverter(id: string): ConverterEntry | undefined {
 }
 
 export function convertersByCategory(category: Category): ConverterEntry[] {
-  return CONVERTERS.filter((c) => c.category === category);
+  return CONVERTERS.filter((c) => c.category === category || c.alsoIn?.includes(category));
 }
 
 /** Find converters that accept a file with this extension (for homepage auto-detect). */

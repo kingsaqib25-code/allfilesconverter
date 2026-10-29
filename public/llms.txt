@@ -19,7 +19,7 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter (iPhone photos to universal JPG).
 - https://allfilesconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter (extract 192 kbps audio from video).
 
-## All converters (73)
+## All converters (80)
 
 ### PDF Converters
 
@@ -56,6 +56,10 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/heic-to-png/ — HEIC to PNG Converter
 - https://allfilesconverter.vercel.app/convert/heif-to-jpg/ — HEIF to JPG Converter
 - https://allfilesconverter.vercel.app/convert/heif-to-png/ — HEIF to PNG Converter
+- https://allfilesconverter.vercel.app/convert/webp-to-pdf/ — WebP to PDF Converter
+- https://allfilesconverter.vercel.app/convert/gif-to-pdf/ — GIF to PDF Converter
+- https://allfilesconverter.vercel.app/convert/bmp-to-pdf/ — BMP to PDF Converter
+- https://allfilesconverter.vercel.app/convert/heic-to-pdf/ — HEIC to PDF Converter
 - https://allfilesconverter.vercel.app/convert/merge-images-jpg/ — Merge Images to JPG
 - https://allfilesconverter.vercel.app/convert/merge-images-png/ — Merge Images to PNG
 
@@ -64,6 +68,8 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/md-to-html/ — Markdown to HTML Converter
 - https://allfilesconverter.vercel.app/convert/html-to-txt/ — HTML to TXT Converter
 - https://allfilesconverter.vercel.app/convert/txt-to-md/ — TXT to Markdown Converter
+- https://allfilesconverter.vercel.app/convert/txt-to-pdf/ — TXT to PDF Converter
+- https://allfilesconverter.vercel.app/convert/md-to-pdf/ — Markdown to PDF Converter
 
 ### Data Converters
 
@@ -73,6 +79,7 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/yaml-to-json/ — YAML to JSON Converter
 - https://allfilesconverter.vercel.app/convert/toml-to-json/ — TOML to JSON Converter
 - https://allfilesconverter.vercel.app/convert/xml-to-json/ — XML to JSON Converter
+- https://allfilesconverter.vercel.app/convert/csv-to-pdf/ — CSV to PDF Converter
 
 ### Subtitle Converters
 

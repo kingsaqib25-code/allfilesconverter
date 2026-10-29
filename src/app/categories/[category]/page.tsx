@@ -32,7 +32,9 @@ export default async function CategoryPage({
   const { category } = await params;
   const meta = CATEGORIES.find((c) => c.id === category);
   if (!meta) notFound();
-  const converters = convertersByCategory(meta.id);
+  const converters = convertersByCategory(meta.id).sort(
+    (a, b) => (b.to === 'PDF' ? 1 : 0) - (a.to === 'PDF' ? 1 : 0)
+  );
 
   return (
     <div className="wrap">
