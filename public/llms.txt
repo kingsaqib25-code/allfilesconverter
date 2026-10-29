@@ -1,101 +1,102 @@
-# All in One Converter
+# All Files Converter
 
 > Free online file converters that run 100% in your browser. No uploads, no sign-up, no watermarks, no accounts.
 
 ## What this site is
 
-All in One Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API). There is no server-side processing, no database and no user accounts.
+All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conversion website. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API). There is no server-side processing, no database and no user accounts.
 
 ## Privacy / no-upload policy
 
 - Files never leave the visitor’s device. Nothing is uploaded anywhere.
 - No server processes files; there is no database and no user accounts.
 - Conversions are free forever with no watermarks and no sign-up.
+- The "Summarize this page with AI" buttons only share the page\u2019s public summary text with the chosen AI — never the visitor\u2019s files.
 
 ## Flagship tools
 
-- https://allinoneconverter.vercel.app/gif-maker/ — Video to GIF Maker: trim, set width/FPS/quality, two-pass palette rendering, no watermark.
-- https://allinoneconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter (iPhone photos to universal JPG).
-- https://allinoneconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter (extract 192 kbps audio from video).
+- https://allfilesconverter.vercel.app/gif-maker/ — Video to GIF Maker: trim, set width/FPS/quality, two-pass palette rendering, no watermark.
+- https://allfilesconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter (iPhone photos to universal JPG).
+- https://allfilesconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter (extract 192 kbps audio from video).
 
 ## All converters (58)
 
 ### Image Converters
 
-- https://allinoneconverter.vercel.app/convert/png-to-jpg/ — PNG to JPG Converter
-- https://allinoneconverter.vercel.app/convert/png-to-webp/ — PNG to WebP Converter
-- https://allinoneconverter.vercel.app/convert/png-to-avif/ — PNG to AVIF Converter
-- https://allinoneconverter.vercel.app/convert/jpg-to-png/ — JPG to PNG Converter
-- https://allinoneconverter.vercel.app/convert/jpg-to-webp/ — JPG to WebP Converter
-- https://allinoneconverter.vercel.app/convert/jpg-to-avif/ — JPG to AVIF Converter
-- https://allinoneconverter.vercel.app/convert/webp-to-png/ — WebP to PNG Converter
-- https://allinoneconverter.vercel.app/convert/webp-to-jpg/ — WebP to JPG Converter
-- https://allinoneconverter.vercel.app/convert/webp-to-avif/ — WebP to AVIF Converter
-- https://allinoneconverter.vercel.app/convert/gif-to-png/ — GIF to PNG Converter
-- https://allinoneconverter.vercel.app/convert/gif-to-jpg/ — GIF to JPG Converter
-- https://allinoneconverter.vercel.app/convert/gif-to-webp/ — GIF to WebP Converter
-- https://allinoneconverter.vercel.app/convert/bmp-to-png/ — BMP to PNG Converter
-- https://allinoneconverter.vercel.app/convert/bmp-to-jpg/ — BMP to JPG Converter
-- https://allinoneconverter.vercel.app/convert/bmp-to-webp/ — BMP to WebP Converter
-- https://allinoneconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter
-- https://allinoneconverter.vercel.app/convert/heic-to-png/ — HEIC to PNG Converter
-- https://allinoneconverter.vercel.app/convert/heif-to-jpg/ — HEIF to JPG Converter
-- https://allinoneconverter.vercel.app/convert/heif-to-png/ — HEIF to PNG Converter
+- https://allfilesconverter.vercel.app/convert/png-to-jpg/ — PNG to JPG Converter
+- https://allfilesconverter.vercel.app/convert/png-to-webp/ — PNG to WebP Converter
+- https://allfilesconverter.vercel.app/convert/png-to-avif/ — PNG to AVIF Converter
+- https://allfilesconverter.vercel.app/convert/jpg-to-png/ — JPG to PNG Converter
+- https://allfilesconverter.vercel.app/convert/jpg-to-webp/ — JPG to WebP Converter
+- https://allfilesconverter.vercel.app/convert/jpg-to-avif/ — JPG to AVIF Converter
+- https://allfilesconverter.vercel.app/convert/webp-to-png/ — WebP to PNG Converter
+- https://allfilesconverter.vercel.app/convert/webp-to-jpg/ — WebP to JPG Converter
+- https://allfilesconverter.vercel.app/convert/webp-to-avif/ — WebP to AVIF Converter
+- https://allfilesconverter.vercel.app/convert/gif-to-png/ — GIF to PNG Converter
+- https://allfilesconverter.vercel.app/convert/gif-to-jpg/ — GIF to JPG Converter
+- https://allfilesconverter.vercel.app/convert/gif-to-webp/ — GIF to WebP Converter
+- https://allfilesconverter.vercel.app/convert/bmp-to-png/ — BMP to PNG Converter
+- https://allfilesconverter.vercel.app/convert/bmp-to-jpg/ — BMP to JPG Converter
+- https://allfilesconverter.vercel.app/convert/bmp-to-webp/ — BMP to WebP Converter
+- https://allfilesconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter
+- https://allfilesconverter.vercel.app/convert/heic-to-png/ — HEIC to PNG Converter
+- https://allfilesconverter.vercel.app/convert/heif-to-jpg/ — HEIF to JPG Converter
+- https://allfilesconverter.vercel.app/convert/heif-to-png/ — HEIF to PNG Converter
 
 ### Text Converters
 
-- https://allinoneconverter.vercel.app/convert/md-to-html/ — Markdown to HTML Converter
-- https://allinoneconverter.vercel.app/convert/html-to-txt/ — HTML to TXT Converter
-- https://allinoneconverter.vercel.app/convert/txt-to-md/ — TXT to Markdown Converter
+- https://allfilesconverter.vercel.app/convert/md-to-html/ — Markdown to HTML Converter
+- https://allfilesconverter.vercel.app/convert/html-to-txt/ — HTML to TXT Converter
+- https://allfilesconverter.vercel.app/convert/txt-to-md/ — TXT to Markdown Converter
 
 ### Data Converters
 
-- https://allinoneconverter.vercel.app/convert/json-to-csv/ — JSON to CSV Converter
-- https://allinoneconverter.vercel.app/convert/csv-to-json/ — CSV to JSON Converter
-- https://allinoneconverter.vercel.app/convert/json-to-yaml/ — JSON to YAML Converter
-- https://allinoneconverter.vercel.app/convert/yaml-to-json/ — YAML to JSON Converter
-- https://allinoneconverter.vercel.app/convert/toml-to-json/ — TOML to JSON Converter
-- https://allinoneconverter.vercel.app/convert/xml-to-json/ — XML to JSON Converter
+- https://allfilesconverter.vercel.app/convert/json-to-csv/ — JSON to CSV Converter
+- https://allfilesconverter.vercel.app/convert/csv-to-json/ — CSV to JSON Converter
+- https://allfilesconverter.vercel.app/convert/json-to-yaml/ — JSON to YAML Converter
+- https://allfilesconverter.vercel.app/convert/yaml-to-json/ — YAML to JSON Converter
+- https://allfilesconverter.vercel.app/convert/toml-to-json/ — TOML to JSON Converter
+- https://allfilesconverter.vercel.app/convert/xml-to-json/ — XML to JSON Converter
 
 ### Subtitle Converters
 
-- https://allinoneconverter.vercel.app/convert/srt-to-vtt/ — SRT to WebVTT Converter
-- https://allinoneconverter.vercel.app/convert/vtt-to-srt/ — WebVTT to SRT Converter
-- https://allinoneconverter.vercel.app/convert/srt-to-ass/ — SRT to ASS Converter
-- https://allinoneconverter.vercel.app/convert/ass-to-srt/ — ASS to SRT Converter
-- https://allinoneconverter.vercel.app/convert/srt-to-ssa/ — SRT to SSA Converter
-- https://allinoneconverter.vercel.app/convert/ssa-to-srt/ — SSA to SRT Converter
-- https://allinoneconverter.vercel.app/convert/vtt-to-ass/ — WebVTT to ASS Converter
-- https://allinoneconverter.vercel.app/convert/ass-to-vtt/ — ASS to WebVTT Converter
-- https://allinoneconverter.vercel.app/convert/vtt-to-ssa/ — WebVTT to SSA Converter
-- https://allinoneconverter.vercel.app/convert/ssa-to-vtt/ — SSA to WebVTT Converter
-- https://allinoneconverter.vercel.app/convert/ass-to-ssa/ — ASS to SSA Converter
-- https://allinoneconverter.vercel.app/convert/ssa-to-ass/ — SSA to ASS Converter
+- https://allfilesconverter.vercel.app/convert/srt-to-vtt/ — SRT to WebVTT Converter
+- https://allfilesconverter.vercel.app/convert/vtt-to-srt/ — WebVTT to SRT Converter
+- https://allfilesconverter.vercel.app/convert/srt-to-ass/ — SRT to ASS Converter
+- https://allfilesconverter.vercel.app/convert/ass-to-srt/ — ASS to SRT Converter
+- https://allfilesconverter.vercel.app/convert/srt-to-ssa/ — SRT to SSA Converter
+- https://allfilesconverter.vercel.app/convert/ssa-to-srt/ — SSA to SRT Converter
+- https://allfilesconverter.vercel.app/convert/vtt-to-ass/ — WebVTT to ASS Converter
+- https://allfilesconverter.vercel.app/convert/ass-to-vtt/ — ASS to WebVTT Converter
+- https://allfilesconverter.vercel.app/convert/vtt-to-ssa/ — WebVTT to SSA Converter
+- https://allfilesconverter.vercel.app/convert/ssa-to-vtt/ — SSA to WebVTT Converter
+- https://allfilesconverter.vercel.app/convert/ass-to-ssa/ — ASS to SSA Converter
+- https://allfilesconverter.vercel.app/convert/ssa-to-ass/ — SSA to ASS Converter
 
 ### Video Converters
 
-- https://allinoneconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter
-- https://allinoneconverter.vercel.app/convert/mov-to-mp4/ — MOV to MP4 Converter
-- https://allinoneconverter.vercel.app/convert/mkv-to-mp4/ — MKV to MP4 Converter
-- https://allinoneconverter.vercel.app/convert/webm-to-mp4/ — WebM to MP4 Converter
-- https://allinoneconverter.vercel.app/convert/avi-to-mp4/ — AVI to MP4 Converter
-- https://allinoneconverter.vercel.app/convert/mp4-to-webm/ — MP4 to WebM Converter
-- https://allinoneconverter.vercel.app/convert/video-to-gif/ — Video to GIF Converter
-- https://allinoneconverter.vercel.app/convert/m4v-to-mp4/ — M4V to MP4 Converter
-- https://allinoneconverter.vercel.app/convert/3gp-to-mp4/ — 3GP to MP4 Converter
-- https://allinoneconverter.vercel.app/convert/flv-to-mp4/ — FLV to MP4 Converter
+- https://allfilesconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter
+- https://allfilesconverter.vercel.app/convert/mov-to-mp4/ — MOV to MP4 Converter
+- https://allfilesconverter.vercel.app/convert/mkv-to-mp4/ — MKV to MP4 Converter
+- https://allfilesconverter.vercel.app/convert/webm-to-mp4/ — WebM to MP4 Converter
+- https://allfilesconverter.vercel.app/convert/avi-to-mp4/ — AVI to MP4 Converter
+- https://allfilesconverter.vercel.app/convert/mp4-to-webm/ — MP4 to WebM Converter
+- https://allfilesconverter.vercel.app/convert/video-to-gif/ — Video to GIF Converter
+- https://allfilesconverter.vercel.app/convert/m4v-to-mp4/ — M4V to MP4 Converter
+- https://allfilesconverter.vercel.app/convert/3gp-to-mp4/ — 3GP to MP4 Converter
+- https://allfilesconverter.vercel.app/convert/flv-to-mp4/ — FLV to MP4 Converter
 
 ### Audio Converters
 
-- https://allinoneconverter.vercel.app/convert/wav-to-mp3/ — WAV to MP3 Converter
-- https://allinoneconverter.vercel.app/convert/flac-to-mp3/ — FLAC to MP3 Converter
-- https://allinoneconverter.vercel.app/convert/ogg-to-mp3/ — OGG to MP3 Converter
-- https://allinoneconverter.vercel.app/convert/m4a-to-mp3/ — M4A to MP3 Converter
-- https://allinoneconverter.vercel.app/convert/aac-to-mp3/ — AAC to MP3 Converter
-- https://allinoneconverter.vercel.app/convert/mp3-to-wav/ — MP3 to WAV Converter
-- https://allinoneconverter.vercel.app/convert/ogg-to-wav/ — OGG to WAV Converter
-- https://allinoneconverter.vercel.app/convert/wma-to-mp3/ — WMA to MP3 Converter
+- https://allfilesconverter.vercel.app/convert/wav-to-mp3/ — WAV to MP3 Converter
+- https://allfilesconverter.vercel.app/convert/flac-to-mp3/ — FLAC to MP3 Converter
+- https://allfilesconverter.vercel.app/convert/ogg-to-mp3/ — OGG to MP3 Converter
+- https://allfilesconverter.vercel.app/convert/m4a-to-mp3/ — M4A to MP3 Converter
+- https://allfilesconverter.vercel.app/convert/aac-to-mp3/ — AAC to MP3 Converter
+- https://allfilesconverter.vercel.app/convert/mp3-to-wav/ — MP3 to WAV Converter
+- https://allfilesconverter.vercel.app/convert/ogg-to-wav/ — OGG to WAV Converter
+- https://allfilesconverter.vercel.app/convert/wma-to-mp3/ — WMA to MP3 Converter
 
 ## Contact
 
-- https://allinoneconverter.vercel.app/contact
+- https://allfilesconverter.vercel.app/contact

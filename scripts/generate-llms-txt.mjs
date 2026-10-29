@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SITE_URL = 'https://allinoneconverter.vercel.app';
+const SITE_URL = 'https://allfilesconverter.vercel.app';
 
 const src = readFileSync(join(root, 'src', 'lib', 'converters', 'registry.ts'), 'utf8');
 
@@ -38,7 +38,7 @@ while ((m = convRe.exec(src)) !== null) {
 const catName = (id) => (categories.find((c) => c.id === id) || { name: id }).name;
 
 const lines = [];
-lines.push('# All in One Converter');
+lines.push('# All Files Converter');
 lines.push('');
 lines.push(
   '> Free online file converters that run 100% in your browser. No uploads, no sign-up, no watermarks, no accounts.'
@@ -47,7 +47,7 @@ lines.push('');
 lines.push('## What this site is');
 lines.push('');
 lines.push(
-  `All in One Converter (${SITE_URL}/) is a free file-conversion website. Every tool converts files ` +
+  `All Files Converter (${SITE_URL}/) is a free file-conversion website. Every tool converts files ` +
     `entirely on the visitor's device using web technology (Canvas, WebAssembly, File API). ` +
     `There is no server-side processing, no database and no user accounts.`
 );
@@ -57,6 +57,7 @@ lines.push('');
 lines.push('- Files never leave the visitor\u2019s device. Nothing is uploaded anywhere.');
 lines.push('- No server processes files; there is no database and no user accounts.');
 lines.push('- Conversions are free forever with no watermarks and no sign-up.');
+lines.push('- The "Summarize this page with AI" buttons only share the page\\u2019s public summary text with the chosen AI — never the visitor\\u2019s files.');
 lines.push('');
 lines.push('## Flagship tools');
 lines.push('');

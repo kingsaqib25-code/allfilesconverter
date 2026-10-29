@@ -4,10 +4,10 @@ export default function Header() {
   return (
     <header className="site-header">
       <div className="wrap">
-        <Link href="/" className="logo" aria-label="All in One Converter — home">
+        <Link href="/" className="logo" aria-label="All Files Converter — home">
           <span className="logo-mark" aria-hidden="true">⇄</span>
           <span>
-            All in One Converter
+            All Files Converter
             <small>Free file converter</small>
           </span>
         </Link>

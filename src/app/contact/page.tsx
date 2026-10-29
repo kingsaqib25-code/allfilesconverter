@@ -26,7 +26,7 @@ export default function Contact() {
         <h2>Email</h2>
         <p>
           Write to us at{' '}
-          <a href="mailto:hello@allinoneconverter.com">hello@allinoneconverter.com</a>.
+          <a href="mailto:hello@allfilesconverter.com">hello@allfilesconverter.com</a>.
           We reply to genuine messages, usually within a few days.
         </p>
         <div className="alert ok">

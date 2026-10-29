@@ -77,7 +77,7 @@ export default async function ConvertPage({
         <span className="pill">
           {entry.fromExts.map((e) => '.' + e).join(', ')} → .{entry.toExt}
         </span>
-        <h1>{entry.title}</h1>
+        <h1>Free {entry.title}</h1>
         <p className="lead">{entry.description}</p>
         <p className="tldr">
           <strong>TL;DR:</strong> Drop a {entry.from} file, get a {entry.to} file back in

@@ -47,7 +47,7 @@ export default async function CategoryPage({
       <AiSummarize
         prompt={buildSummaryPrompt(
           `${SITE_URL}/categories/${meta.id}/`,
-          `the ${meta.name} category page on All in One Converter`
+          `the ${meta.name} category page on All Files Converter`
         )}
       />
       <div className="grid c3">

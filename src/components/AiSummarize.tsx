@@ -76,7 +76,7 @@ export default function AiSummarize({ prompt }: { prompt: string }) {
         ))}
       </div>
       <p className="ai-sum-note">
-        Uses your own AI account — the prompt is copied for you, nothing is sent by us.
+        100% free. Your files never leave your device — the AI only reads this page&apos;s public summary, never your files. Uses your own AI account; nothing is sent by us.
       </p>
     </div>
   );

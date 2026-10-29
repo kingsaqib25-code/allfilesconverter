@@ -36,8 +36,8 @@ export default function Home() {
       <section className="hero">
         <div className="wrap">
           <span className="kicker">100% free · No sign-up</span>
-          <h1>{BRAND}</h1>
-          <p className="lead">{TAGLINE} Convert images, video, audio, text, data and subtitles between {CONVERTERS.length}+ formats — right here in your browser.</p>
+          <h1>Free File Converter</h1>
+          <p className="lead">{BRAND} — {TAGLINE} Convert images, video, audio, text, data and subtitles between {CONVERTERS.length}+ formats — right here in your browser.</p>
           <HeroDropZone />
         </div>
       </section>
@@ -46,7 +46,7 @@ export default function Home() {
         <AiSummarize
           prompt={buildSummaryPrompt(`${SITE_URL}/`, `the ${BRAND} homepage — a free on-device file converter site`)}
         />
-        <div className="badge-row" aria-label="Why All in One Converter">
+        <div className="badge-row" aria-label="Why All Files Converter">
           <span className="badge">🔒 No upload — files stay on your device</span>
           <span className="badge">✨ Free forever</span>
           <span className="badge">🚫 No sign-up</span>

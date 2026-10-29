@@ -8,7 +8,7 @@ import { SITE_URL } from '@/lib/site';
 import { ldScript, webApplicationJsonLd, faqPageJsonLd, breadcrumbJsonLd, howToJsonLd } from '@/lib/jsonld';
 
 export const metadata: Metadata = {
-  title: 'Video to GIF Maker — Free, No Upload, No Watermark | All in One Converter',
+  title: 'Video to GIF Maker — Free, No Upload, No Watermark | All Files Converter',
   description:
     'Turn any video into a high-quality GIF free: trim the exact moment, set size, FPS and quality. Two-pass palette rendering, 100% in your browser — no upload, no watermark, no sign-up.',
   alternates: { canonical: '/gif-maker/' },
@@ -68,7 +68,7 @@ export default function GifMakerPage() {
 
       <div className="page-head">
         <span className="pill">VIDEO → GIF</span>
-        <h1>Video to GIF Maker</h1>
+        <h1>Free Video to GIF Maker</h1>
         <p className="lead">
           Turn any video into a crisp, high-quality GIF — trim the exact moment, set the size,
           frame rate and quality, and render with true two-pass color. Free forever, no sign-up,
@@ -82,7 +82,7 @@ export default function GifMakerPage() {
       </div>
 
       <AiSummarize
-        prompt={buildSummaryPrompt(PAGE_URL, 'the Video to GIF Maker studio on All in One Converter')}
+        prompt={buildSummaryPrompt(PAGE_URL, 'the Video to GIF Maker studio on All Files Converter')}
       />
 
       <GifMaker />
