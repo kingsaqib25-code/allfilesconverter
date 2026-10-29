@@ -3,7 +3,7 @@ import HeroDropZone from '@/components/HeroDropZone';
 import AiSummarize from '@/components/AiSummarize';
 import ToolsGrid from '@/components/ToolsGrid';
 import { ToolCard } from '@/components/ToolCard';
-import { BRAND, TAGLINE, CONVERTERS } from '@/lib/converters/registry';
+import { BRAND, CONVERTERS } from '@/lib/converters/registry';
 import { SITE_URL } from '@/lib/site';
 import { ldScript, websiteOrgJsonLd } from '@/lib/jsonld';
 
@@ -32,14 +32,14 @@ export default function Home() {
         <div className="wrap">
           <span className="kicker">100% free · No sign-up</span>
           <h1>Free File Converter</h1>
-          <p className="lead">{BRAND} — {TAGLINE} Your files never leave your device.</p>
+          <p className="lead">Convert images, video, audio, PDFs and documents online — 100+ converters that run entirely in your browser. No sign-up, no watermarks, no limits. Private by design: your files never leave your device.</p>
           <HeroDropZone />
         </div>
       </section>
 
       <div className="wrap">
         <AiSummarize
-          summaryText={`${BRAND} — ${TAGLINE} Convert PDF, images, video, audio, text, data and subtitles between ${CONVERTERS.length}+ formats, right here in your browser. TL;DR: pick any converter, drop your file, and download the result in seconds. Free forever, no sign-up, no watermarks — and your files never leave your device because every conversion runs on-device in your browser.`}
+          summaryText={`${BRAND} turns PDF, images, video, audio, text, data and subtitles between ${CONVERTERS.length}+ formats, right here in your browser. TL;DR: pick any converter, drop your file, and download the result in seconds. Free forever, no sign-up, no watermarks — and your files never leave your device because every conversion runs on-device in your browser.`}
         />
         <div className="badge-row" aria-label="Why Quick Files Converter">
           <span className="badge">🔒 No upload — files stay on your device</span>

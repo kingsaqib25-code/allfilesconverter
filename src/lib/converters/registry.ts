@@ -131,7 +131,7 @@ export interface CategoryMeta {
 }
 
 export const BRAND = 'Quick Files Converter';
-export const TAGLINE = 'Free file converter. Your files never leave your device.';
+export const TAGLINE = 'Convert your files free.';
 
 export const CATEGORIES: CategoryMeta[] = [
   {
@@ -2966,6 +2966,10 @@ export function getConverter(id: string): ConverterEntry | undefined {
 
 export function convertersByCategory(category: Category): ConverterEntry[] {
   return CONVERTERS.filter((c) => c.category === category || c.alsoIn?.includes(category));
+}
+
+export function standaloneToolsByCategory(category: Category): StandaloneTool[] {
+  return STANDALONE_TOOLS.filter((t) => t.category === category);
 }
 
 /** Find converters that accept a file with this extension (for homepage auto-detect). */
