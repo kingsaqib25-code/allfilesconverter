@@ -43,6 +43,7 @@ export default function PdfWidget({ entryId }: Props) {
   const [password, setPassword] = useState('');
   const [redactWords, setRedactWords] = useState('');
   const [cropMargin, setCropMargin] = useState(10);
+  const [excelPerPage, setExcelPerPage] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const clearOutputs = useCallback(() => {
@@ -171,6 +172,12 @@ export default function PdfWidget({ entryId }: Props) {
           outs.push({ blob: r.blob, filename: r.filename });
           break;
         }
+        case 'pdf-to-excel': {
+          const xmod = await import('@/lib/converters/pdf-to-excel');
+          const r = await xmod.pdfToExcel(files[0], { range, perPage: excelPerPage });
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
         case 'rotate-pdf': {
           const tools = await import('@/lib/converters/pdf-tools');
           const r = await tools.rotatePdf(files[0], parseInt(angle, 10) as 90 | 180 | 270, range);
@@ -241,7 +248,7 @@ export default function PdfWidget({ entryId }: Props) {
       setLoadNote(null);
       setWorking(false);
     }
-  }, [files, working, entry, range, compressLevel, quality, clearOutputs, angle, wmText, wmOpacity, wmSize, pnPosition, password, redactWords, cropMargin]);
+  }, [files, working, entry, range, compressLevel, quality, clearOutputs, angle, wmText, wmOpacity, wmSize, pnPosition, password, redactWords, cropMargin, excelPerPage]);
 
   const downloadZip = useCallback(async () => {
     if (outputs.length === 0) return;
@@ -284,6 +291,7 @@ export default function PdfWidget({ entryId }: Props) {
   const showRedact = entry.id === 'redact-pdf';
   const showDeleteRange = entry.id === 'delete-pages-pdf';
   const showCrop = entry.id === 'crop-pdf';
+  const showExcel = entry.id === 'pdf-to-excel';
   const hasOptions =
     showRange ||
     showCompress ||
@@ -294,7 +302,8 @@ export default function PdfWidget({ entryId }: Props) {
     showUnlock ||
     showRedact ||
     showDeleteRange ||
-    showCrop;
+    showCrop ||
+    showExcel;
   const showSidebar = hasOptions && outputs.length === 0;
 
   return (
@@ -610,6 +619,37 @@ export default function PdfWidget({ entryId }: Props) {
                   aria-label="Crop margin percent"
                 />
               </label>
+            )}
+            {showExcel && (
+              <>
+                <label className="opt-row">
+                  <span className="opt-label">
+                    Pages <span className="opt-hint">(blank = all pages, e.g. 1-3, 5)</span>
+                  </span>
+                  <input
+                    type="text"
+                    value={range}
+                    onChange={(e) => setRange(e.target.value)}
+                    placeholder="1-3, 5"
+                    aria-label="Page range"
+                    style={{ maxWidth: '12rem' }}
+                  />
+                </label>
+                <label className="opt-row opt-check">
+                  <input
+                    type="checkbox"
+                    checked={excelPerPage}
+                    onChange={(e) => setExcelPerPage(e.target.checked)}
+                    aria-label="One sheet per page"
+                  />
+                  <span className="opt-label">
+                    One sheet per PDF page <span className="opt-hint">(off = everything in one sheet)</span>
+                  </span>
+                </label>
+                <p className="opt-hint" style={{ margin: '0.25rem 0 0' }}>
+                  Best-effort table rebuild: simple tables come out clean; complex layouts may need a quick tidy-up in Excel.
+                </p>
+              </>
             )}
           </aside>
         )}

@@ -2377,6 +2377,49 @@ const PAIRS: PairSpec[] = [
     ],
   },
   {
+    id: 'pdf-to-excel', from: 'PDF', to: 'Excel', fromExts: ['pdf'], toExt: 'xlsx', category: 'pdf',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Turn PDF tables into editable Excel spreadsheets — right in your browser. Bank statements, invoices, reports and price lists become real .xlsx rows and columns you can sort, filter and total. Honest note: tables are rebuilt from the PDF\u2019s text layout, so simple tables come out clean while complex layouts may need a quick tidy-up in Excel.',
+    faqQ: 'How do I convert a PDF table to Excel for free?',
+    faqA: 'Drop your PDF above and download a real .xlsx workbook — rows and columns reconstructed from the document\u2019s text positions, ready to open in Excel, Google Sheets or LibreOffice. No sign-up, nothing uploaded.',
+    aboutFrom: 'PDFs freeze tables as fixed print layouts — the numbers are visible but locked away from formulas, sorting and filtering.',
+    aboutTo: 'An Excel workbook sets the data free: real cells you can sort, filter, total and chart in Excel, Google Sheets or LibreOffice.',
+    useCases: [
+      'Turning a bank statement PDF into a sortable spreadsheet',
+      'Pulling invoice line-items into Excel for bookkeeping',
+      'Extracting a supplier\u2019s price list from a PDF for comparison',
+    ],
+    tip: 'For the cleanest tables, use PDFs exported from Word, Excel or accounting software — those carry precise text positions. Scanned PDFs contain no text at all and can\u2019t convert.',
+    flagship: true,
+    extraFaqs: [
+      {
+        q: 'How accurate is the table reconstruction?',
+        a: 'Best-effort, and honest about it: the tool reads where every word sits on the page and rebuilds rows and columns from those positions. Clean, simple tables — bank statements, invoices, price lists — usually come out ready to use. Multi-column magazine layouts, merged cells or skewed scans may need manual cleanup in Excel.',
+      },
+      {
+        q: 'Why do some cells merge or split incorrectly?',
+        a: 'PDFs don\u2019t store \u201cthis is a table\u201d — only text plus coordinates. Wide gaps become column breaks; tightly packed text becomes one cell. When a PDF uses unusual spacing the guess can be off. The \u201cone sheet per page\u201d option and a quick once-over in Excel fix most cases.',
+      },
+      {
+        q: 'Can it convert a scanned PDF?',
+        a: 'No — scanned PDFs are images of text with nothing to extract. They need OCR first, which the browser version doesn\u2019t do yet. If you can select the text in your PDF, it will convert.',
+      },
+      {
+        q: 'Will it open password-protected PDFs?',
+        a: 'No — remove the password first with the free Unlock PDF tool, then convert. Locked files can\u2019t be opened by the converter.',
+      },
+      {
+        q: 'XLSX or CSV — which should I choose?',
+        a: 'XLSX keeps multiple sheets and sensible column widths, and opens directly in Excel or Google Sheets. If you only need raw data for another program, the workbook imports cleanly there too.',
+      },
+      {
+        q: 'Is there a page limit?',
+        a: 'No hard limit — but very large PDFs take longer because every page\u2019s text positions are analyzed on your device. Use the page-range option to convert just the pages that hold tables.',
+      },
+    ],
+  },
+  {
     id: 'edit-pdf', from: 'PDF', to: 'Edited PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
     title: 'Edit PDF Online',
     widget: 'edit',
