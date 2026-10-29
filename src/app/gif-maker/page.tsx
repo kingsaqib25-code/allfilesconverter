@@ -7,7 +7,7 @@ import { SITE_URL } from '@/lib/site';
 import { ldScript, webApplicationJsonLd, faqPageJsonLd, breadcrumbJsonLd, howToJsonLd } from '@/lib/jsonld';
 
 export const metadata: Metadata = {
-  title: 'Video to GIF Maker — Free, No Upload, No Watermark | All Files Converter',
+  title: 'Video to GIF Maker — Free, No Upload, No Watermark | Quick Files Converter',
   description:
     'Turn any video into a high-quality GIF free: trim the exact moment, set size, FPS and quality. Two-pass palette rendering, 100% in your browser — no upload, no watermark, no sign-up.',
   alternates: { canonical: '/gif-maker/' },

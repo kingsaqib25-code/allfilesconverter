@@ -1,5 +1,5 @@
 /**
- * Central converter registry for All Files Converter.
+ * Central converter registry for Quick Files Converter.
  *
  * Every converter on the site is one entry here. Adding a new converter =
  * 1. write its convert() implementation (new file under src/lib/converters/),
@@ -130,7 +130,7 @@ export interface CategoryMeta {
   description: string;
 }
 
-export const BRAND = 'All Files Converter';
+export const BRAND = 'Quick Files Converter';
 export const TAGLINE = 'Free file converter. Your files never leave your device.';
 
 export const CATEGORIES: CategoryMeta[] = [

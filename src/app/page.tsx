@@ -49,7 +49,7 @@ export default function Home() {
         <AiSummarize
           summaryText={`${BRAND} — ${TAGLINE} Convert PDF, images, video, audio, text, data and subtitles between ${CONVERTERS.length}+ formats, right here in your browser. TL;DR: pick any converter, drop your file, and download the result in seconds. Free forever, no sign-up, no watermarks — and your files never leave your device because every conversion runs on-device in your browser.`}
         />
-        <div className="badge-row" aria-label="Why All Files Converter">
+        <div className="badge-row" aria-label="Why Quick Files Converter">
           <span className="badge">🔒 No upload — files stay on your device</span>
           <span className="badge">✨ Free forever</span>
           <span className="badge">🚫 No sign-up</span>

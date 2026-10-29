@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="wrap">
         <div className="footer-grid">
           <div>
-            <h4>All Files Converter</h4>
+            <h4>Quick Files Converter</h4>
             <p style={{ fontSize: '0.94rem', color: 'var(--ink-soft)', maxWidth: '300px' }}>
               Free file converter. Your files never leave your device — every
               conversion runs in your browser, with no uploads and no sign-up.
@@ -49,7 +49,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} All Files Converter. Free forever.</span>
+          <span>© {new Date().getFullYear()} Quick Files Converter. Free forever.</span>
           <span>No uploads. No accounts. No tracking.</span>
         </div>
       </div>
