@@ -4,6 +4,7 @@ import AiSummarize from '@/components/AiSummarize';
 import ToolsGrid from '@/components/ToolsGrid';
 import { ToolCard } from '@/components/ToolCard';
 import { BRAND, CONVERTERS } from '@/lib/converters/registry';
+import { FULL_SITE_SUMMARY } from '@/lib/site-summary.generated';
 import { SITE_URL } from '@/lib/site';
 import { ldScript, websiteOrgJsonLd } from '@/lib/jsonld';
 
@@ -38,9 +39,7 @@ export default function Home() {
       </section>
 
       <div className="wrap">
-        <AiSummarize
-          summaryText={`${BRAND} turns PDF, images, video, audio, text, data and subtitles between ${CONVERTERS.length}+ formats, right here in your browser. TL;DR: pick any converter, drop your file, and download the result in seconds. Free forever, no sign-up, no watermarks — and your files never leave your device because every conversion runs on-device in your browser.`}
-        />
+        <AiSummarize summaryText={FULL_SITE_SUMMARY} />
         <div className="badge-row" aria-label="Why Quick Files Converter">
           <span className="badge">🔒 No upload — files stay on your device</span>
           <span className="badge">✨ Free forever</span>

@@ -1,0 +1,2952 @@
+# Quick Files Converter — complete reference
+
+> Full detail for AI assistants. For the concise version see /llms.txt.
+
+## Site summary
+
+Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 93 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (20 tools), Image Converters (27 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (12 tools), Audio Converters (9 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
+
+## PDF Converters
+
+Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GIF, BMP and HEIC images, TXT, Markdown and CSV files into PDF documents — or convert PDF to JPG/PNG images, merge, split, compress, rotate, watermark, add page numbers, redact, crop, delete pages, unlock and edit PDFs, and extract text and images — your documents are never uploaded anywhere.
+
+### PDF to JPG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/pdf-to-jpg/
+
+What it does:
+Convert every page of a PDF into crisp JPG images — download pages individually or all at once as a ZIP. Perfect for sharing document pages as images, posting to social media, or pulling figures out of a report.
+
+About the source format (PDF):
+PDF is the universal document format — contracts, ebooks, reports and forms. But PDF pages can’t be posted as images or opened in every photo app.
+
+About the target format (JPG):
+JPG is the world’s most compatible image format. As page images, your document opens anywhere — phones, social apps, email and websites that don’t accept PDFs.
+
+Use cases:
+- Sharing a document page as an image on WhatsApp or social media
+- Extracting charts and figures from a PDF report
+- Converting PDF pages for a presentation when the venue PC has no PDF reader
+
+Tip: Pages render at double resolution (2x) so text stays sharp — and each JPG downloads individually, so you can grab just the pages you need.
+
+FAQs:
+Q: How do I turn PDF pages into JPG images?
+A: Drop your PDF above and hit convert. Each page renders as a high-resolution JPG you can download individually — or grab every page at once as a ZIP file. Everything happens in your browser; the PDF is never uploaded.
+
+Q: What resolution are the JPG images?
+A: Each page renders at 2x scale — roughly 1700×2200 px for a standard A4 page — so text stays crisp even when zoomed.
+
+Q: Can I download all pages at once?
+A: Yes — "Download all as ZIP" gives you every page image in one file, or download pages individually.
+
+Q: Is there a page limit?
+A: PDFs up to 150 pages convert in the browser. For larger documents, split them first with our free Split PDF tool.
+
+Q: Do password-protected PDFs work?
+A: No — the browser version cannot open password-protected PDFs. Remove the password in your desktop PDF reader first, then convert.
+
+Q: PDF to JPG or PDF to PNG?
+A: JPG for the smallest files (great for sharing); PNG when you need pixel-perfect quality for print or archiving.
+
+### PDF to PNG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/pdf-to-png/
+
+What it does:
+Convert PDF pages to lossless PNG images at high resolution. Choose PNG when every pixel matters — print, archiving, or documents with fine text and diagrams.
+
+About the source format (PDF):
+PDF pages mix text, vector graphics and images in one document. When you need a page as a picture with no quality compromise, PNG is the answer.
+
+About the target format (PNG):
+PNG preserves every pixel exactly — the right choice for print, archiving, and documents where fine text must stay perfectly legible.
+
+Use cases:
+- Archiving important document pages as pixel-perfect images
+- Extracting diagrams from a PDF for a print publication
+- Converting pages for OCR software that prefers PNG input
+
+Tip: PNGs are bigger than JPGs — if you are just sharing on chat, PDF to JPG gives much smaller files.
+
+FAQs:
+Q: Why convert PDF pages to PNG instead of JPG?
+A: PNG is lossless — text edges and diagrams stay razor-sharp with zero compression artifacts. Files are bigger than JPG, but quality is pixel-perfect.
+
+Q: How big will the PNG files be?
+A: Bigger than JPG — a full A4 page at 2x can be 1–3 MB. That is the price of lossless quality.
+
+Q: Does PNG keep the text selectable?
+A: No — the output is an image of the page. Use our PDF to Text tool if you need the actual words.
+
+### JPG to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/jpg-to-pdf/
+
+What it does:
+Turn JPG photos and scans into a single PDF document — one image per page, in the order you choose. The classic fix for "please send it as a PDF".
+
+About the source format (JPG):
+JPGs are how phones save photos and scans — but offices, universities and forms almost always ask for PDF.
+
+About the target format (PDF):
+PDF packages your images into one professional document that prints cleanly and opens identically everywhere.
+
+Use cases:
+- Turning phone photos of documents into a single PDF for email
+- Combining scanned pages into one file for a job or visa application
+- Converting JPG screenshots into a PDF report
+
+Tip: Drop multiple JPGs at once — they become pages in order. Quality 92 is perfect for documents; go lower if the PDF must stay tiny for upload forms.
+
+FAQs:
+Q: How do I combine JPG images into one PDF?
+A: Drop your JPGs above — pick several at once — arrange them if needed, set quality, and download a single PDF with one image per page. All in your browser, nothing uploaded.
+
+Q: Can I add multiple JPGs to one PDF?
+A: Yes — select several images at once and each becomes a page, in the order shown. This is the main reason people use this tool.
+
+Q: What page size will the PDF use?
+A: Each page matches its image’s dimensions, so nothing is stretched or cropped — photos keep their exact aspect ratio.
+
+Q: How do I keep the PDF small for uploads?
+A: Lower the quality slider to 70–80. For scanned documents the difference is invisible and the file shrinks dramatically.
+
+Q: JPG to PDF or PNG to PDF?
+A: JPG to PDF for photos and scans (smaller). PNG to PDF when the images have sharp text you cannot afford to soften.
+
+Q: Will the PDF look the same when printed?
+A: Yes — each page is your image at full resolution, so printing reproduces it faithfully.
+
+### PNG to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/png-to-pdf/
+
+What it does:
+Convert PNG screenshots and graphics into a clean PDF — one image per page. Ideal when a form or office asks for PDF but all you have are PNGs.
+
+About the source format (PNG):
+PNG is the format of screenshots and crisp graphics — lossless, but not what forms and offices accept.
+
+About the target format (PDF):
+PDF is the document standard: one file, printable, accepted by every institution and upload form.
+
+Use cases:
+- Submitting PNG screenshots as a PDF for a support ticket or application
+- Turning design mockups into a presentable PDF
+- Converting scanned PNGs into a single document
+
+Tip: PNG sources stay sharp — the PDF embeds them at full quality, so text screenshots remain perfectly readable.
+
+FAQs:
+Q: Why would I convert PNG to PDF?
+A: Forms, applications and offices standardize on PDF. This tool wraps your PNGs — screenshots, designs, scans — into a proper PDF document in seconds.
+
+Q: Can I merge several PNGs into one PDF?
+A: Yes — drop multiple PNGs and each becomes a page in order.
+
+Q: Will transparency in my PNGs survive?
+A: Transparent areas become white in the PDF, since PDF pages have a white background.
+
+### Merge PDF
+
+URL: https://allinoneconverter.vercel.app/convert/merge-pdf/
+
+What it does:
+Combine multiple PDF files into one document — arrange pages in any order with up/down controls. The fastest way to join contracts, chapters or scanned batches.
+
+About the source format (PDF):
+PDFs arrive in pieces — separate chapters, scanned batches, a contract plus its annex. Reading or sending them one by one is a hassle.
+
+About the target format (PDF):
+One merged PDF reads front-to-back like a proper document and attaches to a single email instead of five.
+
+Use cases:
+- Joining a contract and its signed annex into one file
+- Combining separately scanned chapters into a single ebook
+- Merging monthly statements into one yearly PDF
+
+Tip: Use the up/down arrows to set the final order before merging — the first file in the list becomes the first pages of the result.
+
+FAQs:
+Q: How do I merge two PDFs into one?
+A: Drop both PDFs above, arrange them in the order you want with the up/down arrows, and download one combined PDF. The original files are never modified or uploaded.
+
+Q: How many PDFs can I merge at once?
+A: As many as your browser memory allows — a dozen typical documents merge in seconds. Truly huge files (hundreds of MB) may strain a phone browser.
+
+Q: Does merging change quality?
+A: No — pages are copied exactly as they are, with no re-rendering. Text stays selectable and vector graphics stay sharp.
+
+Q: Can I remove a file before merging?
+A: Yes — each file in the list has a remove button, plus up/down arrows to reorder.
+
+Q: Will bookmarks or form fields survive merging?
+A: Page content merges perfectly. Interactive form fields and bookmarks from the originals are not carried over in the browser version.
+
+Q: Is there a file size limit?
+A: No hard limit, but very large PDFs (500+ MB combined) can exhaust phone browser memory — merge those on a desktop.
+
+### Split PDF
+
+URL: https://allinoneconverter.vercel.app/convert/split-pdf/
+
+What it does:
+Extract pages from a PDF — enter a range like "1-3, 5" and download just those pages as a new PDF. Pull one chapter out of a manual or one invoice out of a batch.
+
+About the source format (PDF):
+Big PDFs bundle everything together — but you often need just a chapter, a receipt, or three pages for a form.
+
+About the target format (PDF):
+A split PDF contains only the pages you asked for: smaller, focused, and ready to send.
+
+Use cases:
+- Pulling one invoice out of a monthly batch PDF
+- Extracting a single chapter from an ebook
+- Sending only the relevant pages of a long report
+
+Tip: Page numbers start at 1 (the first page). Ranges like 1-3 and lists like 1-3, 5, 8-10 both work.
+
+FAQs:
+Q: How do I extract specific pages from a PDF?
+A: Drop your PDF, type the pages you want — single pages like "5", ranges like "1-3", or combined "1-3, 5, 8-10" — and download a new PDF with exactly those pages.
+
+Q: What page-range formats work?
+A: Single pages ("5"), ranges ("1-3") and combinations ("1-3, 5, 8-10"). Pages are extracted in ascending order.
+
+Q: Does splitting reduce quality?
+A: No — pages are copied exactly, so text and images keep their original quality.
+
+### Compress PDF
+
+URL: https://allinoneconverter.vercel.app/convert/compress-pdf/
+
+What it does:
+Shrink an oversized PDF so it fits email and upload limits. Re-compresses page images at High, Balanced or Small — best for scanned and image-heavy PDFs.
+
+About the source format (PDF):
+PDFs balloon when they are full of scanned images — a 40-page scan can be 100 MB, far over email and form limits.
+
+About the target format (PDF):
+A compressed PDF keeps every page readable at a fraction of the bytes — the same document, emailable again.
+
+Use cases:
+- Shrinking a scanned application to fit a 10 MB upload limit
+- Making a photo-heavy PDF emailable
+- Reducing a large ebook for phone storage
+
+Tip: This works best on scanned/image PDFs. If your PDF is mostly text and already small, there is little left to squeeze — that is normal.
+
+FAQs:
+Q: How much smaller will my PDF get?
+A: It depends on the PDF: scanned and image-heavy PDFs often shrink 50–80%, while text-only PDFs (already small) shrink less. Try "Balanced" first — it is the sweet spot.
+
+Q: Will my text stay sharp?
+A: At High and Balanced settings, yes for normal reading. "Smallest file" visibly softens fine print — use it only when size matters more than crispness.
+
+Q: Honest note: how does this compression work?
+A: It re-renders each page as an optimized image — that is why it excels on scanned PDFs and does little for text-only ones. Nothing is uploaded; it all happens on your device.
+
+### PDF to Text Converter
+
+URL: https://allinoneconverter.vercel.app/convert/pdf-to-text/
+
+What it does:
+Extract all the text from a PDF into a clean .txt file. Copy quotes from ebooks, pull data from reports, or archive document content as plain text.
+
+About the source format (PDF):
+PDF text is trapped inside the document — copying it manually page by page is tedious and error-prone.
+
+About the target format (Text):
+Plain text is the universal editable format: searchable, quotable, and readable by every app ever made.
+
+Use cases:
+- Pulling quotes from an ebook for notes
+- Extracting report text for analysis
+- Archiving document content in a future-proof format
+
+Tip: Tables and multi-column layouts extract as flowing text — great for reading, but don’t expect spreadsheet structure.
+
+FAQs:
+Q: How do I copy all text out of a PDF?
+A: Drop the PDF and download a .txt file with the document’s text, page by page, paragraphs preserved. No selecting, no copy-paste marathons.
+
+Q: What about scanned PDFs?
+A: Scanned PDFs are pictures of text, not text — extraction finds nothing. Those need OCR, which the browser version doesn’t do yet.
+
+Q: Is the reading order correct?
+A: For normal single-column documents, yes. Complex multi-column magazine layouts may read out of order.
+
+### PDF to Word Converter
+
+URL: https://allinoneconverter.vercel.app/convert/pdf-to-word/
+
+What it does:
+Extract your PDF’s text into an editable Word (.docx) document — free, in your browser. Honest note: this extracts the text; complex layouts, tables and images are not preserved.
+
+About the source format (PDF):
+PDFs lock text into fixed pages — great for reading, terrible when you need to edit, quote or reuse the words.
+
+About the target format (Word):
+A Word document frees the text: editable, reflowable, ready for your own formatting in Word, Google Docs or LibreOffice.
+
+Use cases:
+- Getting editable text out of a PDF report for rewriting
+- Extracting contract text to quote in an email
+- Turning an ebook chapter into an editable draft
+
+Tip: Think of it as "text extraction", not "layout cloning" — the words come out clean and editable; the original design doesn’t.
+
+FAQs:
+Q: Is this a full PDF to Word conversion with layout?
+A: Honest answer: no. This tool extracts the PDF’s text into a clean, editable Word document — headings detected, paragraphs preserved. Complex layouts, tables, images and exact formatting are not preserved. For pixel-perfect layout conversion you would need desktop software; for getting editable text out, this does the job in seconds.
+
+Q: Why doesn’t it keep the exact layout?
+A: True layout-preserving PDF-to-Word needs heavy desktop engines (and usually a server). Browsers can’t run those — so we do the honest version: clean, editable text. No fake promises.
+
+Q: Will tables convert properly?
+A: Table text extracts in reading order, but the table grid itself isn’t rebuilt. For data tables, PDF to Text plus manual cleanup works best.
+
+Q: What about scanned PDFs?
+A: Scanned PDFs contain images of text, not text — nothing extracts. They need OCR first, which the browser version doesn’t do yet.
+
+Q: Can I open the .docx in Google Docs?
+A: Yes — the file is a standard Word document and opens in Word, Google Docs, LibreOffice and WPS alike.
+
+Q: Is my document uploaded anywhere?
+A: Never. Extraction runs entirely in your browser — that is exactly why we offer the honest text version instead of a server round-trip.
+
+### PDF to Excel Converter
+
+URL: https://allinoneconverter.vercel.app/convert/pdf-to-excel/
+
+What it does:
+Turn PDF tables into editable Excel spreadsheets — right in your browser. Bank statements, invoices, reports and price lists become real .xlsx rows and columns you can sort, filter and total. Honest note: tables are rebuilt from the PDF’s text layout, so simple tables come out clean while complex layouts may need a quick tidy-up in Excel.
+
+About the source format (PDF):
+PDFs freeze tables as fixed print layouts — the numbers are visible but locked away from formulas, sorting and filtering.
+
+About the target format (Excel):
+An Excel workbook sets the data free: real cells you can sort, filter, total and chart in Excel, Google Sheets or LibreOffice.
+
+Use cases:
+- Turning a bank statement PDF into a sortable spreadsheet
+- Pulling invoice line-items into Excel for bookkeeping
+- Extracting a supplier’s price list from a PDF for comparison
+
+Tip: For the cleanest tables, use PDFs exported from Word, Excel or accounting software — those carry precise text positions. Scanned PDFs contain no text at all and can’t convert.
+
+FAQs:
+Q: How do I convert a PDF table to Excel for free?
+A: Drop your PDF above and download a real .xlsx workbook — rows and columns reconstructed from the document’s text positions, ready to open in Excel, Google Sheets or LibreOffice. No sign-up, nothing uploaded.
+
+Q: How accurate is the table reconstruction?
+A: Best-effort, and honest about it: the tool reads where every word sits on the page and rebuilds rows and columns from those positions. Clean, simple tables — bank statements, invoices, price lists — usually come out ready to use. Multi-column magazine layouts, merged cells or skewed scans may need manual cleanup in Excel.
+
+Q: Why do some cells merge or split incorrectly?
+A: PDFs don’t store “this is a table” — only text plus coordinates. Wide gaps become column breaks; tightly packed text becomes one cell. When a PDF uses unusual spacing the guess can be off. The “one sheet per page” option and a quick once-over in Excel fix most cases.
+
+Q: Can it convert a scanned PDF?
+A: No — scanned PDFs are images of text with nothing to extract. They need OCR first, which the browser version doesn’t do yet. If you can select the text in your PDF, it will convert.
+
+Q: Will it open password-protected PDFs?
+A: No — remove the password first with the free Unlock PDF tool, then convert. Locked files can’t be opened by the converter.
+
+Q: XLSX or CSV — which should I choose?
+A: XLSX keeps multiple sheets and sensible column widths, and opens directly in Excel or Google Sheets. If you only need raw data for another program, the workbook imports cleanly there too.
+
+### Edit PDF Online
+
+URL: https://allinoneconverter.vercel.app/convert/edit-pdf/
+
+What it does:
+Click any text in your PDF and type to edit it — right on the page, in your browser. Fix typos in contracts, update a resume, correct figures in a report, then download the updated PDF. No uploads, no sign-up, no watermark.
+
+About the source format (PDF):
+PDFs are designed to look identical everywhere — which is exactly why their text is normally so hard to change without expensive desktop software.
+
+About the target format (Edited PDF):
+An edited PDF keeps the original layout and look, but with your corrections baked into the file — ready to send, print or archive.
+
+Use cases:
+- Fixing typos in a contract before signing it
+- Updating your resume or CV in seconds
+- Correcting names, dates or figures in a report
+
+Tip: For long rewrites, switch to Text view — edit the whole page as plain text, then apply it back in one go.
+
+FAQs:
+Q: How can I edit text in a PDF for free?
+A: Drop your PDF above. Every text block becomes clickable — click it, type your changes, and download the updated PDF with your edits baked in. It all happens in your browser: your file is never uploaded anywhere.
+
+Q: Is my PDF uploaded to a server when I edit it?
+A: Never. The editor runs 100% in your browser — the file is read, edited and rebuilt on your device. That is the whole point: private editing with nothing leaving your computer.
+
+Q: Will the layout stay the same after editing?
+A: For text-based PDFs, yes — only the words you edit are redrawn, at the exact same position and size. The cover box is painted in the sampled background color and your text in the sampled text color, so headers and colored sections keep their look. Redrawn text uses a matching font (Noto Sans for Noto-based PDFs, Helvetica otherwise). Longer replacement text grows its box to the right; nearby content never moves.
+
+Q: What about scanned PDFs?
+A: Scanned PDFs are pictures of text, not text — there is nothing clickable to edit. They need OCR first, which the browser version does not do yet.
+
+Q: Can I edit images in the PDF?
+A: Not yet — the editor works on text. Images pass through untouched into your downloaded file.
+
+Q: What is the “clean PDF” download?
+A: A rebuilt version of your document with flowing text and simple typography — handy when you made big edits and want a tidy, reflowed document instead of the original layout.
+
+### Merge Images to PDF
+
+URL: https://allinoneconverter.vercel.app/convert/merge-images-pdf/
+
+What it does:
+Turn a stack of images into one PDF — choose 1, 2 or 4 images per page. The quick way from a phone’s camera roll to a proper multi-page document.
+
+About the source format (Images):
+Phone galleries hold dozens of loose photos — but applications and archives want one PDF document.
+
+About the target format (PDF):
+One PDF with your images laid out 1, 2 or 4 per page: organized, printable, universally accepted.
+
+Use cases:
+- Turning photographed document pages into one PDF
+- Making a photo contact sheet as a PDF
+- Combining receipts into a single expense PDF
+
+Tip: Use 1 per page for full-size document scans, 4 per page for compact photo overviews.
+
+FAQs:
+Q: How do I make a PDF with several photos per page?
+A: Drop your images, pick 1, 2 or 4 per page, and download a single PDF. Great for contact sheets, photo albums and document batches.
+
+Q: What page size does it use?
+A: Standard A4-ish pages with margins — images are scaled to fit their slots without distortion.
+
+Q: Can I reorder the images?
+A: Yes — use the up/down arrows on each image to set the final page order before merging.
+
+### Rotate PDF
+
+URL: https://allinoneconverter.vercel.app/convert/rotate-pdf/
+
+What it does:
+Fix sideways or upside-down PDF pages in seconds. Rotate all pages — or just pages 1-3, 5 — by 90°, 180° or 270°, right in your browser.
+
+About the source format (PDF):
+Scanned PDFs and phone exports often open sideways or upside-down, making them unreadable without tilting your head.
+
+About the target format (PDF):
+A rotated PDF opens correctly everywhere — the new orientation is baked into the file, not just your viewer.
+
+Use cases:
+- Fixing a scanned contract that opens sideways
+- Straightening phone-scanned receipts before sending
+- Flipping landscape slides back to portrait
+
+Tip: Leave the page box empty to rotate every page; type "1-3, 5" to rotate only some.
+
+FAQs:
+Q: How do I rotate a PDF that opens sideways?
+A: Drop the PDF, pick 90° clockwise (or 180° / 90° counter-clockwise), and optionally limit it to certain pages like "1-3, 5". Download the fixed PDF — the rotation is saved permanently.
+
+Q: Is the rotation permanent?
+A: Yes — the rotation is written into the PDF file itself, so it opens correctly in every reader, on every device.
+
+Q: Can I rotate only some pages?
+A: Yes. Type the pages in the Pages box (e.g. "1-3, 5") and only those rotate. Leave it blank to rotate the whole document.
+
+Q: Does rotating reduce quality?
+A: No. Rotation only changes page orientation metadata — your text and images are untouched, with zero quality loss.
+
+Q: My PDF is upside down. Which option fixes it?
+A: Choose 180°. Use 90° clockwise for pages lying on their side, 90° counter-clockwise if they lean the other way.
+
+### Watermark PDF
+
+URL: https://allinoneconverter.vercel.app/convert/watermark-pdf/
+
+What it does:
+Stamp DRAFT, CONFIDENTIAL or your brand across every PDF page. Diagonal text watermark with adjustable size and transparency — free, no sign-up.
+
+About the source format (PDF):
+Sharing unfinished or sensitive documents without a watermark invites misuse — anyone can pass them off as final.
+
+About the target format (PDF):
+A watermarked PDF carries your mark on every page: clear ownership, clear status, still perfectly readable underneath.
+
+Use cases:
+- Marking a proposal DRAFT before sending it out
+- Stamping CONFIDENTIAL on internal reports
+- Adding your brand name to free samples and portfolios
+
+Tip: 25–40% opacity keeps the watermark visible without hurting readability. Go bolder only for "do not distribute" documents.
+
+FAQs:
+Q: How do I add a DRAFT watermark to a PDF?
+A: Drop your PDF, type your watermark text (e.g. DRAFT or CONFIDENTIAL), pick a size and transparency, and download. The watermark is stamped diagonally across every page.
+
+Q: Can I control how strong the watermark looks?
+A: Yes — set the opacity from 5% (barely-there) to 90% (impossible to miss), plus three text sizes. 25% is the sweet spot for drafts.
+
+Q: Where does the watermark appear?
+A: Diagonally across the center of every page, behind nothing and over everything — visible on all pages at once.
+
+Q: Will the watermark cover my text?
+A: It sits over the page but at partial transparency, so your content stays readable underneath. Lower the opacity if it feels heavy.
+
+Q: Can I remove a watermark later?
+A: A stamped watermark becomes part of the PDF — that is the point. Keep an unstamped copy if you will need a clean version later.
+
+### Add Page Numbers to PDF
+
+URL: https://allinoneconverter.vercel.app/convert/page-numbers-pdf/
+
+What it does:
+Number every page of your PDF automatically — "Page 1 of 12" in the footer or header, five positions to choose from. Perfect for reports and ebooks.
+
+About the source format (PDF):
+Long PDFs without page numbers are a navigation nightmare — "see page 47" means nothing when pages are not numbered.
+
+About the target format (PDF):
+Numbered pages make any document referenceable: printouts, reviews, and citations all just work.
+
+Use cases:
+- Numbering a thesis or report before submission
+- Adding page numbers to an ebook draft
+- Preparing a contract where clauses reference page numbers
+
+Tip: Bottom center is the classic choice for reports; bottom right suits business documents.
+
+FAQs:
+Q: How do I add page numbers to a PDF?
+A: Drop the PDF, choose where the numbers go (bottom center is classic), and download. Every page gets "Page X of Y" stamped in a clean, subtle style.
+
+Q: What format do the numbers use?
+A: "Page 1 of 12" — total count included, so readers always know how far along they are.
+
+Q: Can I choose where the numbers appear?
+A: Yes: bottom center, bottom left, bottom right, top center, or top right — five positions.
+
+Q: Will it cover my content?
+A: Numbers sit in the margin area in small grey type, well clear of typical content. If your pages run edge-to-edge, pick a top position.
+
+Q: Does it work on scanned PDFs?
+A: Yes — page numbers are drawn onto the page regardless of whether the content is text or scanned images.
+
+### Unlock PDF
+
+URL: https://allinoneconverter.vercel.app/convert/unlock-pdf/
+
+What it does:
+Remove the password from a PDF you own. Enter the password once — it never leaves your browser — and download a freely usable copy.
+
+About the source format (PDF):
+Password-protected PDFs you legitimately own become a daily friction: every open, print, or merge demands the password again.
+
+About the target format (PDF):
+An unlocked copy opens instantly everywhere — same pages, no more password prompts.
+
+Use cases:
+- Removing the password from your own bank statements for archiving
+- Unlocking a protected ebook you bought so it opens on every device
+- Preparing a locked PDF for merging or editing
+
+Tip: You must know the password — no tool can (or should) crack a password you do not have.
+
+FAQs:
+Q: How do I remove a password from a PDF?
+A: Drop the locked PDF, type its password, and download the unlocked copy. Your password is used once inside your browser and never stored or sent anywhere.
+
+Q: Is my password safe?
+A: Yes. It is typed into your own browser, used once to open the file, and never stored, logged, or uploaded. The file never leaves your device either.
+
+Q: What if I forgot the password?
+A: Then it cannot be unlocked — that is what the password is for. Contact whoever set it.
+
+Q: Will the unlocked PDF look the same?
+A: Pages are rebuilt as high-quality images, so the look is preserved — but text is no longer selectable or searchable. For full fidelity, ask the document owner for an unprotected original.
+
+Q: Does it remove print/copy restrictions too?
+A: Yes — the rebuilt copy carries no passwords and no restrictions.
+
+### Extract Images from PDF
+
+URL: https://allinoneconverter.vercel.app/convert/extract-images-pdf/
+
+What it does:
+Pull every embedded photo and graphic out of a PDF as PNG files. Download them individually or all at once as a ZIP — original resolution kept.
+
+About the source format (PDF):
+Photos trapped inside PDFs cannot be right-click-saved — screenshots are the usual sad workaround, at screen resolution.
+
+About the target format (Images):
+Extracted PNGs are the real embedded files at full resolution — ready to reuse, edit, or archive.
+
+Use cases:
+- Recovering product photos from a supplier catalogue PDF
+- Pulling charts out of a report for a presentation
+- Saving illustrations from an ebook
+
+Tip: If a "photo" does not appear, it is probably vector clip-art (drawn shapes), not an embedded image — those cannot be extracted as files.
+
+FAQs:
+Q: How do I save pictures from a PDF?
+A: Drop the PDF and every embedded image is listed for download as a PNG — grab them one by one or take them all as a ZIP. Images come out at their original embedded resolution.
+
+Q: What quality are the extracted images?
+A: Original embedded resolution — whatever the PDF author put in. No re-compression, no screenshots.
+
+Q: What format do I get?
+A: PNG files, named by page and image number (e.g. report-p2-img1.png), or all of them in one ZIP.
+
+Q: Why is an image missing?
+A: Only true embedded raster images extract. Vector drawings, icons, and backgrounds drawn with shapes are not image files.
+
+Q: Is there a limit?
+A: No file-count limit — a 200-image catalogue extracts just fine, though very large PDFs take a moment.
+
+### Redact PDF
+
+URL: https://allinoneconverter.vercel.app/convert/redact-pdf/
+
+What it does:
+Black out names, ID numbers, or any sensitive words across a whole PDF at once. Type the words — every occurrence gets covered.
+
+About the source format (PDF):
+Sharing documents with visible personal data — names, ID numbers, salaries — is a privacy accident waiting to happen.
+
+About the target format (PDF):
+A redacted PDF hides every listed term behind black boxes, safe to share or publish.
+
+Use cases:
+- Hiding ID numbers before sharing a document publicly
+- Redacting names from a report for blind review
+- Covering salaries in a shared HR export
+
+Tip: List every variant ("John", "J. Smith") — matching is literal, so think like a finder, not a reader.
+
+FAQs:
+Q: How do I black out text in a PDF?
+A: Drop the PDF, type the words or phrases to hide (comma or line separated), and download. Every occurrence on every page is covered with a solid black box.
+
+Q: Is the redaction permanent and secure?
+A: Honest answer: this is visual redaction — the words are covered with black boxes, but the underlying text data remains in the file. For legally watertight redaction (court filings, medical records), use desktop software that strips the data too.
+
+Q: Is matching case-sensitive?
+A: No — "Secret", "SECRET" and "secret" are all caught.
+
+Q: Can I redact phrases, not just single words?
+A: Yes — type full phrases like "Project Nightingale". Each phrase is matched wherever it appears on one line.
+
+Q: What about scanned PDFs?
+A: Scanned pages are images, not text — there is nothing to match. Those need OCR first, which the browser version does not do yet.
+
+### Delete Pages from PDF
+
+URL: https://allinoneconverter.vercel.app/convert/delete-pages-pdf/
+
+What it does:
+Remove unwanted pages from a PDF — blank pages, covers, or mistakes. Type "1-3, 5" and download the trimmed document.
+
+About the source format (PDF):
+PDFs collect cruft: blank pages, duplicate scans, cover sheets you do not need — bloating the file and confusing readers.
+
+About the target format (PDF):
+A trimmed PDF contains only the pages that matter — smaller, cleaner, professional.
+
+Use cases:
+- Removing blank pages from a scan
+- Cutting the cover sheet off a downloaded report
+- Deleting a botched page from an otherwise good document
+
+Tip: Double-check the page numbers first — open the PDF and note which pages to cut before you type the range.
+
+FAQs:
+Q: How do I delete pages from a PDF?
+A: Drop the PDF, type which pages to remove (e.g. "1-3, 5"), and download. The remaining pages keep their order and quality — nothing else changes.
+
+Q: How do I specify the pages?
+A: Type ranges like "1-3, 5" — pages 1 through 3 plus page 5 get removed. Everything else stays in order.
+
+Q: Does deleting pages reduce quality?
+A: No — remaining pages are copied untouched. Only the file gets smaller (fewer pages).
+
+Q: Can I delete all pages?
+A: No — at least one page must remain. The tool stops you before making an empty PDF.
+
+Q: What is the difference from Split PDF?
+A: Split keeps the pages you name; Delete removes the pages you name. Two ways to reach the same trimmed document.
+
+### Crop PDF
+
+URL: https://allinoneconverter.vercel.app/convert/crop-pdf/
+
+What it does:
+Trim ugly margins and whitespace off every PDF page. Slide to crop 0–40% from all sides — great for cleaning up scans and slides.
+
+About the source format (PDF):
+Scans and exported slides drown in white margins — content floats in a sea of nothing, tiny on screen and wasteful in print.
+
+About the target format (PDF):
+A cropped PDF puts content front and center: bigger on screen, tighter in print, no information lost.
+
+Use cases:
+- Trimming scanner bed margins off receipts
+- Tightening up exported presentation slides
+- Removing dark scan edges from book pages
+
+Tip: Start at 10% — enough to kill most scanner margins without touching content. Push higher only for truly empty borders.
+
+FAQs:
+Q: How do I crop white margins off a PDF?
+A: Drop the PDF and drag the margin slider — every page is trimmed by that percentage on all four sides. Preview-friendly and instant.
+
+Q: Does cropping delete content?
+A: Cropping hides the outer margins; the underlying page data stays in the file. Most readers respect the crop box, showing the trimmed view.
+
+Q: Can I crop each side differently?
+A: This tool trims all four sides equally — the fast path that fixes 95% of margin problems. For asymmetric crops, use a desktop editor.
+
+Q: What percentage should I use?
+A: 10% handles typical scan margins. 20%+ is for documents that are mostly border.
+
+Q: Does it work on every page at once?
+A: Yes — one slider, all pages. Perfect for consistently-margined scans.
+
+## Image Converters
+
+Free online image converters that run entirely in your browser. Change PNG to JPG, WebP to PNG, HEIC to JPG and more — resize and rotate images in bulk, or create PNG to PDF, JPG to PDF, WebP to PDF, GIF to PDF, BMP to PDF and HEIC to PDF documents — your photos are never uploaded anywhere.
+
+### PNG to JPG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/png-to-jpg/
+
+What it does:
+Turn PNG screenshots, logos and graphics into much smaller JPG files. Perfect when a PNG is too big to email or upload — same picture, a fraction of the size.
+
+About the source format (PNG):
+PNG stores every pixel losslessly, which keeps screenshots and logos razor-sharp. The trade-off is size — PNGs are often several megabytes, too heavy for email attachments and quick uploads.
+
+About the target format (JPG):
+JPG is the world’s most compatible image format. Its lossy compression squeezes photos and graphics down to a fraction of their size, and it opens on every phone, computer, website and app ever made.
+
+Use cases:
+- Emailing screenshots without hitting attachment size limits
+- Converting PNG graphics for upload forms that only accept JPG
+- Shrinking website images for faster page loads
+
+Tip: PNG transparency becomes a white background in JPG. If your image has a transparent background you need to keep, convert to WebP instead.
+
+FAQs:
+Q: Will converting PNG to JPG reduce quality?
+A: JPG uses lossy compression, so files get dramatically smaller with only a tiny, usually invisible quality change. If your PNG has transparency, note that JPG does not support it — transparent areas become white.
+
+Q: What quality setting is used for the JPG?
+A: High quality (92%) — screenshots and graphics look identical to the PNG while files shrink 60–80%.
+
+Q: Can I convert back to PNG later?
+A: Yes, but the small JPG quality loss is permanent. Keep the original PNG if pixel-perfection might matter later.
+
+Q: Why is JPG better for email?
+A: Email providers cap attachment sizes — a 5 MB PNG often becomes a 700 KB JPG that sails through.
+
+Q: Does it work for photos too?
+A: Absolutely — though photos usually start as JPG already. This converter shines on PNG screenshots, logos and graphics.
+
+### PNG to WebP Converter
+
+URL: https://allinoneconverter.vercel.app/convert/png-to-webp/
+
+What it does:
+Convert PNG images to WebP, the modern format that keeps transparency while shrinking files by 25–35%. Ideal for faster websites and smaller uploads.
+
+About the source format (PNG):
+PNG is the default for crisp screenshots and graphics because it never degrades quality. But it barely compresses, so PNG files are bulky — a real problem on the web.
+
+About the target format (WebP):
+WebP is Google’s modern image format: 25–35% smaller than PNG or JPG at the same visual quality, with transparency support. Every modern browser displays it natively.
+
+Use cases:
+- Speeding up a website by replacing PNG images with WebP
+- Keeping screenshot transparency while cutting file size
+- Preparing images for platforms that prefer WebP uploads
+
+Tip: Compare the WebP side-by-side with your PNG at 100% zoom — you won’t see a difference, but the file will be roughly a third of the size.
+
+FAQs:
+Q: Why convert PNG to WebP instead of JPG?
+A: WebP keeps transparency like PNG but compresses far better — typically 25–35% smaller than PNG and even smaller than JPG at similar quality. All modern browsers display WebP natively.
+
+Q: Will the WebP keep my PNG’s transparency?
+A: Yes — unlike JPG, WebP fully supports transparency, so logos and UI graphics convert perfectly.
+
+Q: Do all browsers support WebP now?
+A: All modern ones do — Chrome, Edge, Firefox, Safari 14+ and every mobile browser from recent years. Only truly ancient browsers miss it.
+
+### PNG to AVIF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/png-to-avif/
+
+What it does:
+Convert PNG to AVIF, the cutting-edge image format with the best compression available today. Great for web developers squeezing every kilobyte.
+
+About the source format (PNG):
+PNG preserves images pixel-for-pixel, transparency included. That perfection is expensive in bandwidth — a single PNG screenshot can outweigh an entire page of text.
+
+About the target format (AVIF):
+AVIF is the newest image format, squeezing 20–30% smaller files than even WebP at the same quality. Best when every kilobyte counts and your audience uses modern browsers.
+
+Use cases:
+- Maximum compression for hero images on performance-critical sites
+- Archiving graphics at the smallest size without visible loss
+- Testing next-gen formats for a portfolio or tech blog
+
+Tip: AVIF encoding needs a recent browser (Chrome or Edge recommended). If you see a ‘not supported’ message, WebP is the safe fallback at nearly the same size.
+
+FAQs:
+Q: My browser says AVIF is not supported. What now?
+A: AVIF encoding needs a recent browser — Chrome or Edge work best. If yours does not support it, convert to WebP instead: nearly as small and supported everywhere.
+
+Q: Is AVIF better than WebP?
+A: For compression, yes — typically 20–30% smaller at equal quality. For compatibility, WebP still wins. Use AVIF when your audience is on modern browsers.
+
+Q: Why does AVIF conversion take longer?
+A: AVIF’s superior compression comes from heavier math — encoding takes a few seconds longer than WebP, but viewing the result is instant.
+
+### JPG to PNG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/jpg-to-png/
+
+What it does:
+Convert JPG photos to PNG when you need lossless quality or plan to edit further. Note: this will not restore quality already lost to JPG compression — but it stops further loss.
+
+About the source format (JPG):
+JPG is the universal photo format — tiny files that open everywhere. Its lossy compression is tuned for photos, but every re-save shaves off a little more quality.
+
+About the target format (PNG):
+PNG is completely lossless: once your image is a PNG, editing and re-saving it never degrades it further. The safe format for graphics you plan to keep editing.
+
+Use cases:
+- Freezing a JPG at its current quality before heavy editing
+- Converting photos for software that requires PNG input
+- Preparing images for print workflows that prefer lossless files
+
+Tip: Converting JPG to PNG stops further quality loss, but it can’t restore detail the JPG already discarded — and the PNG will be much bigger.
+
+FAQs:
+Q: Does JPG to PNG improve image quality?
+A: No — conversion cannot recover detail that JPG compression already removed. But PNG is lossless, so editing and re-saving a PNG will not degrade it further the way re-saving a JPG does.
+
+Q: Will my photo look better as a PNG?
+A: No — conversion can’t invent detail that JPG compression removed. The benefit is that future edits and saves won’t degrade it further.
+
+Q: Why is the PNG so much bigger?
+A: PNG stores every pixel exactly with no lossy shortcuts. Expect 3–5x the JPG’s file size — that’s the price of lossless.
+
+### JPG to WebP Converter
+
+URL: https://allinoneconverter.vercel.app/convert/jpg-to-webp/
+
+What it does:
+Shrink JPG photos into WebP files that look identical but load faster. The easiest win for bloggers and shop owners speeding up their pages.
+
+About the source format (JPG):
+JPG has been the web’s photo format for 30 years: small files, universal support. But it’s showing its age — modern formats beat it by 25–35% at the same quality.
+
+About the target format (WebP):
+WebP is the modern replacement for JPG on the web: noticeably smaller files at identical visual quality, supported by every current browser.
+
+Use cases:
+- Cutting a blog’s image weight by a third with zero visible change
+- Speeding up product photos on an online store
+- Converting camera JPGs before uploading to a WebP-friendly CMS
+
+Tip: WebP at default quality is visually identical to your JPG. If you’re converting photos for the web, just convert — no settings to agonize over.
+
+FAQs:
+Q: How much smaller is WebP than JPG?
+A: Typically 25–35% smaller at the same visual quality. A 500 KB JPG often becomes a 320–370 KB WebP with no visible difference.
+
+Q: How much smaller, really?
+A: 25–35% smaller at the same visual quality is typical — a 900 KB photo often becomes about 600 KB.
+
+Q: Is WebP safe for client work?
+A: Yes — all modern browsers support it. Only worry if your audience includes Internet Explorer, which is vanishingly rare now.
+
+Q: Does converting affect SEO?
+A: Positively — smaller images mean faster pages, and page speed is a ranking factor. Keep descriptive filenames.
+
+Q: Should I delete the JPGs after converting?
+A: Keep originals archived somewhere. WebP is excellent going forward, but JPG masters cost little to keep and protect you.
+
+### JPG to AVIF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/jpg-to-avif/
+
+What it does:
+Convert JPG photos to AVIF for the smallest possible file at high quality. Best for modern browsers and performance-obsessed websites.
+
+About the source format (JPG):
+JPG’s compression was designed in the 1990s. It still works everywhere, but it leaves a lot of efficiency on the table compared to modern codecs.
+
+About the target format (AVIF):
+AVIF applies video-codec-grade compression to still images, beating JPG by 40–50% at the same quality. The catch: you need a modern browser to create AVIF files.
+
+Use cases:
+- Squeezing maximum quality into minimum bytes for a photography portfolio
+- Future-proofing an image archive at the smallest sizes available today
+- A/B testing page speed with next-gen image formats
+
+Tip: Encode in Chrome or Edge — Firefox and Safari display AVIF but encoding support varies. WebP is the fallback if your browser can’t encode AVIF.
+
+FAQs:
+Q: My browser says AVIF is not supported. What now?
+A: AVIF encoding needs a recent browser — Chrome or Edge work best. If yours does not support it, convert to WebP instead: nearly as small and supported everywhere.
+
+Q: AVIF vs WebP — which should I choose?
+A: AVIF for the absolute smallest files when your audience uses current browsers; WebP when you want small files plus near-universal support.
+
+Q: Do phones display AVIF?
+A: Recent iPhones (iOS 16+) and Android phones (Android 12+) display AVIF in their browsers. Older phones may not.
+
+### WebP to PNG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/webp-to-png/
+
+What it does:
+Convert WebP images back to PNG for maximum compatibility — older software, editors and platforms that do not understand WebP yet.
+
+About the source format (WebP):
+WebP is the efficient modern format — small files, great quality. But some desktop software, print services and older platforms still don’t recognize it.
+
+About the target format (PNG):
+PNG is the compatibility king for lossless images: it opens in every editor, viewer and operating system, no questions asked.
+
+Use cases:
+- Opening a downloaded WebP in an old photo editor
+- Sending images to a print shop that only accepts PNG or JPG
+- Converting WebP assets for software with no WebP support
+
+Tip: The PNG will be bigger than your WebP — that’s normal. You’re trading file size for universal compatibility.
+
+FAQs:
+Q: Why would I convert WebP back to PNG?
+A: Some desktop editors, print services and older platforms still do not accept WebP. PNG opens everywhere, so converting back is the safe choice when compatibility matters more than file size.
+
+Q: Do I lose quality converting WebP to PNG?
+A: No — PNG is lossless, so whatever quality your WebP had is preserved exactly. The conversion itself adds no degradation.
+
+Q: Why is the PNG bigger than the WebP?
+A: WebP’s compression is simply more advanced. PNG keeps every pixel perfectly but needs more bytes to do it — often 30–50% more.
+
+### WebP to JPG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/webp-to-jpg/
+
+What it does:
+Turn WebP images into universally compatible JPGs. Handy when a site or app rejects WebP uploads — JPG works absolutely everywhere.
+
+About the source format (WebP):
+WebP looks great at tiny file sizes, but the wider world — email clients, old phones, upload forms — still speaks JPG first.
+
+About the target format (JPG):
+JPG remains the lowest-common-denominator image format: if a system accepts images at all, it accepts JPG.
+
+Use cases:
+- Uploading a WebP image to a site that rejects it
+- Emailing downloaded WebP images to anyone
+- Converting WebP to JPG for maximum compatibility
+
+Tip: Watch out for transparency: WebP can have it, JPG can’t. Transparent areas turn white — convert to PNG instead if transparency matters.
+
+FAQs:
+Q: Does WebP to JPG lose transparency?
+A: Yes — JPG has no transparency, so transparent areas become white. If you need to keep transparency, convert to PNG instead.
+
+Q: Will I lose the transparency?
+A: Yes — JPG can’t do transparency, so transparent areas become white. Use WebP to PNG instead if transparency matters.
+
+Q: Is the quality the same?
+A: At high quality settings the difference is invisible for photos and typical graphics.
+
+Q: Why do sites still reject WebP?
+A: Some upload validators and older systems were built before WebP existed and never updated their allowed-formats list.
+
+Q: JPG or PNG as the target?
+A: JPG for the smallest files; PNG if you need transparency or plan to edit further.
+
+### WebP to AVIF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/webp-to-avif/
+
+What it does:
+Move from WebP to AVIF for even better compression. For image-heavy sites where every kilobyte of bandwidth counts.
+
+About the source format (WebP):
+WebP already beats JPG and PNG on size. AVIF is the next step on the same ladder — the newest codec squeezing files smaller still.
+
+About the target format (AVIF):
+AVIF typically compresses 20–30% better than WebP at equal quality, making it today’s champion for pure file-size efficiency.
+
+Use cases:
+- Pushing already-optimized site images even smaller
+- Preparing assets for AVIF-first image CDNs
+- Experimenting with next-gen formats on a tech-savvy audience
+
+Tip: Gains over WebP are real but modest (~20–30%). Worth it for image-heavy pages; for a handful of images, WebP is already excellent.
+
+FAQs:
+Q: Is AVIF really better than WebP?
+A: Yes, AVIF typically compresses 20–30% better than WebP at the same quality. The trade-off is slower encoding and slightly narrower support — which is why we check your browser first.
+
+Q: Is it worth converting WebP to AVIF?
+A: For large image libraries and performance-critical sites, yes — the savings add up. For occasional images, WebP’s wider support may matter more.
+
+Q: Which browsers can create AVIF files here?
+A: Chrome and Edge encode AVIF reliably. If your browser shows ‘not supported’, your WebP is already a great result.
+
+### GIF to PNG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/gif-to-png/
+
+What it does:
+Extract a still frame from a GIF as a crisp PNG image. We convert the first frame — perfect for thumbnails and previews.
+
+About the source format (GIF):
+GIF is the classic animation format — and a decent way to share short loops. But as a still-image source it’s limited to 256 colors.
+
+About the target format (PNG):
+PNG captures the frame losslessly at full color depth — perfect for thumbnails, previews and documents.
+
+Use cases:
+- Grabbing a clean thumbnail from an animated GIF
+- Extracting a still for a presentation slide
+- Saving a GIF frame as a high-quality static image
+
+Tip: We convert the first frame — for most GIFs that’s the representative still.
+
+FAQs:
+Q: Does this convert the whole animation?
+A: No — a PNG is a still image, so we convert the first frame of the GIF. For the full animation, keep it as a GIF or convert to WebP.
+
+Q: Which frame becomes the PNG?
+A: The first frame of the animation. For most GIFs that’s the intended preview image.
+
+Q: Will the PNG have the GIF’s 256-color limit?
+A: The PNG supports full color, but it can only preserve colors that were in the GIF frame — it can’t add detail that wasn’t there.
+
+### GIF to JPG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/gif-to-jpg/
+
+What it does:
+Turn a GIF frame into a compact JPG. Useful when you need a lightweight still from an animation for a document or post.
+
+About the source format (GIF):
+GIFs are everywhere as reactions and memes. When you need a lightweight still from one — for a document, post or thumbnail — JPG is the compact choice.
+
+About the target format (JPG):
+JPG compresses the still frame far smaller than the GIF’s own frame data — ideal for embedding in pages and documents.
+
+Use cases:
+- Making a lightweight preview image from a meme GIF
+- Extracting a still for a blog post
+- Creating a compact thumbnail from an animation
+
+Tip: JPG suits photographic GIF frames; for flat cartoon graphics with sharp edges, PNG keeps edges crisper.
+
+FAQs:
+Q: Does this convert the whole animation?
+A: No — JPG is a still format, so we convert the first frame. The result is a small, widely compatible photo-style image.
+
+Q: Does it convert the whole animation?
+A: No — JPG is a still format, so we convert the first frame. Keep the GIF itself if you need the motion.
+
+Q: JPG or PNG for a GIF still?
+A: JPG for photos and complex frames (smaller file); PNG for flat graphics, text or logos (sharper edges).
+
+### GIF to WebP Converter
+
+URL: https://allinoneconverter.vercel.app/convert/gif-to-webp/
+
+What it does:
+Convert GIFs to WebP stills at a fraction of the size. Great for previews and thumbnails taken from animations.
+
+About the source format (GIF):
+Animated GIFs are charming but technically ancient — huge files for what they show. Even a single frame carries GIF’s inefficient 256-color encoding.
+
+About the target format (WebP):
+WebP stores the still at full color in a fraction of the bytes — modern, tiny, and supported everywhere current.
+
+Use cases:
+- Replacing GIF thumbnails with tiny WebP stills on a website
+- Extracting high-quality stills from animations
+- Shrinking preview images without visible quality loss
+
+Tip: WebP stills are often 50%+ smaller than the equivalent GIF frame — a quick win anywhere you show GIF previews.
+
+FAQs:
+Q: Why convert GIF to WebP?
+A: Even as a still, WebP compresses far better than GIF — often 50%+ smaller — while keeping full color. We convert the first frame of the animation.
+
+Q: Can WebP keep the animation?
+A: WebP does support animation, but this tool extracts a still — the first frame. For animated output, keep the GIF or make a video.
+
+Q: Why is the WebP so much smaller?
+A: GIF’s compression dates to 1987 and is capped at 256 colors. WebP uses modern techniques — the size difference is dramatic even for one frame.
+
+### BMP to PNG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/bmp-to-png/
+
+What it does:
+Convert bulky BMP files to efficient PNGs with zero quality loss. BMPs are uncompressed — PNG keeps every pixel and slashes the size.
+
+About the source format (BMP):
+BMP is Windows’ raw bitmap format — every pixel stored uncompressed. Simple, ancient, and enormous: a single screenshot can be tens of megabytes.
+
+About the target format (PNG):
+PNG keeps every pixel bit-for-bit identical while compressing the data losslessly — the same image at a fraction of the size.
+
+Use cases:
+- Archiving old BMP screenshots without wasting disk space
+- Converting BMPs for use on the web
+- Preparing BMP images for any modern software
+
+Tip: Expect 50–70% smaller files with zero visual change — one of the safest conversions on the site.
+
+FAQs:
+Q: How much smaller will my BMP become?
+A: Often 50–70% smaller with identical pixels. BMP stores every pixel raw; PNG compresses that data losslessly, so nothing visual changes at all.
+
+Q: Is anything lost converting BMP to PNG?
+A: Nothing at all. PNG’s compression is lossless — every pixel is preserved exactly.
+
+Q: Where do BMP files even come from?
+A: Mostly old Windows software, scanners and legacy systems. If you found a BMP, it’s probably been sitting around for years.
+
+### BMP to JPG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/bmp-to-jpg/
+
+What it does:
+Shrink huge BMP files down to small JPGs for sharing and the web. The fastest way to make a BMP emailable.
+
+About the source format (BMP):
+BMP files are uncompressed bitmaps — simple but gigantic. They’re the number-one ‘why is this file so big’ image format.
+
+About the target format (JPG):
+JPG’s lossy compression is the fastest route from a 20 MB BMP to an emailable photo.
+
+Use cases:
+- Making an old BMP small enough to email
+- Converting BMP scans for web upload
+- Shrinking BMP screenshots for sharing
+
+Tip: For photos and scans the quality loss is invisible; for sharp text screenshots, PNG keeps text crisper than JPG.
+
+FAQs:
+Q: Will I lose quality converting BMP to JPG?
+A: JPG is lossy, so there is a small quality trade-off — but BMPs are so large that the size saving (often 90%+) is worth it for photos and screenshots meant for sharing.
+
+Q: How much smaller will the JPG be?
+A: Often 90%+ smaller. A 15 MB BMP commonly becomes a 1–2 MB JPG — that’s what lossy compression does to uncompressed sources.
+
+Q: BMP to JPG or BMP to PNG?
+A: JPG for photos and the smallest files; PNG for screenshots with text, or when you can’t afford any quality loss.
+
+### BMP to WebP Converter
+
+URL: https://allinoneconverter.vercel.app/convert/bmp-to-webp/
+
+What it does:
+Convert BMP to WebP for the best of both worlds: dramatically smaller files with excellent quality for web use.
+
+About the source format (BMP):
+BMP’s uncompressed pixels make it the heaviest common image format — the worst starting point for sharing or the web.
+
+About the target format (WebP):
+WebP gives you the best of both worlds: near-lossless quality options at dramatically smaller sizes than BMP.
+
+Use cases:
+- Modernizing a folder of old BMP images
+- Preparing BMP graphics for a website
+- Getting maximum quality per byte from legacy images
+
+Tip: Going BMP to WebP directly skips the JPG step some people do in between — one conversion, best result.
+
+FAQs:
+Q: BMP to WebP or BMP to PNG — which should I pick?
+A: Pick WebP for the web (smallest), PNG when you need lossless editing or maximum compatibility. Both are big upgrades over BMP.
+
+Q: Is WebP better than PNG for BMP conversion?
+A: For file size, yes — WebP is typically 25–30% smaller than PNG. For absolute lossless archiving, PNG is the purist’s choice.
+
+Q: Will old software open the WebP?
+A: Modern browsers and editors will. Truly ancient software won’t — use PNG for maximum compatibility with old tools.
+
+### HEIC to JPG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/heic-to-jpg/
+
+What it does:
+Convert iPhone HEIC photos to JPG so they open everywhere — Windows, Android, email and the web. The fix for "my iPhone photo will not upload".
+
+About the source format (HEIC):
+HEIC is Apple’s efficient photo format — roughly half the size of JPG at the same quality. iPhones have saved photos as HEIC by default since 2017.
+
+About the target format (JPG):
+JPG is the universal fallback: bigger than HEIC, but readable by every device, app and website on earth.
+
+Use cases:
+- Emailing iPhone photos to people on Windows
+- Uploading to websites and forms that reject HEIC files
+- Sharing in WhatsApp or Telegram without compatibility warnings
+- Saving photos in a format every device will still open in ten years
+
+Tip: Converting at high quality keeps the photo visually identical — and your original HEIC file is never modified.
+
+FAQs:
+Q: Why do my iPhone photos need converting?
+A: iPhones save photos as HEIC by default, which many Windows apps, websites and older devices cannot open. Converting to JPG makes the photo universally compatible.
+
+Q: Why won’t my HEIC photo open on Windows?
+A: Windows needs an extra paid HEVC codec to open HEIC, and most PCs don’t have it. Converting to JPG sidesteps the problem entirely — JPG opens everywhere with no extra software.
+
+Q: Will converting HEIC to JPG lose quality?
+A: Barely. We convert at high quality (92%), so any difference is invisible in normal viewing. Your original HEIC file is never touched — the JPG is a new download.
+
+Q: Can I convert several HEIC photos at once?
+A: Right now each conversion handles one file at a time — drop a photo, convert, download, repeat. It takes a few seconds per photo.
+
+Q: How do I stop my iPhone saving HEIC in the future?
+A: On your iPhone go to Settings → Camera → Formats and choose "Most Compatible". New photos will save as JPG — but this won’t change photos you already took.
+
+Q: Does this work for HEIC files from cameras or drones, not just iPhones?
+A: Yes — any valid HEIC or HEIF file converts the same way, no matter which device created it.
+
+### HEIC to PNG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/heic-to-png/
+
+What it does:
+Convert HEIC photos to lossless PNG when quality matters most — for editing, design work or archiving your iPhone shots.
+
+About the source format (HEIC):
+HEIC is Apple’s efficient photo format — half the size of JPG at the same quality. But outside Apple devices, support is patchy.
+
+About the target format (PNG):
+PNG preserves your photo losslessly, making it the right choice when you plan to edit, print, or archive the shot.
+
+Use cases:
+- Converting iPhone photos before editing in Photoshop
+- Archiving HEIC shots in a lossless format
+- Preparing HEIC photos for print
+
+Tip: PNGs from HEIC are big — that’s the price of lossless. For everyday sharing, HEIC to JPG gives much smaller files.
+
+FAQs:
+Q: HEIC to PNG or HEIC to JPG?
+A: JPG for sharing and small files; PNG when you plan to edit the photo or need every bit of quality preserved. PNG files are larger.
+
+Q: HEIC to PNG or HEIC to JPG?
+A: PNG for editing, printing and archiving (lossless, larger). JPG for sharing and everyday use (smaller, still excellent).
+
+Q: Does the PNG keep the photo’s full resolution?
+A: Yes — every pixel converts at full resolution. Nothing is downscaled.
+
+### HEIF to JPG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/heif-to-jpg/
+
+What it does:
+Convert HEIF images to JPG for universal compatibility. Same idea as HEIC — HEIF is simply the format name without the "container" distinction.
+
+About the source format (HEIF):
+HEIF is the underlying standard behind Apple’s HEIC photos — extremely efficient, but unreadable by most Windows apps and websites.
+
+About the target format (JPG):
+JPG is the universal fallback: slightly bigger than HEIF, but opens absolutely everywhere.
+
+Use cases:
+- Opening HEIF images on a Windows PC
+- Uploading HEIF photos to web forms
+- Sharing HEIF images with Android users
+
+Tip: HEIC and HEIF are siblings — if your iPhone file says .HEIF instead of .HEIC, this is the right converter.
+
+FAQs:
+Q: What is the difference between HEIC and HEIF?
+A: HEIF is the format standard; HEIC is HEIF using HEVC compression — what iPhones actually produce. Both open the same way here: drop the file and convert.
+
+Q: What’s the difference between HEIC and HEIF?
+A: HEIF is the format standard; HEIC is HEIF using HEVC compression — what iPhones actually produce. Both convert the same way here.
+
+Q: Will I lose quality?
+A: A negligible amount at high quality — invisible in normal viewing. The original file is never modified.
+
+### HEIF to PNG Converter
+
+URL: https://allinoneconverter.vercel.app/convert/heif-to-png/
+
+What it does:
+Convert HEIF images to lossless PNG for editing and archiving without any further quality loss.
+
+About the source format (HEIF):
+HEIF packs photos incredibly small using modern compression. The price of that efficiency: most non-Apple software can’t open it.
+
+About the target format (PNG):
+PNG trades file size for universality and lossless quality — the safe, editable, archivable result.
+
+Use cases:
+- Editing HEIF photos in desktop software
+- Converting HEIF for a design project
+- Lossless archiving of HEIF originals
+
+Tip: Expect the PNG to be several times larger than your HEIF — HEIF is one of the most efficient formats ever made.
+
+FAQs:
+Q: Will the PNG be much bigger than my HEIF?
+A: Yes — HEIF is extremely efficient, so the PNG will be several times larger. That is the price of a lossless, universally editable file.
+
+Q: Why is the PNG so much bigger than my HEIF?
+A: HEIF’s compression is state-of-the-art; PNG is lossless and much older. A 4–6x size gap is normal.
+
+Q: Should I keep the original HEIF too?
+A: If storage allows, yes — it’s your smallest full-quality original. The PNG is your editable working copy.
+
+### WebP to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/webp-to-pdf/
+
+What it does:
+Convert WebP images into a PDF document — one image per page. Handy when a form or office demands PDF but your images are modern WebPs.
+
+About the source format (WebP):
+WebP is the modern, super-efficient image format — a third smaller than JPG or PNG. But officialdom moves slowly: plenty of upload forms still reject anything that is not a PDF.
+
+About the target format (PDF):
+PDF is the document format every institution accepts: printable, unchangeable-looking, and identical on every screen.
+
+Use cases:
+- Submitting WebP screenshots as a PDF for a support ticket or application
+- Turning downloaded WebP images into a printable document
+- Combining several WebP graphics into one PDF portfolio page set
+
+Tip: Drop several WebPs at once — each becomes a page in order, so a folder of screenshots becomes a document in one go.
+
+FAQs:
+Q: Why convert WebP to PDF?
+A: Many official forms, universities and offices only accept PDF uploads. If your screenshots or downloads are WebP, this wraps them into a proper PDF in seconds — each image on its own page.
+
+Q: Can I add multiple WebP images to one PDF?
+A: Yes — select several at once and each becomes a page, in the order shown. Perfect for turning a set of screenshots into one file.
+
+Q: Will the PDF keep the WebP quality?
+A: Yes — images are embedded at high quality, so what you see in the WebP is what lands in the PDF.
+
+Q: What about WebP transparency?
+A: Transparent areas become white, since PDF pages have a white background. If transparency matters, keep the WebP as-is.
+
+### GIF to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/gif-to-pdf/
+
+What it does:
+Turn GIFs into a PDF — the first frame of each GIF becomes a page. Useful for archiving memes, reaction images or animated diagrams as a document.
+
+About the source format (GIF):
+GIFs are the internet’s flip-books — short loops everyone recognizes. But try attaching one to a formal application and you will be asked for a PDF.
+
+About the target format (PDF):
+PDF freezes each GIF’s representative frame into a clean, printable page — the archivable version of your animations.
+
+Use cases:
+- Archiving a set of GIFs as a single document
+- Printing animated diagrams as stills for a report
+- Converting meme GIFs into shareable PDF pages
+
+Tip: Each GIF becomes one page using its first frame — for most GIFs that is the intended still image.
+
+FAQs:
+Q: Does the PDF keep the animation?
+A: No — PDF is a document format, so each GIF contributes its first frame as a still image on its own page. The result is perfect for archiving and printing.
+
+Q: Which frame of the GIF ends up in the PDF?
+A: The first frame — for the vast majority of GIFs, that is the representative image the creator intended.
+
+Q: Can I convert several GIFs at once?
+A: Yes — drop multiple GIFs and each becomes its own page in the PDF, in order.
+
+Q: Will the PDF be big?
+A: No — a single still frame per GIF keeps the PDF small. Lower the quality slider if you need it tiny for uploads.
+
+### BMP to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/bmp-to-pdf/
+
+What it does:
+Convert bulky BMP files into a compact PDF — one image per page. The fastest way to make ancient BMP scans emailable and printable.
+
+About the source format (BMP):
+BMP is Windows’ ancient uncompressed bitmap — every pixel stored raw. A single scan can be tens of megabytes, far too heavy to email.
+
+About the target format (PDF):
+PDF wraps your images into the universal document format — and because the images are re-encoded, the PDF is a fraction of the BMP’s size.
+
+Use cases:
+- Turning old BMP scans into an emailable PDF
+- Submitting legacy BMP images to forms that require PDF
+- Archiving BMP screenshots as a compact document
+
+Tip: BMPs are enormous, so this conversion shrinks them dramatically — a 20 MB BMP often becomes a 1–2 MB PDF page.
+
+FAQs:
+Q: Why convert BMP to PDF instead of JPG?
+A: When the destination is a form, an office or a printer, PDF is what they ask for. This skips the middleman: your BMPs go straight into a proper document, dramatically smaller than the BMPs themselves.
+
+Q: How much smaller will the PDF be than my BMP?
+A: Dramatically — BMP stores pixels uncompressed, so expect 80–95% smaller files with no visible difference for scans and screenshots.
+
+Q: Can I combine several BMPs into one PDF?
+A: Yes — each BMP becomes a page in order, so a folder of scans becomes one document.
+
+Q: Will text in my BMP scans stay readable?
+A: Yes — images are embedded at high quality, keeping scanned text crisp. For the sharpest text, keep quality at 92.
+
+### HEIC to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/heic-to-pdf/
+
+What it does:
+Convert iPhone HEIC photos directly into a PDF — one photo per page. Skip the JPG middleman when what you need is a document.
+
+About the source format (HEIC):
+HEIC is how iPhones save photos — half the size of JPG, but unreadable by most Windows apps, forms and printers.
+
+About the target format (PDF):
+PDF is the format forms and offices actually accept. This puts your iPhone shots straight into a proper document.
+
+Use cases:
+- Turning iPhone photos of documents into a single PDF for email
+- Submitting HEIC photos to applications that demand PDF
+- Combining iPhone shots into a printable PDF album
+
+Tip: Drop several HEICs at once — each becomes a page in order. Your originals are never modified.
+
+FAQs:
+Q: Can I put iPhone photos straight into a PDF?
+A: Yes — drop your HEIC files and each becomes a full page in the PDF. No need to convert to JPG first; the HEIC decoding happens right in your browser.
+
+Q: Do I need to convert HEIC to JPG first?
+A: No — this tool decodes HEIC directly in your browser and builds the PDF in one step. One less conversion, one less quality loss.
+
+Q: Will my iPhone photos keep their quality?
+A: Yes — photos are decoded at full resolution and embedded at high quality in the PDF.
+
+Q: Does it work with HEIF files too?
+A: Yes — both .heic and .heif files are accepted and handled identically.
+
+### Merge Images to JPG
+
+URL: https://allinoneconverter.vercel.app/convert/merge-images-jpg/
+
+What it does:
+Combine multiple images into one JPG — pick Grid 2×2, Grid 3×3, a horizontal strip or a vertical strip. Perfect for collages, before/after shots and comparison images.
+
+About the source format (Images):
+Photos arrive one by one — but collages, comparisons and contact sheets need them in a single frame.
+
+About the target format (JPG):
+One merged JPG tells the whole story in a single shareable image that opens everywhere.
+
+Use cases:
+- Making a before/after comparison image
+- Joining screenshots into one long vertical strip for a tutorial
+- Creating a 2×2 photo collage for social media
+
+Tip: For before/after shots use Horizontal strip; for step-by-step tutorials use Vertical strip — readers scroll naturally.
+
+FAQs:
+Q: How do I join two photos side by side?
+A: Drop both images, choose the Horizontal strip layout, and download one wide JPG with your photos next to each other. Lower the quality slider if the file must stay small.
+
+Q: How many images can I merge?
+A: Up to 16 at once. Grids arrange them in 2 or 3 columns; strips line them all up in one row or column.
+
+Q: Will different-sized images look odd?
+A: No — each image is scaled to fit its cell while keeping its aspect ratio, centered on a clean white background.
+
+### Merge Images to PNG
+
+URL: https://allinoneconverter.vercel.app/convert/merge-images-png/
+
+What it does:
+Merge multiple images into one lossless PNG collage — Grid 2×2, Grid 3×3, horizontal or vertical layouts. Best when sharpness matters more than file size.
+
+About the source format (Images):
+Collages of screenshots and UI graphics need pixel-perfect sharpness that JPG’s compression would soften.
+
+About the target format (PNG):
+A merged PNG keeps every edge crisp — the right choice for tutorials, documentation and design comparisons.
+
+Use cases:
+- Combining UI screenshots into one tutorial image
+- Making a sharp 2×2 comparison of design mockups
+- Joining diagrams into a single figure
+
+Tip: PNG collages are bigger than JPG — if you are posting to chat or social, Merge Images to JPG gives far smaller files.
+
+FAQs:
+Q: Merge to PNG or JPG — which should I pick?
+A: PNG for screenshots, text and graphics (razor-sharp, larger file). JPG for photos (much smaller, tiny quality trade-off).
+
+Q: Why is my merged PNG so big?
+A: PNG is lossless — a 2×2 collage of screenshots can easily be several MB. That is normal; use JPG if size matters.
+
+Q: Do transparent PNGs keep transparency?
+A: Cells render on a white background, so transparency becomes white — consistent and print-friendly.
+
+### Resize Images
+
+URL: https://allinoneconverter.vercel.app/convert/image-resize/
+
+What it does:
+Resize images in bulk — by percent, exact width, or exact height. Drop a whole folder of photos, get them all back at the new size, zipped.
+
+About the source format (Image):
+Oversized photos choke uploads, slow websites, and eat phone storage — yet resizing them one by one is soul-crushing.
+
+About the target format (Image):
+Right-sized images load fast and fit everywhere: same pictures, sensible dimensions, smaller files.
+
+Use cases:
+- Shrinking product photos to a uniform 1200px width for a store
+- Halving vacation photos before emailing them
+- Preparing uniform thumbnails for a gallery
+
+Tip: Percent mode is fastest for batches; exact-width mode is best when a platform demands specific dimensions.
+
+FAQs:
+Q: How do I resize multiple images at once?
+A: Drop all your images, choose percent (e.g. 50%), an exact width, or an exact height — aspect ratio is always kept — and download everything as a ZIP. Your original format is preserved per file.
+
+Q: Will my images get stretched?
+A: Never — the aspect ratio is always locked. Set a width and the height follows automatically (and vice versa).
+
+Q: Does it keep my file format?
+A: Yes. A JPG stays a JPG, a PNG stays a PNG — each file keeps its original format.
+
+Q: How many images can I resize at once?
+A: Dozens at a time work fine; they process one by one and download as a ZIP.
+
+Q: Does resizing reduce quality?
+A: Downscaling with high-quality smoothing keeps images crisp. Avoid upscaling beyond ~200% — pixels cannot be invented.
+
+### Rotate Images
+
+URL: https://allinoneconverter.vercel.app/convert/image-rotate/
+
+What it does:
+Fix sideways photos in bulk — rotate any number of images 90°, 180° or 270° and download them all as a ZIP. Format preserved.
+
+About the source format (Image):
+Phone photos often save sideways thanks to orientation metadata — and some viewers ignore that metadata entirely.
+
+About the target format (Image):
+Rotated images open correctly everywhere, because the pixels themselves are turned — no metadata roulette.
+
+Use cases:
+- Fixing a batch of sideways vacation photos
+- Straightening scanned documents saved as images
+- Preparing product shots in consistent orientation
+
+Tip: Most phone photos need 90° clockwise. If they lean the other way, use 90° counter-clockwise.
+
+FAQs:
+Q: How do I rotate many photos at once?
+A: Drop all the sideways photos, pick 90° clockwise (or 180° / counter-clockwise), and download the fixed set as a ZIP. Each photo keeps its original format.
+
+Q: Does rotating lose quality?
+A: For 90°/180°/270° turns, pixels are only rearranged — no resampling blur. (Arbitrary angles would be a different story.)
+
+Q: Why do my photos open sideways in some apps?
+A: Phones store orientation as metadata, and not every viewer reads it. Rotating the actual pixels fixes it everywhere, permanently.
+
+Q: Does it keep my file format?
+A: Yes — JPG stays JPG, PNG stays PNG, per file.
+
+Q: Can I rotate just one image?
+A: Of course — drop one file and it works exactly the same.
+
+## Text Converters
+
+Free online text converters. Convert Markdown to a styled HTML page, extract clean text from HTML, turn plain text into Markdown — or save TXT and Markdown files as PDF documents — all on your device.
+
+### Markdown to HTML Converter
+
+URL: https://allinoneconverter.vercel.app/convert/md-to-html/
+
+What it does:
+Turn a Markdown file into a clean, styled HTML page you can open in any browser or paste into a CMS. Headings, lists, links and code blocks all convert properly.
+
+About the source format (Markdown):
+Markdown is the plain-text writing format developers and writers love: # headings, **bold**, lists — readable as-is, but not a finished web page.
+
+About the target format (HTML):
+HTML is the web’s native language. Markdown rendered to HTML becomes a proper page you can open, print, or paste into any CMS.
+
+Use cases:
+- Turning README-style notes into a shareable web page
+- Converting Markdown drafts for pasting into WordPress
+- Previewing Markdown as a formatted document
+
+Tip: The output is a complete HTML document — open it directly in your browser to see your formatted page.
+
+FAQs:
+Q: What does the HTML output look like?
+A: A complete, valid HTML document with your Markdown rendered as proper headings, paragraphs, lists and code blocks — ready to open, print or publish.
+
+Q: Does it handle code blocks?
+A: Yes — fenced code blocks render as proper pre/code blocks, great for documentation.
+
+Q: Can I style the HTML output?
+A: The HTML is clean and semantic, so drop it into any stylesheet or CMS theme and it picks up your styles.
+
+### HTML to TXT Converter
+
+URL: https://allinoneconverter.vercel.app/convert/html-to-txt/
+
+What it does:
+Strip an HTML page down to clean plain text. Perfect for extracting article content from saved web pages without the tags, scripts or styling.
+
+About the source format (HTML):
+HTML pages mix content with markup — tags, scripts, styles. Sometimes you just want the words.
+
+About the target format (TXT):
+Plain text is the universal readable format: no formatting, no code, just the content in reading order.
+
+Use cases:
+- Extracting article text from a saved web page
+- Stripping a newsletter’s HTML for plain-text archiving
+- Getting clean text from HTML for analysis
+
+Tip: Scripts, styles and navigation chrome are removed — what remains is the visible text in reading order.
+
+FAQs:
+Q: Does it keep the readable text in order?
+A: Yes — scripts and styles are removed, block elements become line breaks, and you get the visible text in reading order as a plain .txt file.
+
+Q: Does it keep links?
+A: No — link URLs are dropped and only the link text remains. Keep the HTML itself if you need the destinations.
+
+Q: What about tables?
+A: Table cell text is extracted in order, but the table structure isn’t preserved — the result reads as flowing text.
+
+### TXT to Markdown Converter
+
+URL: https://allinoneconverter.vercel.app/convert/txt-to-md/
+
+What it does:
+Convert plain text to Markdown format in one click. A quick starting point before you add headings and formatting in any Markdown editor.
+
+About the source format (TXT):
+Plain text is where most writing starts — quick notes, drafts, pasted content with no formatting at all.
+
+About the target format (Markdown):
+Markdown adds lightweight structure (# headings, lists, emphasis) that renders beautifully in editors, GitHub and documentation tools.
+
+Use cases:
+- Preparing notes for a Markdown-based wiki
+- Starting a README from plain-text drafts
+- Moving text into Obsidian or similar note apps
+
+Tip: The conversion gives you a valid Markdown file as-is — then add # headings and **bold** in seconds with any Markdown editor.
+
+FAQs:
+Q: Does it add formatting automatically?
+A: It converts your text into a valid Markdown file as-is. You can then add # headings, **bold** and lists in seconds with any Markdown editor.
+
+Q: Does it auto-detect headings?
+A: No — it converts your text faithfully as-is. Adding # marks for headings takes seconds and keeps you in control.
+
+Q: Why convert TXT to Markdown at all?
+A: Markdown renders with formatting on GitHub, in note apps and docs sites — plain .txt files never do.
+
+### TXT to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/txt-to-pdf/
+
+What it does:
+Turn a plain text file into a clean, paginated PDF document. Perfect for notes, logs and drafts that need to look like a real document.
+
+About the source format (TXT):
+Plain text is where writing starts — notes, logs, drafts. But a .txt file looks unfinished when you need to share or print it.
+
+About the target format (PDF):
+PDF gives your text the document treatment: paginated A4 pages, proper margins, ready to email, print or archive.
+
+Use cases:
+- Turning meeting notes into a shareable PDF
+- Converting log files or reports for printing
+- Making a plain-text draft look presentable for submission
+
+Tip: Long files paginate automatically — a 50-page text file becomes a 50-page PDF with no extra work.
+
+FAQs:
+Q: What does the PDF look like?
+A: Clean A4 pages with comfortable margins and readable type — your text flows across pages automatically. Simple, professional, printable.
+
+Q: Does it preserve my line breaks?
+A: Yes — your paragraphs and line breaks are kept, and long lines wrap neatly within the page margins.
+
+Q: What page size is used?
+A: A4 with comfortable margins — the standard for documents worldwide, and it prints perfectly.
+
+Q: Can I convert a huge text file?
+A: Yes — pagination is automatic, so even very long files convert into a proper multi-page PDF.
+
+### Markdown to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/md-to-pdf/
+
+What it does:
+Convert Markdown into a styled PDF — headings, lists, bold, italic and code blocks all render properly. Your README, notes or docs as a real document.
+
+About the source format (Markdown):
+Markdown is the writer-friendly format: # headings, **bold**, lists — readable as plain text, but not a finished document.
+
+About the target format (PDF):
+PDF renders your Markdown as a styled, paginated document — the version you can email, print or hand to anyone.
+
+Use cases:
+- Turning a README or documentation file into a PDF handout
+- Converting Markdown notes into a printable document
+- Sharing a styled spec with people who do not use Markdown tools
+
+Tip: Use proper # headings in your Markdown — they become the styled section titles that make the PDF look professional.
+
+FAQs:
+Q: Does the PDF keep my Markdown formatting?
+A: Yes — headings render large and bold, lists get bullets, **bold** and *italic* are styled, and code blocks appear in monospace on a shaded background.
+
+Q: Are code blocks supported?
+A: Yes — fenced code blocks render in monospace on a light shaded background, just like documentation sites.
+
+Q: What about tables?
+A: Simple text tables convert as plain text lines. For real formatted tables, convert your data from CSV to PDF instead.
+
+Q: Markdown to PDF or Markdown to HTML?
+A: PDF for printing, emailing and archiving; HTML for publishing on the web. Pick the one your audience needs.
+
+## Data Converters
+
+Free online data-format converters for developers and analysts. Convert JSON to CSV, CSV to JSON, JSON to YAML, YAML to JSON, TOML to JSON and XML to JSON — or turn a CSV spreadsheet into a printable PDF table — parsed locally, never uploaded.
+
+### JSON to CSV Converter
+
+URL: https://allinoneconverter.vercel.app/convert/json-to-csv/
+
+What it does:
+Convert a JSON array of objects into a CSV spreadsheet that opens in Excel and Google Sheets. The fastest way to make API data human-readable.
+
+About the source format (JSON):
+JSON is the data format of APIs and JavaScript — nested, precise, and unreadable to non-developers.
+
+About the target format (CSV):
+CSV is the spreadsheet format: rows and columns that open in Excel and Google Sheets, readable by anyone.
+
+Use cases:
+- Turning API responses into a spreadsheet for analysis
+- Sharing JSON data with colleagues who use Excel
+- Preparing data for tools that import CSV
+
+Tip: Works best with an array of objects sharing the same keys — each object becomes one spreadsheet row.
+
+FAQs:
+Q: What shape of JSON works best?
+A: An array of objects with consistent keys — like [{"name":"A"},{"name":"B"}]. A single object also works; it becomes a one-row CSV.
+
+Q: What if my JSON is nested?
+A: Nested objects are flattened with dot notation (address.city), so no data is lost — though deep nesting is easier to read as JSON.
+
+Q: How are commas inside values handled?
+A: Properly quoted per CSV rules — values with commas or quotes are wrapped so spreadsheets parse them correctly.
+
+### CSV to JSON Converter
+
+URL: https://allinoneconverter.vercel.app/convert/csv-to-json/
+
+What it does:
+Convert a CSV spreadsheet into structured JSON for APIs, scripts and databases. Handles quoted fields and commas inside cells correctly.
+
+About the source format (CSV):
+CSV is how the world shares tabular data — simple, but dumb: no types, no structure beyond rows.
+
+About the target format (JSON):
+JSON gives that data structure: typed values, nesting, and a format every API and programming language understands.
+
+Use cases:
+- Feeding spreadsheet data into a web app or API
+- Converting exports for a JavaScript project
+- Turning CSV logs into structured JSON for processing
+
+Tip: The first row becomes your JSON keys — make sure your CSV has a clean header row before converting.
+
+FAQs:
+Q: Does the first row become the keys?
+A: Yes — the header row becomes the JSON keys, and every following row becomes an object. Empty headers get safe names like column_1.
+
+Q: Are numbers kept as numbers?
+A: Yes — numeric cells become JSON numbers, not strings, so your data stays computable.
+
+Q: What about empty cells?
+A: Empty cells become null, preserving the row structure without inventing data.
+
+### JSON to YAML Converter
+
+URL: https://allinoneconverter.vercel.app/convert/json-to-yaml/
+
+What it does:
+Convert JSON config into readable YAML for Docker Compose, Kubernetes, CI pipelines and app settings.
+
+About the source format (JSON):
+JSON is precise but noisy — braces, quotes and commas everywhere make it tiring to read and edit by hand.
+
+About the target format (YAML):
+YAML is the human-friendly config format: clean indentation, no clutter — the native language of Docker Compose and Kubernetes.
+
+Use cases:
+- Converting JSON configs for Kubernetes manifests
+- Making API data editable as a config file
+- Preparing Docker Compose files from JSON sources
+
+Tip: Watch indentation in the YAML output — YAML is whitespace-sensitive, unlike JSON.
+
+FAQs:
+Q: Why convert JSON to YAML?
+A: YAML is far easier for humans to read and edit than JSON — no braces or quotes everywhere. Most DevOps tools accept YAML configs natively.
+
+Q: Is YAML just prettier JSON?
+A: Mostly — YAML is a superset of JSON, so data converts exactly. The win is readability.
+
+Q: Can YAML do everything JSON can?
+A: For data, yes. Note that comments can’t round-trip back to JSON, since JSON has no comments.
+
+### YAML to JSON Converter
+
+URL: https://allinoneconverter.vercel.app/convert/yaml-to-json/
+
+What it does:
+Convert YAML config files to JSON for APIs, JavaScript apps and tools that only speak JSON.
+
+About the source format (YAML):
+YAML is great for humans editing configs — but most APIs, and all of JavaScript’s native tooling, speak JSON.
+
+About the target format (JSON):
+JSON is the machine format: strict, unambiguous, parseable by every language’s standard library.
+
+Use cases:
+- Converting Kubernetes configs for programmatic processing
+- Turning YAML settings into JSON for a JS app
+- Validating YAML by viewing it as strict JSON
+
+Tip: Anchors and aliases in YAML are resolved during conversion — the JSON holds the final expanded values.
+
+FAQs:
+Q: Will comments in my YAML survive?
+A: No — JSON has no comments, so they are dropped. The data itself converts exactly, including nested objects and arrays.
+
+Q: Do YAML comments survive?
+A: No — JSON has no comment syntax, so comments are dropped. The data converts exactly.
+
+Q: What happens to multi-line strings?
+A: They become JSON strings with escaped line breaks — the breaks are preserved, just encoded.
+
+### TOML to JSON Converter
+
+URL: https://allinoneconverter.vercel.app/convert/toml-to-json/
+
+What it does:
+Convert TOML config files (Cargo.toml, pyproject.toml and friends) into JSON for processing in any language.
+
+About the source format (TOML):
+TOML is the config format of Rust’s Cargo, Python’s pyproject.toml and many modern tools — minimal, obvious, and typed.
+
+About the target format (JSON):
+JSON makes that config readable by any language or tool without a TOML parser.
+
+Use cases:
+- Reading pyproject.toml data in a JavaScript tool
+- Converting Cargo.toml for analysis scripts
+- Bridging TOML configs into JSON-based pipelines
+
+Tip: TOML dates convert to ISO strings in JSON — parse them with your language’s date handling.
+
+FAQs:
+Q: What is TOML used for?
+A: TOML is the config format behind Rust's Cargo, Python's pyproject.toml and many other tools. Converting to JSON makes it easy to read programmatically.
+
+Q: What is TOML mainly used for?
+A: Configuration files — most famously Cargo.toml (Rust) and pyproject.toml (Python). It’s designed to be obvious to humans.
+
+Q: Does anything get lost?
+A: TOML’s types — integers, floats, booleans, datetimes, arrays, tables — all map cleanly to JSON. Only comments are dropped.
+
+### XML to JSON Converter
+
+URL: https://allinoneconverter.vercel.app/convert/xml-to-json/
+
+What it does:
+Convert XML documents into clean JSON. Attributes are kept under @attributes so nothing is lost in translation.
+
+About the source format (XML):
+XML is the venerable data format of enterprises, RSS feeds and Office files — verbose, but structured.
+
+About the target format (JSON):
+JSON is XML’s lean successor for data exchange: the same structure with a fraction of the noise.
+
+Use cases:
+- Converting RSS/XML feeds for a JavaScript app
+- Modernizing legacy XML exports
+- Turning SOAP-style responses into workable JSON
+
+Tip: Check the @attributes objects in the output — that’s where XML attributes live, so nothing is silently dropped.
+
+FAQs:
+Q: How are XML attributes handled?
+A: Attributes are preserved in an "@attributes" object, repeated elements become arrays, and text content lands in "#text" — so the JSON round-trips your data faithfully.
+
+Q: How are repeated elements handled?
+A: They become JSON arrays automatically — an <item> repeated three times becomes an array of three objects.
+
+Q: What about XML namespaces?
+A: Namespace prefixes stay in the key names (e.g. dc:title), so namespaced documents remain distinguishable.
+
+### CSV to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/csv-to-pdf/
+
+What it does:
+Turn a CSV spreadsheet into a printable PDF table — header row highlighted, grid lines, columns auto-sized. Your data as a proper document.
+
+About the source format (CSV):
+CSV is the universal spreadsheet exchange format — but raw CSV is not something you print or email to a client.
+
+About the target format (PDF):
+PDF turns your spreadsheet into a formatted, printable table document that looks deliberate and professional.
+
+Use cases:
+- Printing a CSV export as a readable report
+- Emailing spreadsheet data to someone without Excel
+- Archiving data exports as fixed-layout documents
+
+Tip: The first row becomes the header — make sure your CSV has a clean header row before converting.
+
+FAQs:
+Q: How does the table look?
+A: A clean A4 table: bold header row on a shaded background, thin grid lines, and columns automatically sized to their content. Multi-page for long spreadsheets.
+
+Q: What if my CSV has many columns?
+A: Columns shrink automatically to fit the page, down to a readable minimum. Very wide sheets stay legible; extremely wide ones may need fewer columns.
+
+Q: Are commas inside cells handled?
+A: Yes — quoted fields with commas or quotes inside parse correctly, so your data lands in the right columns.
+
+Q: How many rows can it handle?
+A: Up to 500 rows per conversion, flowing across as many pages as needed. Larger exports: split the CSV first.
+
+## Subtitle Converters
+
+Free online subtitle converters. Switch SRT to WebVTT for the web, to ASS for styled karaoke subtitles, or between any of SRT, VTT, ASS and SSA — all in your browser.
+
+### SRT to WebVTT Converter
+
+URL: https://allinoneconverter.vercel.app/convert/srt-to-vtt/
+
+What it does:
+Convert SRT subtitles to WebVTT for HTML5 video players. VTT is the web standard — required for <track> captions that work in every browser.
+
+About the source format (SRT):
+SRT is the universal subtitle format — plain numbered cues with timestamps. Nearly every player and platform accepts it.
+
+About the target format (WebVTT):
+WebVTT is the web’s caption standard: the only format browsers accept natively for video captions via the track element.
+
+Use cases:
+- Adding captions to an HTML5 video player
+- Publishing accessible video on the web
+- Converting subtitles for web embedding
+
+Tip: Name the .vtt file the same as your video and add a captions track — browsers pick it up automatically.
+
+FAQs:
+Q: Why do I need WebVTT instead of SRT?
+A: Browsers only accept WebVTT for native <video> captions via the <track> element. SRT will not load there — this conversion fixes that in one click.
+
+Q: Do I need to change the timestamps?
+A: No — timestamps convert precisely; only the header format and separators change.
+
+Q: Can I style WebVTT captions?
+A: Yes — WebVTT supports basic styling with ::cue CSS, unlike SRT. The text converts first; style it afterwards.
+
+### WebVTT to SRT Converter
+
+URL: https://allinoneconverter.vercel.app/convert/vtt-to-srt/
+
+What it does:
+Convert WebVTT captions back to SRT, the universal subtitle format that video players, editors and YouTube all accept.
+
+About the source format (WebVTT):
+WebVTT powers web video captions, but outside browsers it’s the odd one out — many desktop players and editors prefer SRT.
+
+About the target format (SRT):
+SRT is the lingua franca of subtitles: YouTube, VLC, Premiere and virtually everything else accept it.
+
+Use cases:
+- Using web captions in VLC or another desktop player
+- Uploading captions to platforms that want SRT
+- Editing web captions in subtitle software
+
+Tip: Styling tags like <b> are stripped since SRT is plain text — timing and dialogue stay exact.
+
+FAQs:
+Q: Do I lose anything converting VTT to SRT?
+A: Styling tags (like <b> or <i>) are stripped since SRT is plain text — but timing and text stay exactly the same.
+
+Q: Will I lose the caption positioning?
+A: Yes — SRT has no positioning, so VTT position cues are dropped. Text and timing are preserved.
+
+Q: Is SRT still relevant?
+A: Very — it’s the most widely supported subtitle format in existence, which is exactly why people convert to it.
+
+### SRT to ASS Converter
+
+URL: https://allinoneconverter.vercel.app/convert/srt-to-ass/
+
+What it does:
+Convert SRT to ASS for styled subtitles — custom fonts, colors, positioning and karaoke effects that SRT cannot do.
+
+About the source format (SRT):
+SRT handles plain dialogue well, but it’s style-blind: no fonts, no colors, no positioning.
+
+About the target format (ASS):
+ASS (Advanced SubStation Alpha) is the styled subtitle format — fonts, colors, screen positions, outlines and karaoke effects.
+
+Use cases:
+- Styling fansub releases with custom fonts
+- Creating karaoke-timed lyrics
+- Positioning dialogue for overlapping speakers
+
+Tip: Your text and timing carry over; open the ASS in Aegisub to apply styles — that’s where ASS shines.
+
+FAQs:
+Q: What does ASS give me that SRT does not?
+A: Styling: fonts, colors, screen position, outlines and karaoke timing. Your text and timing carry over; you can then style it in Aegisub or any ASS editor.
+
+Q: What’s the difference between ASS and SSA?
+A: ASS is the newer, more capable version. SSA is its predecessor — pick ASS unless a specific old tool demands SSA.
+
+Q: Will my video player show the styles?
+A: VLC, MPV and most anime players render ASS styles fully. Some smart TVs and phones may show plain text.
+
+### ASS to SRT Converter
+
+URL: https://allinoneconverter.vercel.app/convert/ass-to-srt/
+
+What it does:
+Convert styled ASS subtitles to plain SRT for maximum compatibility with players and platforms that ignore styling.
+
+About the source format (ASS):
+ASS subtitles carry rich styling — great for fansubs, but many platforms and devices ignore all of it.
+
+About the target format (SRT):
+SRT strips everything down to timed dialogue: the format that works absolutely everywhere.
+
+Use cases:
+- Uploading fansub dialogue to YouTube
+- Playing styled subs on a device that ignores styling
+- Simplifying subtitles for editing
+
+Tip: Dialogue text and exact timing are preserved — only the styling codes are removed.
+
+FAQs:
+Q: What happens to the styling?
+A: Styling codes are removed — SRT cannot carry them. The dialogue text and its exact timing are preserved.
+
+Q: Do I lose dialogue?
+A: No — every line of dialogue converts with its timing. Only fonts, colors and positioning are dropped.
+
+Q: What about karaoke timing?
+A: Per-syllable karaoke timing is simplified to plain per-line cues, since SRT stores one start/end time per line.
+
+### SRT to SSA Converter
+
+URL: https://allinoneconverter.vercel.app/convert/srt-to-ssa/
+
+What it does:
+Convert SRT to SSA, the classic SubStation Alpha format still used by older fansub tooling and players.
+
+About the source format (SRT):
+SRT is the modern plain-text subtitle standard — simple, universal, style-free.
+
+About the target format (SSA):
+SSA is the classic SubStation Alpha format from the fansub era — still required by some older encoders and scripts.
+
+Use cases:
+- Feeding subtitles to legacy fansub tooling
+- Matching an old tutorial’s required format
+- Archiving subs in the classic format
+
+Tip: Only choose SSA if your tool specifically asks for it — ASS is the better modern choice for styled subtitles.
+
+FAQs:
+Q: SSA or ASS — which should I choose?
+A: ASS is the newer version with more features; SSA is its predecessor. Pick SSA only if your specific tool asks for it — otherwise ASS is the safer choice.
+
+Q: SSA or ASS — which should I pick?
+A: ASS, unless your tool explicitly requires SSA. ASS supports everything SSA does, plus more.
+
+Q: Is SSA obsolete?
+A: Mostly — but ‘mostly’ isn’t ‘entirely’, which is why this converter exists.
+
+### SSA to SRT Converter
+
+URL: https://allinoneconverter.vercel.app/convert/ssa-to-srt/
+
+What it does:
+Convert SSA subtitles to plain SRT for universal player support. Text and timing preserved, styling removed.
+
+About the source format (SSA):
+SSA is the older styled subtitle format — expressive, but increasingly unsupported outside niche players.
+
+About the target format (SRT):
+SRT is the safe universal choice: every player, editor and platform from the last 20 years accepts it.
+
+Use cases:
+- Modernizing an old SSA subtitle collection
+- Uploading legacy subs to YouTube
+- Simplifying styled subs for mobile playback
+
+Tip: Karaoke timing becomes plain cues — the words and their timing stay, the per-syllable effects go.
+
+FAQs:
+Q: Will karaoke timing survive?
+A: No — SRT stores one start and end time per line, so per-syllable karaoke timing is simplified to plain cues.
+
+Q: Will the text stay in sync?
+A: Yes — start and end times convert precisely. Only styling and override codes are dropped.
+
+Q: Can I get the styling back later?
+A: Not automatically — the style data is discarded. Keep your original SSA file if you might need it.
+
+### WebVTT to ASS Converter
+
+URL: https://allinoneconverter.vercel.app/convert/vtt-to-ass/
+
+What it does:
+Convert WebVTT web captions to styled ASS subtitles for desktop players and fansub workflows.
+
+About the source format (WebVTT):
+WebVTT is built for browsers, with only basic styling. Desktop fansub workflows expect much more.
+
+About the target format (ASS):
+ASS brings full styling to your captions: fonts, colors, positioning and effects for players like VLC and MPV.
+
+Use cases:
+- Restyling web captions for a fansub release
+- Moving browser captions into Aegisub for editing
+- Adding karaoke effects to web video captions
+
+Tip: Text and timing transfer exactly — then style freely in Aegisub, which is built for ASS.
+
+FAQs:
+Q: Do VTT positioning cues carry over?
+A: Text and timing carry over exactly; VTT-specific positioning is simplified since ASS uses its own style system.
+
+Q: Do VTT cue settings carry over?
+A: Text and timing do; VTT-specific positioning is simplified since ASS uses its own style system.
+
+Q: Why not go straight to SRT?
+A: If you want styling, ASS is the destination. SRT is the choice when you want maximum compatibility instead.
+
+### ASS to WebVTT Converter
+
+URL: https://allinoneconverter.vercel.app/convert/ass-to-vtt/
+
+What it does:
+Convert styled ASS subtitles to WebVTT for use in HTML5 video players on the web.
+
+About the source format (ASS):
+ASS is the desktop styling king — but browsers don’t speak it. Web video needs WebVTT.
+
+About the target format (WebVTT):
+WebVTT is the native web caption format, working with the track element in every browser.
+
+Use cases:
+- Publishing fansubbed video on the web
+- Converting styled subs for an HTML5 player
+- Making ASS dialogue work in browser-based courses
+
+Tip: ASS style codes are stripped — what remains is clean timed text that browsers render natively.
+
+FAQs:
+Q: What happens to ASS styling?
+A: ASS style codes are stripped — WebVTT carries text and timing. The result works natively with the <track> element in browsers.
+
+Q: Can browsers show ASS styling?
+A: No — browsers only render WebVTT, and even then with limited styling. Convert first, then optionally style with ::cue CSS.
+
+Q: Is any dialogue lost?
+A: None — every line converts with precise timing.
+
+### WebVTT to SSA Converter
+
+URL: https://allinoneconverter.vercel.app/convert/vtt-to-ssa/
+
+What it does:
+Convert WebVTT captions to SSA format for legacy subtitling tools that expect SubStation Alpha.
+
+About the source format (WebVTT):
+WebVTT is modern and web-native; SSA is a legacy desktop format. Rarely do they meet — but some old tools insist.
+
+About the target format (SSA):
+SSA satisfies those legacy encoders and scripts that predate both WebVTT and ASS.
+
+Use cases:
+- Feeding web captions to an old encoder
+- Matching a legacy workflow’s format requirement
+- Rare archival conversions
+
+Tip: This is a niche conversion — double-check your tool really wants SSA and not ASS or SRT.
+
+FAQs:
+Q: When would I need VTT to SSA?
+A: Rarely — usually when an old encoder or fansub script only accepts SSA. For the web, keep VTT; for modern styling, use ASS.
+
+Q: When would I actually need this?
+A: Almost never — usually an old encoder or script that only accepts SSA. For anything else, SRT or ASS is the better target.
+
+Q: Does timing stay accurate?
+A: Yes — timestamps convert precisely regardless of how unusual the format pair is.
+
+### SSA to WebVTT Converter
+
+URL: https://allinoneconverter.vercel.app/convert/ssa-to-vtt/
+
+What it does:
+Convert SSA subtitles to WebVTT so they play as native captions in HTML5 video.
+
+About the source format (SSA):
+SSA belongs to the desktop fansub era; the web never adopted it.
+
+About the target format (WebVTT):
+WebVTT brings those subtitles to browsers as native track captions.
+
+Use cases:
+- Putting legacy subtitle collections on the web
+- Converting old fansubs for HTML5 video
+- Web publishing of SSA archives
+
+Tip: Styling and override codes are dropped — browsers render the clean timed text.
+
+FAQs:
+Q: Is any timing lost?
+A: No — start and end times convert precisely. Only styling and override codes are dropped.
+
+Q: Is any timing lost?
+A: No — start and end times convert precisely. Only styling is dropped.
+
+Q: Why not convert SSA to SRT instead?
+A: If the destination is the web, VTT is the native choice. For desktop players and YouTube, SRT is equivalent.
+
+### ASS to SSA Converter
+
+URL: https://allinoneconverter.vercel.app/convert/ass-to-ssa/
+
+What it does:
+Downgrade ASS subtitles to the older SSA format for tools that predate ASS support.
+
+About the source format (ASS):
+ASS is SSA’s more capable successor — but a few ancient tools only understand the original.
+
+About the target format (SSA):
+SSA is the predecessor format: simpler, older, and exactly what those tools expect.
+
+Use cases:
+- Downgrading subs for a pre-ASS-era tool
+- Matching an old guide’s required format
+- Legacy compatibility fixes
+
+Tip: This is a downgrade — keep your ASS original, since SSA can’t hold its advanced features.
+
+FAQs:
+Q: What is lost going from ASS to SSA?
+A: Newer ASS-only features (like advanced karaoke and some overrides) are simplified. Plain dialogue converts perfectly.
+
+Q: What exactly is lost?
+A: ASS-only features like advanced karaoke and some override codes are simplified. Plain dialogue converts perfectly.
+
+Q: Why does this tool exist?
+A: Because somewhere out there, a 15-year-old encoder still demands SSA — and now you can feed it.
+
+### SSA to ASS Converter
+
+URL: https://allinoneconverter.vercel.app/convert/ssa-to-ass/
+
+What it does:
+Upgrade SSA subtitles to modern ASS format, unlocking better styling support in current players and editors.
+
+About the source format (SSA):
+SSA was great for its time, but ASS does everything it does, better.
+
+About the target format (ASS):
+ASS is the modern styled subtitle standard — better tooling, better player support, more features.
+
+Use cases:
+- Modernizing an old subtitle collection
+- Unlocking better styling in current editors
+- Standardizing on ASS for a fansub group
+
+Tip: This is a strict upgrade with no downside — everything that reads SSA reads ASS.
+
+FAQs:
+Q: Why upgrade SSA to ASS?
+A: ASS is supported by everything that supports SSA, plus more styling features. It is a strict upgrade with no downside.
+
+Q: Why upgrade SSA to ASS?
+A: ASS is supported everywhere SSA is, plus better styling features and modern editor support. There’s no reason to stay on SSA.
+
+Q: Does the upgrade change my timing?
+A: Not at all — it’s a format upgrade, your cues stay exactly as they were.
+
+## Video Converters
+
+Free online video converters that run entirely in your browser. Convert MOV to MP4, MKV to MP4, WebM to MP4, extract MP3 audio from video, and make GIFs — your videos are never uploaded anywhere.
+
+### MP4 to MP3 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/mp4-to-mp3/
+
+What it does:
+Extract the audio from any MP4 video as a high-quality MP3. Perfect for saving podcast audio, lectures, music and voice from video files.
+
+About the source format (MP4):
+MP4 is the universal video container — video and audio bundled together. Often you only want the audio.
+
+About the target format (MP3):
+MP3 is the universal audio format: tiny files that play on every device, car stereo and app ever made.
+
+Use cases:
+- Saving podcast audio from a video file
+- Extracting lecture audio for offline listening
+- Ripping audio from screen recordings for editing
+
+Tip: We encode at 192 kbps — transparent quality for music and voice, at roughly 1.4 MB per minute.
+
+FAQs:
+Q: What audio quality do I get?
+A: 192 kbps MP3 — transparent quality for music and voice that sounds identical to the original for the vast majority of listeners.
+
+Q: What audio quality do I get?
+A: 192 kbps MP3 — indistinguishable from the original for the vast majority of listeners, including music.
+
+Q: How big will the MP3 be?
+A: About 1.4 MB per minute of audio. A 10-minute video’s audio becomes roughly a 14 MB MP3.
+
+Q: Can I extract audio from a 2-hour video?
+A: Yes, as long as the file stays under ~500 MB — beyond that browsers tend to run out of memory.
+
+Q: Does it keep the video too?
+A: No — the video track is discarded and only the audio is kept. That’s exactly what makes the file so much smaller.
+
+### MOV to MP4 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/mov-to-mp4/
+
+What it does:
+Convert Apple MOV videos to universal MP4 so they play on Windows, Android, smart TVs and every video editor.
+
+About the source format (MOV):
+MOV is Apple’s QuickTime container — the default from iPhones and Macs. Great quality, but Windows and web players sometimes choke on it.
+
+About the target format (MP4):
+MP4 with H.264 is the one video format that plays absolutely everywhere: every browser, phone, TV and editor.
+
+Use cases:
+- Making iPhone videos playable on Windows
+- Converting MOV for YouTube upload
+- Preparing Mac screen recordings for sharing
+
+Tip: We re-encode with H.264 at CRF 23 — visually identical to your MOV at a much friendlier file size.
+
+FAQs:
+Q: Will I lose quality converting MOV to MP4?
+A: Visually, no. We re-encode with H.264 at CRF 23 — the sweet spot where compression is strong but artifacts are invisible in normal viewing.
+
+Q: Will I lose quality?
+A: Visually, no — CRF 23 is the sweet spot where compression is strong but artifacts are invisible in normal viewing.
+
+Q: Why not just rename .mov to .mp4?
+A: Renaming doesn’t change the actual video data and often breaks playback. Real conversion re-encodes properly.
+
+### MKV to MP4 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/mkv-to-mp4/
+
+What it does:
+Convert MKV videos to MP4 for playback on phones, smart TVs, tablets and anything that refuses Matroska files.
+
+About the source format (MKV):
+MKV (Matroska) is the enthusiast’s container — it holds anything: multiple audio tracks, subtitles, chapters. But phones, TVs and browsers often refuse it.
+
+About the target format (MP4):
+MP4 is the compatibility container: one video track, one audio track, plays everywhere from iPhones to smart TVs.
+
+Use cases:
+- Making downloaded MKV movies play on a smart TV
+- Converting MKV for iPhone/Android playback
+- Preparing MKV for video editors that prefer MP4
+
+Tip: Extra audio tracks and subtitles in the MKV aren’t carried over — the main video and audio tracks convert.
+
+FAQs:
+Q: What happens to subtitles or extra audio tracks in my MKV?
+A: The main video and audio tracks convert. Extra audio tracks, subtitles and chapters are not carried into the MP4.
+
+Q: What happens to subtitles in my MKV?
+A: They’re not carried into the MP4 — extract them separately if you need them.
+
+Q: How long does conversion take?
+A: Roughly proportional to video length — a 2-minute clip takes well under a minute on a modern laptop.
+
+### WebM to MP4 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/webm-to-mp4/
+
+What it does:
+Convert WebM videos to MP4 for editing in Premiere, DaVinci or CapCut — and for playback on devices that ignore WebM.
+
+About the source format (WebM):
+WebM is the web’s open video format — efficient and royalty-free, but poorly supported outside browsers.
+
+About the target format (MP4):
+MP4/H.264 is the safe universal format for sharing, editing and uploading anywhere.
+
+Use cases:
+- Converting WebM screen recordings for Premiere or DaVinci
+- Making WebM clips editable in mobile apps
+- Uploading WebM to platforms that want MP4
+
+Tip: WebM uses VP9/Opus internally; we transcode to H.264/AAC — the combination every editor and platform expects.
+
+FAQs:
+Q: Where do WebM files usually come from?
+A: Mostly browsers: screen recordings, downloaded web videos, and some Android apps save video as WebM.
+
+Q: Where do WebM files come from?
+A: Mostly browsers — screen recordings, downloaded web videos, and some Android apps save as WebM.
+
+Q: Does quality suffer?
+A: Minimally — CRF 23 H.264 preserves the visual quality while producing a widely compatible file.
+
+### AVI to MP4 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/avi-to-mp4/
+
+What it does:
+Convert ancient AVI files to modern MP4 — far smaller files that play on every current device.
+
+About the source format (AVI):
+AVI is Microsoft’s 1992 container — ancient, inefficient, and still floating around in old cameras and archives.
+
+About the target format (MP4):
+MP4 drags that video into the modern era: far smaller files, universal playback.
+
+Use cases:
+- Modernizing old camera AVI footage
+- Converting AVI archives for phone playback
+- Making ancient video files emailable
+
+Tip: AVI files are often huge for their quality — expect the MP4 to be dramatically smaller with no visible difference.
+
+FAQs:
+Q: Why are my AVI files so big?
+A: Many AVIs use 20-year-old codecs with poor compression. Modern H.264 does the same job at a fraction of the size.
+
+Q: Why are my AVI files so big?
+A: Many AVIs use 20-year-old codecs with poor compression. Modern H.264 does the same job at a fraction of the size.
+
+Q: Will very old AVIs convert?
+A: Most will. A few use truly obscure codecs from the 90s — if one fails, that’s usually why.
+
+### MP4 to WebM Converter
+
+URL: https://allinoneconverter.vercel.app/convert/mp4-to-webm/
+
+What it does:
+Convert MP4 to WebM (VP9 + Opus) — the open, royalty-free video format for HTML5 players and open-web publishing.
+
+About the source format (MP4):
+MP4/H.264 is universal but patent-encumbered; for open web projects, royalty-free matters.
+
+About the target format (WebM):
+WebM (VP9 + Opus) is the open, royalty-free web video format — ideal for HTML5 video on your own site.
+
+Use cases:
+- Preparing videos for a website’s HTML5 player
+- Creating royalty-free video assets for open-source projects
+- Publishing video where open codecs are required
+
+Tip: VP9 encoding is slower than H.264 — give it time on longer videos. The result is worth it for web use.
+
+FAQs:
+Q: Why convert MP4 to WebM?
+A: For open-web publishing: WebM is royalty-free, so you avoid H.264 licensing concerns on your own platform — and it streams beautifully in browsers.
+
+Q: Why convert MP4 to WebM?
+A: For open-web publishing: WebM is royalty-free, so you avoid H.264 licensing concerns on your own platform.
+
+Q: Do browsers play WebM?
+A: Chrome, Edge, Firefox and Android do. Safari added support more recently — for maximum reach, keep an MP4 fallback.
+
+### Video to GIF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/video-to-gif/
+
+What it does:
+Turn a video clip into an animated GIF in one click — we convert the first 10 seconds at 480px. For trimming, custom length and quality control, use the GIF Maker studio.
+
+About the source format (Video):
+Video clips capture moments perfectly — but they’re heavy, need a player, and don’t autoplay everywhere.
+
+About the target format (GIF):
+GIFs are the internet’s universal animation: they play inline on every site, chat app and forum ever made.
+
+Use cases:
+- Turning a funny clip into a shareable reaction GIF
+- Making a quick demo animation for documentation
+- Creating a looping preview from a video
+
+Tip: This one-click version converts the first 10 seconds at 480px — for trimming, custom length and quality control, use the GIF Maker studio.
+
+FAQs:
+Q: How long is the resulting GIF?
+A: The first 10 seconds of your video. For a custom section, longer clips or quality options, use the dedicated GIF Maker page.
+
+Q: How long is the resulting GIF?
+A: The first 10 seconds of your video. For a custom section or longer clips, the GIF Maker page lets you trim up to 15 seconds.
+
+Q: Why is my GIF file so big?
+A: GIFs store every frame as an image — they’re inherently heavy. Shorter clips, smaller widths and lower FPS all shrink the file.
+
+### M4V to MP4 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/m4v-to-mp4/
+
+What it does:
+Convert Apple M4V videos to standard MP4 for playback on Android, Windows and everything else.
+
+About the source format (M4V):
+M4V is Apple’s iTunes-era video format — essentially MP4’s close cousin, occasionally with DRM.
+
+About the target format (MP4):
+MP4 is the DRM-free universal standard that plays on everything.
+
+Use cases:
+- Converting old iTunes video purchases (non-DRM) for modern devices
+- Making M4V files play on Android
+- Standardizing an Apple-heavy video library
+
+Tip: DRM-protected M4V files from the iTunes Store can’t be converted — only DRM-free M4V works.
+
+FAQs:
+Q: What is the difference between M4V and MP4?
+A: Technically very little — M4V is Apple’s variant of MP4. Conversion is quick and preserves quality.
+
+Q: What’s the difference between M4V and MP4?
+A: Technically very little — M4V is Apple’s variant of MP4. Conversion is quick and preserves quality.
+
+Q: Why won’t my M4V convert?
+A: If it was bought from iTunes with DRM, no converter can touch it. DRM-free M4V converts fine.
+
+### 3GP to MP4 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/3gp-to-mp4/
+
+What it does:
+Convert old 3GP mobile videos to MP4 so they play on modern phones, computers and the web.
+
+About the source format (3GP):
+3GP is the ancient mobile video format — tiny, low-resolution clips from early-2000s phones.
+
+About the target format (MP4):
+MP4 makes those clips playable on modern phones, computers and the web.
+
+Use cases:
+- Rescuing old phone videos for modern playback
+- Converting 3GP archives for YouTube
+- Making ancient mobile clips shareable
+
+Tip: Don’t expect HD — 3GP was made for tiny screens. The MP4 preserves what quality exists; it can’t invent more.
+
+FAQs:
+Q: Will the quality improve?
+A: No — conversion preserves the original quality exactly. 3GP was low-resolution by design, made for tiny early-2000s phone screens.
+
+Q: Where do 3GP files come from?
+A: Old mobile phones (2000s–early 2010s) and some MMS messages. If you found one, it’s a time capsule.
+
+Q: Will the quality improve?
+A: No — conversion preserves the original quality exactly. 3GP was low-resolution by design.
+
+### FLV to MP4 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/flv-to-mp4/
+
+What it does:
+Convert Flash-era FLV videos to MP4 — rescuing old downloads into a format that plays today.
+
+About the source format (FLV):
+FLV (Flash Video) powered YouTube’s early years — then Flash died, and FLV players went with it.
+
+About the target format (MP4):
+MP4 rescues that content into a format that plays on everything today.
+
+Use cases:
+- Recovering old Flash-era video downloads
+- Converting FLV archives for modern playback
+- Making legacy video content uploadable
+
+Tip: FLV quality was often low by today’s standards — the MP4 will look the same, just playable.
+
+FAQs:
+Q: Why won’t anything play my FLV?
+A: Flash was discontinued in 2020 and browsers removed support. Converting to MP4 is the fix.
+
+Q: Why won’t anything play my FLV?
+A: Flash was discontinued in 2020 and browsers removed support. Converting to MP4 is the fix.
+
+Q: Does FLV to MP4 improve quality?
+A: No — but it makes the video playable again, which is the whole point.
+
+### Merge Videos
+
+URL: https://allinoneconverter.vercel.app/convert/merge-videos/
+
+What it does:
+Join multiple video clips into one MP4 — interviews, takes, or parts of a vlog. Same-codec clips merge instantly with no quality loss; mixed clips are re-encoded automatically.
+
+About the source format (Videos):
+Videos are shot in pieces — takes, scenes, clips from different days. Players and platforms want one file.
+
+About the target format (MP4):
+One merged MP4 plays start-to-finish with no gaps — ready to upload, share or archive.
+
+Use cases:
+- Joining interview takes into one continuous video
+- Combining vlog clips shot across a day
+- Merging screen recordings into a single tutorial
+
+Tip: Clips from the same camera and settings merge fastest with zero quality loss. Mixed sources still work — they are re-encoded to a common format automatically.
+
+FAQs:
+Q: How do I combine several video clips into one?
+A: Drop your clips in order (rearrange with up/down arrows), hit merge, and download one MP4. Clips from the same camera merge with zero quality loss; different sources are smoothly re-encoded to match.
+
+Q: Will merging reduce quality?
+A: Not when clips share the same codec — they join with stream copy, bit-for-bit. Mixed clips get re-encoded once at your chosen quality.
+
+Q: What if my clips have different resolutions?
+A: They still merge — the re-encode fallback normalizes them. For cleanest results, shoot all clips at the same resolution.
+
+### Video to GIF Maker
+
+URL: https://allinoneconverter.vercel.app/gif-maker/
+
+What it does:
+Turn any video into an animated GIF: trim the exact moment, set width, FPS and quality, two-pass palette rendering for crisp colors. Runs in your browser, no watermark, free forever.
+
+## Audio Converters
+
+Free online audio converters. Turn WAV, FLAC, OGG, M4A, AAC or WMA into universal MP3s at 192 kbps, or convert MP3 back to WAV — all on your device, nothing uploaded.
+
+### WAV to MP3 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/wav-to-mp3/
+
+What it does:
+Convert huge WAV files to compact MP3s at 192 kbps — about 7x smaller with no audible difference.
+
+About the source format (WAV):
+WAV is uncompressed CD-quality audio — perfect fidelity, enormous files (about 10 MB per minute).
+
+About the target format (MP3):
+MP3 at 192 kbps keeps that audio sounding identical to almost every ear at roughly one-seventh the size.
+
+Use cases:
+- Shrinking WAV recordings for sharing
+- Converting studio exports for streaming
+- Making voice memos emailable
+
+Tip: 192 kbps is the sweet spot — below 128 kbps you’d start hearing the difference on music.
+
+FAQs:
+Q: Will I hear a difference?
+A: Almost certainly not — 192 kbps MP3 is transparent for the vast majority of listeners, even on good headphones.
+
+Q: Will I hear a difference?
+A: Almost certainly not — 192 kbps MP3 is transparent for the vast majority of listeners, even on good headphones.
+
+Q: How much smaller?
+A: Roughly 7x smaller. A 50 MB WAV becomes about a 7 MB MP3.
+
+### FLAC to MP3 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/flac-to-mp3/
+
+What it does:
+Convert lossless FLAC music to universal MP3 for car stereos, phones and anywhere FLAC won’t play.
+
+About the source format (FLAC):
+FLAC is audiophile-grade lossless compression — bit-perfect, but still 5x bigger than MP3.
+
+About the target format (MP3):
+MP3 trades inaudible detail for universal compatibility and tiny files.
+
+Use cases:
+- Making FLAC music playable in the car
+- Converting a FLAC library for a phone with limited storage
+- Sharing lossless rips with friends
+
+Tip: Keep your FLAC originals archived — convert copies to MP3 for portable use.
+
+FAQs:
+Q: Isn’t FLAC better than MP3?
+A: Technically yes — FLAC is lossless. But in blind tests almost nobody can tell 192 kbps MP3 from FLAC. Compatibility and size are MP3’s wins.
+
+Q: Isn’t FLAC better than MP3?
+A: Technically yes — FLAC is lossless. But in blind tests almost nobody can tell 192 kbps MP3 from FLAC. Compatibility and size are MP3’s wins.
+
+Q: Do tags (artist, album) survive?
+A: Yes — metadata tags carry over to the MP3.
+
+### OGG to MP3 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/ogg-to-mp3/
+
+What it does:
+Convert OGG Vorbis audio to MP3 for playback on iPhones, car stereos and everything that ignores OGG.
+
+About the source format (OGG):
+OGG Vorbis is the open-source audio codec — great quality, but spotty support on Apple devices and car stereos.
+
+About the target format (MP3):
+MP3 plays on literally everything with an audio chip.
+
+Use cases:
+- Playing OGG music on an iPhone
+- Converting game audio rips for general use
+- Making OGG files car-stereo compatible
+
+Tip: OGG and MP3 at similar bitrates sound the same — this conversion is purely about compatibility.
+
+FAQs:
+Q: Where do OGG files come from?
+A: Spotify’s local files, many video games, and open-source projects. OGG is excellent — just not universal.
+
+Q: Where do OGG files come from?
+A: Spotify’s local files, many video games, and open-source projects. It’s excellent — just not universal.
+
+Q: Quality loss?
+A: Negligible at 192 kbps. You’re transcoding between two good lossy codecs; the difference is inaudible to nearly everyone.
+
+### M4A to MP3 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/m4a-to-mp3/
+
+What it does:
+Convert Apple M4A audio to MP3 for old MP3 players, DJ software and maximum compatibility.
+
+About the source format (M4A):
+M4A (AAC) is Apple’s audio format — the iTunes default. Great quality, but some older players and DJ software want MP3.
+
+About the target format (MP3):
+MP3 is the safe universal audio format nothing rejects.
+
+Use cases:
+- Converting iTunes purchases for old MP3 players
+- Preparing audio for DJ software that prefers MP3
+- Standardizing a mixed audio library
+
+Tip: M4A/AAC is technically slightly more efficient than MP3 — but at 192 kbps the difference is inaudible, and compatibility wins.
+
+FAQs:
+Q: Is M4A better than MP3?
+A: Marginally more efficient at the same bitrate. In practice 192 kbps of either sounds identical — pick based on compatibility.
+
+Q: Is M4A better than MP3?
+A: Marginally more efficient at the same bitrate. In practice 192 kbps of either sounds identical — pick based on compatibility.
+
+Q: Do protected iTunes files convert?
+A: Old DRM-protected M4P files won’t. Standard DRM-free M4A converts fine.
+
+### AAC to MP3 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/aac-to-mp3/
+
+What it does:
+Convert AAC audio to MP3 — the compatibility baseline every device supports.
+
+About the source format (AAC):
+AAC is the modern efficient codec behind YouTube, iTunes and broadcasts — better than MP3 on paper, less universal in practice.
+
+About the target format (MP3):
+MP3 remains the compatibility baseline every device supports.
+
+Use cases:
+- Converting AAC streams for legacy hardware
+- Standardizing audio for maximum compatibility
+- Preparing AAC for MP3-only workflows
+
+Tip: At 192 kbps both codecs are transparent — convert for compatibility, not quality.
+
+FAQs:
+Q: AAC vs MP3 quality?
+A: AAC is more efficient on paper, but at 192 kbps both are transparent to human hearing. This conversion is about compatibility.
+
+Q: AAC vs MP3 quality?
+A: AAC is more efficient on paper, but at 192 kbps both are transparent to human hearing. This conversion is about compatibility.
+
+Q: Where do raw AAC files come from?
+A: Video extraction, broadcasts, and some Android recordings save audio as bare AAC.
+
+### MP3 to WAV Converter
+
+URL: https://allinoneconverter.vercel.app/convert/mp3-to-wav/
+
+What it does:
+Convert MP3 to uncompressed WAV for editing in a DAW or any pro audio workflow that demands WAV.
+
+About the source format (MP3):
+MP3 is the compact universal format — but it’s lossy, and some pro workflows demand uncompressed audio.
+
+About the target format (WAV):
+WAV is uncompressed PCM: the studio standard that every DAW and audio tool accepts.
+
+Use cases:
+- Preparing MP3 for editing in a DAW
+- Converting MP3 for audio software that needs WAV
+- Making MP3s CD-burn ready
+
+Tip: This won’t restore quality the MP3 discarded — it just gives you an uncompressed container for editing.
+
+FAQs:
+Q: Will it sound better as WAV?
+A: No — conversion can’t recover what MP3 compression removed. The benefit is compatibility with pro tools, not quality.
+
+Q: Will it sound better as WAV?
+A: No — conversion can’t recover what MP3 compression removed. The benefit is compatibility with pro tools, not quality.
+
+Q: Why is the WAV so big?
+A: Uncompressed audio is ~10 MB per minute. That’s normal — it’s the price of the studio standard.
+
+### OGG to WAV Converter
+
+URL: https://allinoneconverter.vercel.app/convert/ogg-to-wav/
+
+What it does:
+Convert OGG audio to uncompressed WAV for editors, samplers and game engines that only accept WAV.
+
+About the source format (OGG):
+OGG Vorbis is efficient and open — but pro audio tools and some game engines want plain WAV.
+
+About the target format (WAV):
+WAV is the uncompressed interchange format: no codec, no patents, no surprises.
+
+Use cases:
+- Converting game audio OGGs for editing
+- Preparing OGG for sample libraries
+- Getting OGG into WAV-only software
+
+Tip: Like all lossy-to-lossless conversions, quality stays exactly as good as the OGG — no better, no worse.
+
+FAQs:
+Q: Does WAV improve OGG quality?
+A: No — it preserves it exactly. The WAV is bigger, not better. The point is compatibility with WAV-only software.
+
+Q: Does WAV improve OGG quality?
+A: No — it preserves it exactly. The WAV is bigger, not better. The point is compatibility with WAV-only software.
+
+Q: Why would I want that?
+A: Some audio editors, samplers and game engines only accept WAV. This conversion is the bridge.
+
+### WMA to MP3 Converter
+
+URL: https://allinoneconverter.vercel.app/convert/wma-to-mp3/
+
+What it does:
+Convert old Windows WMA rips to MP3 — rescuing 2000s music collections for modern playback.
+
+About the source format (WMA):
+WMA is Microsoft’s 2000s-era audio format — once bundled with Windows Media Player, now largely abandoned.
+
+About the target format (MP3):
+MP3 brings that audio into the modern world of universal playback.
+
+Use cases:
+- Converting old Windows Media rips
+- Rescuing a WMA music collection
+- Making WMA files phone-compatible
+
+Tip: DRM-protected WMA files (from old music stores) can’t be converted — only plain WMA works.
+
+FAQs:
+Q: Where do WMA files come from?
+A: Windows Media Player CD rips from the 2000s. If you ripped CDs on Windows back then, you probably have WMAs.
+
+Q: Where do WMA files come from?
+A: Windows Media Player CD rips from the 2000s. If you ripped CDs on Windows back then, you probably have WMAs.
+
+Q: Why won’t my WMA convert?
+A: If it was bought from an old DRM music store, it’s locked. Plain ripped WMAs convert fine.
+
+### Merge Audio
+
+URL: https://allinoneconverter.vercel.app/convert/merge-audios/
+
+What it does:
+Join audio clips into one MP3 — podcast segments, voice memos, or music parts. Arrange the order, pick a bitrate, and download a single seamless file.
+
+About the source format (Audio):
+Voice memos, interview segments and music ideas pile up as separate files — hard to share or play in order.
+
+About the target format (MP3):
+One merged MP3 plays seamlessly and shares like any single audio file.
+
+Use cases:
+- Joining podcast segments into one episode
+- Combining voice memos into a single recording
+- Merging music stems or practice takes
+
+Tip: MP3 segments join with no re-encoding (no quality loss). Mixed formats are converted to MP3 at your chosen bitrate.
+
+FAQs:
+Q: How do I join voice memos into one file?
+A: Drop your recordings in order, rearrange with the arrows if needed, choose a bitrate, and download one MP3. Everything runs in your browser.
+
+Q: Does merging MP3s lose quality?
+A: No — MP3 segments join via stream copy with zero re-encoding. Only non-MP3 inputs get encoded once.
+
+Q: Which bitrate should I choose?
+A: 192 kbps is the sweet spot for voice and most music. 320 kbps for critical listening, 128 kbps for the smallest files.
+
+## File Tools
+
+Free online file tools that run entirely in your browser. Rename up to 500 files at once with find & replace, prefixes, sequential numbering and live preview — your files never leave your device.
+
+### Bulk File Renamer
+
+URL: https://allinoneconverter.vercel.app/tools/bulk-rename/
+
+What it does:
+Rename up to 500 files at once: find & replace, prefix/suffix, sequential numbering, case fixes — live preview, ZIP download, 100% in your browser.

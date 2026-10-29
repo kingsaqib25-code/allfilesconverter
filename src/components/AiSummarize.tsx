@@ -14,6 +14,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 interface Props {
   /** The page's public summary text (TL;DR + about). Never user files. */
   summaryText: string;
+  /** Compact header variant: small "✨ Summary" button instead of the full block. */
+  compact?: boolean;
 }
 
 function renderAiText(text: string) {
@@ -39,7 +41,7 @@ function renderAiText(text: string) {
   });
 }
 
-export default function AiSummarize({ summaryText }: Props) {
+export default function AiSummarize({ summaryText, compact }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -105,14 +107,16 @@ export default function AiSummarize({ summaryText }: Props) {
   }, [open, close]);
 
   return (
-    <div className="ai-sum" aria-label="Summarize this page with AI">
-      <button type="button" className="btn secondary ai-sum-open" onClick={summarize}>
-        <span aria-hidden="true">✨</span> Summarize with AI
+    <div className={compact ? 'ai-sum ai-sum-compact' : 'ai-sum'} aria-label="Summarize this page with AI">
+      <button type="button" className={compact ? 'ai-sum-compact-btn' : 'btn secondary ai-sum-open'} onClick={summarize} aria-label={compact ? 'Summarize this page with AI' : undefined}>
+        <span aria-hidden="true">✨</span> {compact ? 'Summary' : 'Summarize with AI'}
       </button>
-      <p className="ai-sum-note">
-        Only this page&apos;s public summary is sent to the AI — your files never leave your
-        device.
-      </p>
+      {!compact && (
+        <p className="ai-sum-note">
+          Only this page&apos;s public summary is sent to the AI — your files never leave your
+          device.
+        </p>
+      )}
 
       {open && (
         <>

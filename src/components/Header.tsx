@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import SearchBar from './SearchBar';
 import FeedbackButton from './FeedbackButton';
+import HeaderSummaryButton from './HeaderSummaryButton';
 import { CATEGORIES, convertersByCategory, standaloneToolsByCategory, TAGLINE } from '@/lib/converters/registry';
 
 const catCount = (id: (typeof CATEGORIES)[number]['id']) =>
@@ -125,6 +126,9 @@ function MobileMenu() {
               </Link>
             ))}
             <div className="mmenu-sep" role="separator" />
+            <div className="mmenu-item mmenu-summary">
+              <HeaderSummaryButton />
+            </div>
             <Link href="/about" className="mmenu-item" role="menuitem" onClick={close}>About</Link>
             <Link href="/contact" className="mmenu-item" role="menuitem" onClick={close}>Contact</Link>
             <Link href="/privacy" className="mmenu-item" role="menuitem" onClick={close}>Privacy</Link>
@@ -165,6 +169,7 @@ export default function Header() {
           <Link href="/categories/image" className="nav-link">Images</Link>
           <Link href="/categories/data" className="nav-link">Data</Link>
           <Link href="/about" className="nav-link">About</Link>
+          <HeaderSummaryButton />
         </nav>
         <MobileMenu />
       </div>

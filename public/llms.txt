@@ -4,138 +4,169 @@
 
 ## What this site is
 
-Quick Files Converter (https://allfilesconverter.vercel.app/) is a free file-conversion website. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API). There is no server-side processing, no database and no user accounts.
+Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 93 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (20 tools), Image Converters (27 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (12 tools), Audio Converters (9 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
 
 ## Privacy / no-upload policy
 
-- Files never leave the visitor’s device. Nothing is uploaded anywhere.
-- No server processes files; there is no database and no user accounts.
-- Conversions are free forever with no watermarks and no sign-up.
-- The "Summarize this page with AI" buttons only share the page\u2019s public summary text with the chosen AI — never the visitor\u2019s files.
+— Files never leave the visitor’s device. Nothing is uploaded anywhere.
+— No server processes files; there is no database and no user accounts.
+— Conversions are free forever with no watermarks and no sign-up.
+— The "Summarize with AI" buttons only share a page’s public summary text with the chosen AI — never the visitor’s files.
 
 ## Flagship tools
 
-- https://allfilesconverter.vercel.app/gif-maker/ — Video to GIF Maker: trim, set width/FPS/quality, two-pass palette rendering, no watermark.
-- https://allfilesconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter (iPhone photos to universal JPG).
-- https://allfilesconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter (extract 192 kbps audio from video).
-- https://allfilesconverter.vercel.app/tools/bulk-rename/ — Bulk File Renamer: rename up to 500 files at once with live preview.
+- https://allinoneconverter.vercel.app/convert/png-to-jpg/ — PNG to JPG Converter: Turn PNG screenshots, logos and graphics into much smaller JPG files.
+- https://allinoneconverter.vercel.app/convert/jpg-to-webp/ — JPG to WebP Converter: Shrink JPG photos into WebP files that look identical but load faster.
+- https://allinoneconverter.vercel.app/convert/webp-to-jpg/ — WebP to JPG Converter: Turn WebP images into universally compatible JPGs.
+- https://allinoneconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter: Convert iPhone HEIC photos to JPG so they open everywhere — Windows, Android, email and the web.
+- https://allinoneconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter: Extract the audio from any MP4 video as a high-quality MP3.
+- https://allinoneconverter.vercel.app/convert/pdf-to-jpg/ — PDF to JPG Converter: Convert every page of a PDF into crisp JPG images — download pages individually or all at once as a ZIP.
+- https://allinoneconverter.vercel.app/convert/jpg-to-pdf/ — JPG to PDF Converter: Turn JPG photos and scans into a single PDF document — one image per page, in the order you choose.
+- https://allinoneconverter.vercel.app/convert/merge-pdf/ — Merge PDF: Combine multiple PDF files into one document — arrange pages in any order with up/down controls.
+- https://allinoneconverter.vercel.app/convert/pdf-to-word/ — PDF to Word Converter: Extract your PDF’s text into an editable Word (.docx) document — free, in your browser.
+- https://allinoneconverter.vercel.app/convert/pdf-to-excel/ — PDF to Excel Converter: Turn PDF tables into editable Excel spreadsheets — right in your browser.
+- https://allinoneconverter.vercel.app/convert/edit-pdf/ — Edit PDF Online: Click any text in your PDF and type to edit it — right on the page, in your browser.
+- https://allinoneconverter.vercel.app/gif-maker/ — Video to GIF Maker: Turn any video into an animated GIF: trim the exact moment, set width, FPS and quality, two-pass palette rendering for crisp colors.
+- https://allinoneconverter.vercel.app/tools/bulk-rename/ — Bulk File Renamer: Rename up to 500 files at once: find & replace, prefix/suffix, sequential numbering, case fixes — live preview, ZIP download, 100% in your browser.
 
-## All converters (90)
+## PDF Converters (20)
 
-### PDF Converters
+Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GIF, BMP and HEIC images, TXT, Markdown and CSV files into PDF documents — or convert PDF to JPG/PNG images, merge, split, compress, rotate, watermark, add page numbers, redact, crop, delete pages, unlock and edit PDFs, and extract text and images — your documents are never uploaded anywhere.
 
-- https://allfilesconverter.vercel.app/convert/pdf-to-jpg/ — PDF to JPG Converter
-- https://allfilesconverter.vercel.app/convert/pdf-to-png/ — PDF to PNG Converter
-- https://allfilesconverter.vercel.app/convert/jpg-to-pdf/ — JPG to PDF Converter
-- https://allfilesconverter.vercel.app/convert/png-to-pdf/ — PNG to PDF Converter
-- https://allfilesconverter.vercel.app/convert/merge-pdf/ — Merge PDF
-- https://allfilesconverter.vercel.app/convert/split-pdf/ — Split PDF
-- https://allfilesconverter.vercel.app/convert/compress-pdf/ — Compress PDF
-- https://allfilesconverter.vercel.app/convert/pdf-to-text/ — PDF to Text Converter
-- https://allfilesconverter.vercel.app/convert/pdf-to-word/ — PDF to Word Converter
-- https://allfilesconverter.vercel.app/convert/edit-pdf/ — Edit PDF Online
-- https://allfilesconverter.vercel.app/convert/merge-images-pdf/ — Merge Images to PDF
-- https://allfilesconverter.vercel.app/convert/rotate-pdf/ — Rotate PDF
-- https://allfilesconverter.vercel.app/convert/watermark-pdf/ — Watermark PDF
-- https://allfilesconverter.vercel.app/convert/page-numbers-pdf/ — Add Page Numbers to PDF
-- https://allfilesconverter.vercel.app/convert/unlock-pdf/ — Unlock PDF
-- https://allfilesconverter.vercel.app/convert/extract-images-pdf/ — Extract Images from PDF
-- https://allfilesconverter.vercel.app/convert/redact-pdf/ — Redact PDF
-- https://allfilesconverter.vercel.app/convert/delete-pages-pdf/ — Delete Pages from PDF
-- https://allfilesconverter.vercel.app/convert/crop-pdf/ — Crop PDF
+- https://allinoneconverter.vercel.app/convert/pdf-to-jpg/ — PDF to JPG Converter: Convert every page of a PDF into crisp JPG images — download pages individually or all at once as a ZIP.
+- https://allinoneconverter.vercel.app/convert/pdf-to-png/ — PDF to PNG Converter: Convert PDF pages to lossless PNG images at high resolution.
+- https://allinoneconverter.vercel.app/convert/jpg-to-pdf/ — JPG to PDF Converter: Turn JPG photos and scans into a single PDF document — one image per page, in the order you choose.
+- https://allinoneconverter.vercel.app/convert/png-to-pdf/ — PNG to PDF Converter: Convert PNG screenshots and graphics into a clean PDF — one image per page.
+- https://allinoneconverter.vercel.app/convert/merge-pdf/ — Merge PDF: Combine multiple PDF files into one document — arrange pages in any order with up/down controls.
+- https://allinoneconverter.vercel.app/convert/split-pdf/ — Split PDF: Extract pages from a PDF — enter a range like "1-3, 5" and download just those pages as a new PDF.
+- https://allinoneconverter.vercel.app/convert/compress-pdf/ — Compress PDF: Shrink an oversized PDF so it fits email and upload limits.
+- https://allinoneconverter.vercel.app/convert/pdf-to-text/ — PDF to Text Converter: Extract all the text from a PDF into a clean .txt file.
+- https://allinoneconverter.vercel.app/convert/pdf-to-word/ — PDF to Word Converter: Extract your PDF’s text into an editable Word (.docx) document — free, in your browser.
+- https://allinoneconverter.vercel.app/convert/pdf-to-excel/ — PDF to Excel Converter: Turn PDF tables into editable Excel spreadsheets — right in your browser.
+- https://allinoneconverter.vercel.app/convert/edit-pdf/ — Edit PDF Online: Click any text in your PDF and type to edit it — right on the page, in your browser.
+- https://allinoneconverter.vercel.app/convert/merge-images-pdf/ — Merge Images to PDF: Turn a stack of images into one PDF — choose 1, 2 or 4 images per page.
+- https://allinoneconverter.vercel.app/convert/rotate-pdf/ — Rotate PDF: Fix sideways or upside-down PDF pages in seconds.
+- https://allinoneconverter.vercel.app/convert/watermark-pdf/ — Watermark PDF: Stamp DRAFT, CONFIDENTIAL or your brand across every PDF page.
+- https://allinoneconverter.vercel.app/convert/page-numbers-pdf/ — Add Page Numbers to PDF: Number every page of your PDF automatically — "Page 1 of 12" in the footer or header, five positions to choose from.
+- https://allinoneconverter.vercel.app/convert/unlock-pdf/ — Unlock PDF: Remove the password from a PDF you own.
+- https://allinoneconverter.vercel.app/convert/extract-images-pdf/ — Extract Images from PDF: Pull every embedded photo and graphic out of a PDF as PNG files.
+- https://allinoneconverter.vercel.app/convert/redact-pdf/ — Redact PDF: Black out names, ID numbers, or any sensitive words across a whole PDF at once.
+- https://allinoneconverter.vercel.app/convert/delete-pages-pdf/ — Delete Pages from PDF: Remove unwanted pages from a PDF — blank pages, covers, or mistakes.
+- https://allinoneconverter.vercel.app/convert/crop-pdf/ — Crop PDF: Trim ugly margins and whitespace off every PDF page.
 
-### Image Converters
+## Image Converters (27)
 
-- https://allfilesconverter.vercel.app/convert/png-to-jpg/ — PNG to JPG Converter
-- https://allfilesconverter.vercel.app/convert/png-to-webp/ — PNG to WebP Converter
-- https://allfilesconverter.vercel.app/convert/png-to-avif/ — PNG to AVIF Converter
-- https://allfilesconverter.vercel.app/convert/jpg-to-png/ — JPG to PNG Converter
-- https://allfilesconverter.vercel.app/convert/jpg-to-webp/ — JPG to WebP Converter
-- https://allfilesconverter.vercel.app/convert/jpg-to-avif/ — JPG to AVIF Converter
-- https://allfilesconverter.vercel.app/convert/webp-to-png/ — WebP to PNG Converter
-- https://allfilesconverter.vercel.app/convert/webp-to-jpg/ — WebP to JPG Converter
-- https://allfilesconverter.vercel.app/convert/webp-to-avif/ — WebP to AVIF Converter
-- https://allfilesconverter.vercel.app/convert/gif-to-png/ — GIF to PNG Converter
-- https://allfilesconverter.vercel.app/convert/gif-to-jpg/ — GIF to JPG Converter
-- https://allfilesconverter.vercel.app/convert/gif-to-webp/ — GIF to WebP Converter
-- https://allfilesconverter.vercel.app/convert/bmp-to-png/ — BMP to PNG Converter
-- https://allfilesconverter.vercel.app/convert/bmp-to-jpg/ — BMP to JPG Converter
-- https://allfilesconverter.vercel.app/convert/bmp-to-webp/ — BMP to WebP Converter
-- https://allfilesconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter
-- https://allfilesconverter.vercel.app/convert/heic-to-png/ — HEIC to PNG Converter
-- https://allfilesconverter.vercel.app/convert/heif-to-jpg/ — HEIF to JPG Converter
-- https://allfilesconverter.vercel.app/convert/heif-to-png/ — HEIF to PNG Converter
-- https://allfilesconverter.vercel.app/convert/webp-to-pdf/ — WebP to PDF Converter
-- https://allfilesconverter.vercel.app/convert/gif-to-pdf/ — GIF to PDF Converter
-- https://allfilesconverter.vercel.app/convert/bmp-to-pdf/ — BMP to PDF Converter
-- https://allfilesconverter.vercel.app/convert/heic-to-pdf/ — HEIC to PDF Converter
-- https://allfilesconverter.vercel.app/convert/merge-images-jpg/ — Merge Images to JPG
-- https://allfilesconverter.vercel.app/convert/merge-images-png/ — Merge Images to PNG
-- https://allfilesconverter.vercel.app/convert/image-resize/ — Resize Images
-- https://allfilesconverter.vercel.app/convert/image-rotate/ — Rotate Images
+Free online image converters that run entirely in your browser. Change PNG to JPG, WebP to PNG, HEIC to JPG and more — resize and rotate images in bulk, or create PNG to PDF, JPG to PDF, WebP to PDF, GIF to PDF, BMP to PDF and HEIC to PDF documents — your photos are never uploaded anywhere.
 
-### Text Converters
+- https://allinoneconverter.vercel.app/convert/png-to-jpg/ — PNG to JPG Converter: Turn PNG screenshots, logos and graphics into much smaller JPG files.
+- https://allinoneconverter.vercel.app/convert/png-to-webp/ — PNG to WebP Converter: Convert PNG images to WebP, the modern format that keeps transparency while shrinking files by 25–35%.
+- https://allinoneconverter.vercel.app/convert/png-to-avif/ — PNG to AVIF Converter: Convert PNG to AVIF, the cutting-edge image format with the best compression available today.
+- https://allinoneconverter.vercel.app/convert/jpg-to-png/ — JPG to PNG Converter: Convert JPG photos to PNG when you need lossless quality or plan to edit further.
+- https://allinoneconverter.vercel.app/convert/jpg-to-webp/ — JPG to WebP Converter: Shrink JPG photos into WebP files that look identical but load faster.
+- https://allinoneconverter.vercel.app/convert/jpg-to-avif/ — JPG to AVIF Converter: Convert JPG photos to AVIF for the smallest possible file at high quality.
+- https://allinoneconverter.vercel.app/convert/webp-to-png/ — WebP to PNG Converter: Convert WebP images back to PNG for maximum compatibility — older software, editors and platforms that do not understand WebP yet.
+- https://allinoneconverter.vercel.app/convert/webp-to-jpg/ — WebP to JPG Converter: Turn WebP images into universally compatible JPGs.
+- https://allinoneconverter.vercel.app/convert/webp-to-avif/ — WebP to AVIF Converter: Move from WebP to AVIF for even better compression.
+- https://allinoneconverter.vercel.app/convert/gif-to-png/ — GIF to PNG Converter: Extract a still frame from a GIF as a crisp PNG image.
+- https://allinoneconverter.vercel.app/convert/gif-to-jpg/ — GIF to JPG Converter: Turn a GIF frame into a compact JPG.
+- https://allinoneconverter.vercel.app/convert/gif-to-webp/ — GIF to WebP Converter: Convert GIFs to WebP stills at a fraction of the size.
+- https://allinoneconverter.vercel.app/convert/bmp-to-png/ — BMP to PNG Converter: Convert bulky BMP files to efficient PNGs with zero quality loss.
+- https://allinoneconverter.vercel.app/convert/bmp-to-jpg/ — BMP to JPG Converter: Shrink huge BMP files down to small JPGs for sharing and the web.
+- https://allinoneconverter.vercel.app/convert/bmp-to-webp/ — BMP to WebP Converter: Convert BMP to WebP for the best of both worlds: dramatically smaller files with excellent quality for web use.
+- https://allinoneconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter: Convert iPhone HEIC photos to JPG so they open everywhere — Windows, Android, email and the web.
+- https://allinoneconverter.vercel.app/convert/heic-to-png/ — HEIC to PNG Converter: Convert HEIC photos to lossless PNG when quality matters most — for editing, design work or archiving your iPhone shots.
+- https://allinoneconverter.vercel.app/convert/heif-to-jpg/ — HEIF to JPG Converter: Convert HEIF images to JPG for universal compatibility.
+- https://allinoneconverter.vercel.app/convert/heif-to-png/ — HEIF to PNG Converter: Convert HEIF images to lossless PNG for editing and archiving without any further quality loss.
+- https://allinoneconverter.vercel.app/convert/webp-to-pdf/ — WebP to PDF Converter: Convert WebP images into a PDF document — one image per page.
+- https://allinoneconverter.vercel.app/convert/gif-to-pdf/ — GIF to PDF Converter: Turn GIFs into a PDF — the first frame of each GIF becomes a page.
+- https://allinoneconverter.vercel.app/convert/bmp-to-pdf/ — BMP to PDF Converter: Convert bulky BMP files into a compact PDF — one image per page.
+- https://allinoneconverter.vercel.app/convert/heic-to-pdf/ — HEIC to PDF Converter: Convert iPhone HEIC photos directly into a PDF — one photo per page.
+- https://allinoneconverter.vercel.app/convert/merge-images-jpg/ — Merge Images to JPG: Combine multiple images into one JPG — pick Grid 2×2, Grid 3×3, a horizontal strip or a vertical strip.
+- https://allinoneconverter.vercel.app/convert/merge-images-png/ — Merge Images to PNG: Merge multiple images into one lossless PNG collage — Grid 2×2, Grid 3×3, horizontal or vertical layouts.
+- https://allinoneconverter.vercel.app/convert/image-resize/ — Resize Images: Resize images in bulk — by percent, exact width, or exact height.
+- https://allinoneconverter.vercel.app/convert/image-rotate/ — Rotate Images: Fix sideways photos in bulk — rotate any number of images 90°, 180° or 270° and download them all as a ZIP.
 
-- https://allfilesconverter.vercel.app/convert/md-to-html/ — Markdown to HTML Converter
-- https://allfilesconverter.vercel.app/convert/html-to-txt/ — HTML to TXT Converter
-- https://allfilesconverter.vercel.app/convert/txt-to-md/ — TXT to Markdown Converter
-- https://allfilesconverter.vercel.app/convert/txt-to-pdf/ — TXT to PDF Converter
-- https://allfilesconverter.vercel.app/convert/md-to-pdf/ — Markdown to PDF Converter
+## Text Converters (5)
 
-### Data Converters
+Free online text converters. Convert Markdown to a styled HTML page, extract clean text from HTML, turn plain text into Markdown — or save TXT and Markdown files as PDF documents — all on your device.
 
-- https://allfilesconverter.vercel.app/convert/json-to-csv/ — JSON to CSV Converter
-- https://allfilesconverter.vercel.app/convert/csv-to-json/ — CSV to JSON Converter
-- https://allfilesconverter.vercel.app/convert/json-to-yaml/ — JSON to YAML Converter
-- https://allfilesconverter.vercel.app/convert/yaml-to-json/ — YAML to JSON Converter
-- https://allfilesconverter.vercel.app/convert/toml-to-json/ — TOML to JSON Converter
-- https://allfilesconverter.vercel.app/convert/xml-to-json/ — XML to JSON Converter
-- https://allfilesconverter.vercel.app/convert/csv-to-pdf/ — CSV to PDF Converter
+- https://allinoneconverter.vercel.app/convert/md-to-html/ — Markdown to HTML Converter: Turn a Markdown file into a clean, styled HTML page you can open in any browser or paste into a CMS.
+- https://allinoneconverter.vercel.app/convert/html-to-txt/ — HTML to TXT Converter: Strip an HTML page down to clean plain text.
+- https://allinoneconverter.vercel.app/convert/txt-to-md/ — TXT to Markdown Converter: Convert plain text to Markdown format in one click.
+- https://allinoneconverter.vercel.app/convert/txt-to-pdf/ — TXT to PDF Converter: Turn a plain text file into a clean, paginated PDF document.
+- https://allinoneconverter.vercel.app/convert/md-to-pdf/ — Markdown to PDF Converter: Convert Markdown into a styled PDF — headings, lists, bold, italic and code blocks all render properly.
 
-### Subtitle Converters
+## Data Converters (7)
 
-- https://allfilesconverter.vercel.app/convert/srt-to-vtt/ — SRT to WebVTT Converter
-- https://allfilesconverter.vercel.app/convert/vtt-to-srt/ — WebVTT to SRT Converter
-- https://allfilesconverter.vercel.app/convert/srt-to-ass/ — SRT to ASS Converter
-- https://allfilesconverter.vercel.app/convert/ass-to-srt/ — ASS to SRT Converter
-- https://allfilesconverter.vercel.app/convert/srt-to-ssa/ — SRT to SSA Converter
-- https://allfilesconverter.vercel.app/convert/ssa-to-srt/ — SSA to SRT Converter
-- https://allfilesconverter.vercel.app/convert/vtt-to-ass/ — WebVTT to ASS Converter
-- https://allfilesconverter.vercel.app/convert/ass-to-vtt/ — ASS to WebVTT Converter
-- https://allfilesconverter.vercel.app/convert/vtt-to-ssa/ — WebVTT to SSA Converter
-- https://allfilesconverter.vercel.app/convert/ssa-to-vtt/ — SSA to WebVTT Converter
-- https://allfilesconverter.vercel.app/convert/ass-to-ssa/ — ASS to SSA Converter
-- https://allfilesconverter.vercel.app/convert/ssa-to-ass/ — SSA to ASS Converter
+Free online data-format converters for developers and analysts. Convert JSON to CSV, CSV to JSON, JSON to YAML, YAML to JSON, TOML to JSON and XML to JSON — or turn a CSV spreadsheet into a printable PDF table — parsed locally, never uploaded.
 
-### Video Converters
+- https://allinoneconverter.vercel.app/convert/json-to-csv/ — JSON to CSV Converter: Convert a JSON array of objects into a CSV spreadsheet that opens in Excel and Google Sheets.
+- https://allinoneconverter.vercel.app/convert/csv-to-json/ — CSV to JSON Converter: Convert a CSV spreadsheet into structured JSON for APIs, scripts and databases.
+- https://allinoneconverter.vercel.app/convert/json-to-yaml/ — JSON to YAML Converter: Convert JSON config into readable YAML for Docker Compose, Kubernetes, CI pipelines and app settings.
+- https://allinoneconverter.vercel.app/convert/yaml-to-json/ — YAML to JSON Converter: Convert YAML config files to JSON for APIs, JavaScript apps and tools that only speak JSON.
+- https://allinoneconverter.vercel.app/convert/toml-to-json/ — TOML to JSON Converter: Convert TOML config files (Cargo.toml, pyproject.toml and friends) into JSON for processing in any language.
+- https://allinoneconverter.vercel.app/convert/xml-to-json/ — XML to JSON Converter: Convert XML documents into clean JSON.
+- https://allinoneconverter.vercel.app/convert/csv-to-pdf/ — CSV to PDF Converter: Turn a CSV spreadsheet into a printable PDF table — header row highlighted, grid lines, columns auto-sized.
 
-- https://allfilesconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter
-- https://allfilesconverter.vercel.app/convert/mov-to-mp4/ — MOV to MP4 Converter
-- https://allfilesconverter.vercel.app/convert/mkv-to-mp4/ — MKV to MP4 Converter
-- https://allfilesconverter.vercel.app/convert/webm-to-mp4/ — WebM to MP4 Converter
-- https://allfilesconverter.vercel.app/convert/avi-to-mp4/ — AVI to MP4 Converter
-- https://allfilesconverter.vercel.app/convert/mp4-to-webm/ — MP4 to WebM Converter
-- https://allfilesconverter.vercel.app/convert/video-to-gif/ — Video to GIF Converter
-- https://allfilesconverter.vercel.app/convert/m4v-to-mp4/ — M4V to MP4 Converter
-- https://allfilesconverter.vercel.app/convert/3gp-to-mp4/ — 3GP to MP4 Converter
-- https://allfilesconverter.vercel.app/convert/flv-to-mp4/ — FLV to MP4 Converter
-- https://allfilesconverter.vercel.app/convert/merge-videos/ — Merge Videos
+## Subtitle Converters (12)
 
-### Audio Converters
+Free online subtitle converters. Switch SRT to WebVTT for the web, to ASS for styled karaoke subtitles, or between any of SRT, VTT, ASS and SSA — all in your browser.
 
-- https://allfilesconverter.vercel.app/convert/wav-to-mp3/ — WAV to MP3 Converter
-- https://allfilesconverter.vercel.app/convert/flac-to-mp3/ — FLAC to MP3 Converter
-- https://allfilesconverter.vercel.app/convert/ogg-to-mp3/ — OGG to MP3 Converter
-- https://allfilesconverter.vercel.app/convert/m4a-to-mp3/ — M4A to MP3 Converter
-- https://allfilesconverter.vercel.app/convert/aac-to-mp3/ — AAC to MP3 Converter
-- https://allfilesconverter.vercel.app/convert/mp3-to-wav/ — MP3 to WAV Converter
-- https://allfilesconverter.vercel.app/convert/ogg-to-wav/ — OGG to WAV Converter
-- https://allfilesconverter.vercel.app/convert/wma-to-mp3/ — WMA to MP3 Converter
-- https://allfilesconverter.vercel.app/convert/merge-audios/ — Merge Audio
+- https://allinoneconverter.vercel.app/convert/srt-to-vtt/ — SRT to WebVTT Converter: Convert SRT subtitles to WebVTT for HTML5 video players.
+- https://allinoneconverter.vercel.app/convert/vtt-to-srt/ — WebVTT to SRT Converter: Convert WebVTT captions back to SRT, the universal subtitle format that video players, editors and YouTube all accept.
+- https://allinoneconverter.vercel.app/convert/srt-to-ass/ — SRT to ASS Converter: Convert SRT to ASS for styled subtitles — custom fonts, colors, positioning and karaoke effects that SRT cannot do.
+- https://allinoneconverter.vercel.app/convert/ass-to-srt/ — ASS to SRT Converter: Convert styled ASS subtitles to plain SRT for maximum compatibility with players and platforms that ignore styling.
+- https://allinoneconverter.vercel.app/convert/srt-to-ssa/ — SRT to SSA Converter: Convert SRT to SSA, the classic SubStation Alpha format still used by older fansub tooling and players.
+- https://allinoneconverter.vercel.app/convert/ssa-to-srt/ — SSA to SRT Converter: Convert SSA subtitles to plain SRT for universal player support.
+- https://allinoneconverter.vercel.app/convert/vtt-to-ass/ — WebVTT to ASS Converter: Convert WebVTT web captions to styled ASS subtitles for desktop players and fansub workflows.
+- https://allinoneconverter.vercel.app/convert/ass-to-vtt/ — ASS to WebVTT Converter: Convert styled ASS subtitles to WebVTT for use in HTML5 video players on the web.
+- https://allinoneconverter.vercel.app/convert/vtt-to-ssa/ — WebVTT to SSA Converter: Convert WebVTT captions to SSA format for legacy subtitling tools that expect SubStation Alpha.
+- https://allinoneconverter.vercel.app/convert/ssa-to-vtt/ — SSA to WebVTT Converter: Convert SSA subtitles to WebVTT so they play as native captions in HTML5 video.
+- https://allinoneconverter.vercel.app/convert/ass-to-ssa/ — ASS to SSA Converter: Downgrade ASS subtitles to the older SSA format for tools that predate ASS support.
+- https://allinoneconverter.vercel.app/convert/ssa-to-ass/ — SSA to ASS Converter: Upgrade SSA subtitles to modern ASS format, unlocking better styling support in current players and editors.
 
-### File Tools
+## Video Converters (12)
 
+Free online video converters that run entirely in your browser. Convert MOV to MP4, MKV to MP4, WebM to MP4, extract MP3 audio from video, and make GIFs — your videos are never uploaded anywhere.
 
-## Contact
+- https://allinoneconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter: Extract the audio from any MP4 video as a high-quality MP3.
+- https://allinoneconverter.vercel.app/convert/mov-to-mp4/ — MOV to MP4 Converter: Convert Apple MOV videos to universal MP4 so they play on Windows, Android, smart TVs and every video editor.
+- https://allinoneconverter.vercel.app/convert/mkv-to-mp4/ — MKV to MP4 Converter: Convert MKV videos to MP4 for playback on phones, smart TVs, tablets and anything that refuses Matroska files.
+- https://allinoneconverter.vercel.app/convert/webm-to-mp4/ — WebM to MP4 Converter: Convert WebM videos to MP4 for editing in Premiere, DaVinci or CapCut — and for playback on devices that ignore WebM.
+- https://allinoneconverter.vercel.app/convert/avi-to-mp4/ — AVI to MP4 Converter: Convert ancient AVI files to modern MP4 — far smaller files that play on every current device.
+- https://allinoneconverter.vercel.app/convert/mp4-to-webm/ — MP4 to WebM Converter: Convert MP4 to WebM (VP9 + Opus) — the open, royalty-free video format for HTML5 players and open-web publishing.
+- https://allinoneconverter.vercel.app/convert/video-to-gif/ — Video to GIF Converter: Turn a video clip into an animated GIF in one click — we convert the first 10 seconds at 480px.
+- https://allinoneconverter.vercel.app/convert/m4v-to-mp4/ — M4V to MP4 Converter: Convert Apple M4V videos to standard MP4 for playback on Android, Windows and everything else.
+- https://allinoneconverter.vercel.app/convert/3gp-to-mp4/ — 3GP to MP4 Converter: Convert old 3GP mobile videos to MP4 so they play on modern phones, computers and the web.
+- https://allinoneconverter.vercel.app/convert/flv-to-mp4/ — FLV to MP4 Converter: Convert Flash-era FLV videos to MP4 — rescuing old downloads into a format that plays today.
+- https://allinoneconverter.vercel.app/convert/merge-videos/ — Merge Videos: Join multiple video clips into one MP4 — interviews, takes, or parts of a vlog.
+- https://allinoneconverter.vercel.app/gif-maker/ — Video to GIF Maker: Turn any video into an animated GIF: trim the exact moment, set width, FPS and quality, two-pass palette rendering for crisp colors.
 
-- https://allfilesconverter.vercel.app/contact
+## Audio Converters (9)
+
+Free online audio converters. Turn WAV, FLAC, OGG, M4A, AAC or WMA into universal MP3s at 192 kbps, or convert MP3 back to WAV — all on your device, nothing uploaded.
+
+- https://allinoneconverter.vercel.app/convert/wav-to-mp3/ — WAV to MP3 Converter: Convert huge WAV files to compact MP3s at 192 kbps — about 7x smaller with no audible difference.
+- https://allinoneconverter.vercel.app/convert/flac-to-mp3/ — FLAC to MP3 Converter: Convert lossless FLAC music to universal MP3 for car stereos, phones and anywhere FLAC won’t play.
+- https://allinoneconverter.vercel.app/convert/ogg-to-mp3/ — OGG to MP3 Converter: Convert OGG Vorbis audio to MP3 for playback on iPhones, car stereos and everything that ignores OGG.
+- https://allinoneconverter.vercel.app/convert/m4a-to-mp3/ — M4A to MP3 Converter: Convert Apple M4A audio to MP3 for old MP3 players, DJ software and maximum compatibility.
+- https://allinoneconverter.vercel.app/convert/aac-to-mp3/ — AAC to MP3 Converter: Convert AAC audio to MP3 — the compatibility baseline every device supports.
+- https://allinoneconverter.vercel.app/convert/mp3-to-wav/ — MP3 to WAV Converter: Convert MP3 to uncompressed WAV for editing in a DAW or any pro audio workflow that demands WAV.
+- https://allinoneconverter.vercel.app/convert/ogg-to-wav/ — OGG to WAV Converter: Convert OGG audio to uncompressed WAV for editors, samplers and game engines that only accept WAV.
+- https://allinoneconverter.vercel.app/convert/wma-to-mp3/ — WMA to MP3 Converter: Convert old Windows WMA rips to MP3 — rescuing 2000s music collections for modern playback.
+- https://allinoneconverter.vercel.app/convert/merge-audios/ — Merge Audio: Join audio clips into one MP3 — podcast segments, voice memos, or music parts.
+
+## File Tools (1)
+
+Free online file tools that run entirely in your browser. Rename up to 500 files at once with find & replace, prefixes, sequential numbering and live preview — your files never leave your device.
+
+- https://allinoneconverter.vercel.app/tools/bulk-rename/ — Bulk File Renamer: Rename up to 500 files at once: find & replace, prefix/suffix, sequential numbering, case fixes — live preview, ZIP download, 100% in your browser.
+
+## Site pages
+
+- https://allinoneconverter.vercel.app/ — home, all tools
+- https://allinoneconverter.vercel.app/all-converters/ — every converter grouped by category
+- https://allinoneconverter.vercel.app/contact/ — contact
+- https://allinoneconverter.vercel.app/privacy/ — privacy policy
+- https://allinoneconverter.vercel.app/llms.txt — this file (concise AI reference)
+- https://allinoneconverter.vercel.app/llms-full.txt — complete AI reference (every tool in full detail)
