@@ -17,7 +17,8 @@ interface BlockState extends EditorBlock {
 
 interface PageState extends EditorPageData {
   blocks: BlockState[];
-  textOverride: string | null;
+  /** Block ids last touched by Text-view Apply (for "Discard text-view edits"). */
+  tvTouched: string[];
   thumb: string | null;
 }
 
@@ -73,10 +74,7 @@ export default function PdfEditor() {
 
   const page = pages[sel];
   const totalEdits = pages.reduce(
-    (n, p) =>
-      n +
-      (p.textOverride != null ? 1 : 0) +
-      p.blocks.filter((b) => b.editedText != null && b.editedText !== b.text).length,
+    (n, p) => n + p.blocks.filter((b) => b.editedText != null && b.editedText !== b.text).length,
     0
   );
 
@@ -132,7 +130,7 @@ export default function PdfEditor() {
           extracted.map((p) => ({
             ...p,
             blocks: p.blocks.map((b) => ({ ...b, editedText: null })),
-            textOverride: null,
+            tvTouched: [] as string[],
             thumb: null,
           }))
         );
@@ -234,16 +232,16 @@ export default function PdfEditor() {
   // ---- text view draft follows selection ----
   useEffect(() => {
     if (!page) return;
-    setTextDraft(page.textOverride ?? page.blocks.map((b) => b.text).join('\n\n'));
+    setTextDraft(page.blocks.map((b) => b.text).join('\n\n'));
     setEditingId(null);
   }, [sel, page?.pageNum, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
-   * Live page preview in Text view: a cheap 2D-canvas sketch of what the
-   * page will look like after applying the draft (approximate layout —
-   * the Review step shows the exact output). Debounced while typing.
+   * Live preview in Text view: the page thumbnail with the draft's pending
+   * edits overlaid (approximate — the Review step shows the exact file).
+   * Debounced while typing.
    */
-  const drawTextPreview = useCallback(() => {
+  const drawTextPreview = useCallback(async () => {
     const canvas = tvPreviewRef.current;
     if (!canvas || !page) return;
     const W = 240;
@@ -254,56 +252,50 @@ export default function PdfEditor() {
     if (!ctx) return;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = '#e3e3e3';
-    ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
-    const blocks = page.blocks;
-    if (!blocks.length) {
+    const mod = await import('@/lib/converters/pdf');
+    const edits = mod.diffTextViewToBlocks(
+      page.blocks.map((b) => ({ id: b.id, text: b.text })),
+      textDraft
+    );
+    const changed = new Map(
+      edits.filter((e) => e.newText !== null).map((e) => [e.blockId, e.newText as string])
+    );
+    const drawOverlay = () => {
+      if (changed.size === 0) return;
+      const sx = W / page.width;
+      const sy = H / page.height;
+      for (const b of page.blocks) {
+        const nt = changed.get(b.id);
+        if (nt == null) continue;
+        const bx = b.x * sx;
+        const bw = Math.max(6, b.width * sx);
+        const byTop = (page.height - (b.y + b.height)) * sy;
+        const bh = Math.max(8, b.height * 1.3 * sy);
+        ctx.fillStyle = 'rgba(255,176,0,0.28)';
+        ctx.fillRect(bx - 1, byTop - 1, bw + 2, bh + 2);
+        ctx.fillStyle = '#333';
+        ctx.font = `${Math.max(5, Math.min(9, b.fontSize * sx))}px sans-serif`;
+        const first = nt.split('\n')[0] || '';
+        const label = first.length > 34 ? `${first.slice(0, 34)}…` : first;
+        if (label) ctx.fillText(label, bx, byTop + bh * 0.65);
+      }
+    };
+    if (page.thumb) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, W, H);
+        ctx.strokeStyle = '#e3e3e3';
+        ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+        drawOverlay();
+      };
+      img.onerror = () => drawOverlay();
+      img.src = page.thumb;
+    } else {
       ctx.fillStyle = '#999';
       ctx.font = '12px sans-serif';
-      ctx.fillText('No text on this page', 16, 30);
-      return;
+      ctx.fillText('Preview appears here', 16, 30);
+      drawOverlay();
     }
-    const sx = W / page.width;
-    const sy = H / page.height;
-    const ux0 = Math.min(...blocks.map((b) => b.x));
-    const ux1 = Math.max(...blocks.map((b) => b.x + b.width));
-    const utop = Math.max(...blocks.map((b) => b.y + b.height));
-    const ubot = Math.min(...blocks.map((b) => b.y));
-    const size = Math.max(4, 11 * sx);
-    ctx.font = `${size}px sans-serif`;
-    ctx.fillStyle = '#3a3a3a';
-    const maxW = Math.max(10, (ux1 - ux0) * sx);
-    const lines: string[] = [];
-    for (const para of textDraft.split('\n')) {
-      const words = para.split(/\s+/).filter(Boolean);
-      if (!words.length) {
-        lines.push('');
-        continue;
-      }
-      let line = '';
-      for (const w of words) {
-        const test = line ? `${line} ${w}` : w;
-        if (ctx.measureText(test).width > maxW && line) {
-          lines.push(line);
-          line = w;
-        } else {
-          line = test;
-        }
-      }
-      lines.push(line);
-    }
-    const lh = size * 1.4;
-    let cy = utop * sy - size * 0.3;
-    const floor = ubot * sy;
-    for (const ln of lines) {
-      if (cy < floor + 2) break;
-      if (ln) ctx.fillText(ln, ux0 * sx, cy);
-      cy -= lh;
-    }
-    ctx.strokeStyle = 'rgba(43,122,120,.45)';
-    ctx.setLineDash([4, 3]);
-    ctx.strokeRect(ux0 * sx, ubot * sy, (ux1 - ux0) * sx, (utop - ubot) * sy);
-    ctx.setLineDash([]);
   }, [page, textDraft]);
 
   useEffect(() => {
@@ -333,63 +325,175 @@ export default function PdfEditor() {
     [sel]
   );
 
-  const applyTextView = useCallback(() => {
-    const original = page.blocks.map((b) => b.text).join('\n\n');
-    setPages((prev) =>
-      prev.map((p, i) =>
-        i === sel ? { ...p, textOverride: textDraft === original ? null : textDraft } : p
-      )
+  /**
+   * Apply the Text-view draft as per-block edits (never a page-level reflow).
+   * Pure: returns the updated pages array; caller commits it with setPages.
+   * The diff fn is passed in because pdf.ts is dynamically imported.
+   */
+  function applyDraftPure(
+    all: PageState[],
+    selIdx: number,
+    v: 'page' | 'text',
+    draft: string,
+    diffFn: (blocks: Array<{ id: string; text: string }>, d: string) => Array<{ blockId: string; newText: string | null }>
+  ): PageState[] {
+    if (v !== 'text') return all;
+    const p = all[selIdx];
+    if (!p) return all;
+    const original = p.blocks.map((b) => b.text).join('\n\n');
+    if (draft === original) return all;
+    const edits = diffFn(
+      p.blocks.map((b) => ({ id: b.id, text: b.text })),
+      draft
     );
-  }, [sel, textDraft, page]);
+    const touched: string[] = [];
+    const blocks = p.blocks.map((b) => {
+      const e = edits.find((x) => x.blockId === b.id);
+      if (!e || e.newText === null) return b;
+      touched.push(b.id);
+      return { ...b, editedText: e.newText === b.text ? null : e.newText };
+    });
+    return all.map((q, i) => (i === selIdx ? { ...q, blocks, tvTouched: touched } : q));
+  }
+
+  const applyTextView = useCallback(async () => {
+    if (!page) return;
+    const mod = await import('@/lib/converters/pdf');
+    setPages((prev) => applyDraftPure(prev, sel, view, textDraft, mod.diffTextViewToBlocks));
+  }, [sel, view, textDraft, page]);
 
   const discardTextView = useCallback(() => {
-    setPages((prev) => prev.map((p, i) => (i === sel ? { ...p, textOverride: null } : p)));
+    setPages((prev) =>
+      prev.map((p, i) =>
+        i === sel
+          ? {
+              ...p,
+              blocks: p.blocks.map((b) =>
+                p.tvTouched.includes(b.id) ? { ...b, editedText: null } : b
+              ),
+              tvTouched: [],
+            }
+          : p
+      )
+    );
   }, [sel]);
 
-  const buildFinalPages = useCallback((): FinalPage[] => {
-    return pages.map((p) => ({
-      pageNum: p.pageNum,
-      textOverride: p.textOverride,
-      blocks: p.blocks.map((b) => ({
-        ...b,
-        text: b.editedText ?? b.text,
-        edited: b.editedText != null && b.editedText !== b.text,
-      })),
-    }));
-  }, [pages]);
+  /** Cache of sampled design colors per page+block (original render never changes). */
+  const colorCache = useRef(new Map<string, { bg: [number, number, number]; fg: [number, number, number] }>());
+
+  /** Render one page offscreen (for color sampling on non-selected pages). */
+  const renderPageOffscreen = useCallback(
+    async (pageNum: number, scale: number): Promise<HTMLCanvasElement | null> => {
+      if (!docRef.current) return null;
+      try {
+        const pg = (await docRef.current.getPage(pageNum)) as {
+          getViewport: (o: { scale: number }) => { width: number; height: number };
+          render: (o: { canvasContext: CanvasRenderingContext2D; viewport: unknown }) => { promise: Promise<void> };
+          cleanup: () => void;
+        };
+        const vp = pg.getViewport({ scale });
+        const c = document.createElement('canvas');
+        c.width = Math.floor(vp.width);
+        c.height = Math.floor(vp.height);
+        await pg.render({ canvasContext: c.getContext('2d')!, viewport: vp }).promise;
+        pg.cleanup();
+        return c;
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
 
   /**
-   * Like buildFinalPages, but also folds in a not-yet-applied Text-view draft
-   * for the selected page, so Preview/Downloads never miss fresh typing.
+   * Build FinalPages with sampled design colors for edited blocks.
+   * Takes the effective pages array (draft already applied) — pure except
+   * for the async sampling renders.
    */
-  const getEffectiveFinalPages = useCallback((): FinalPage[] => {
-    return pages.map((p, i) => {
-      let override = p.textOverride;
-      if (i === sel && view === 'text' && page) {
-        const original = p.blocks.map((b) => b.text).join('\n\n');
-        const pending = textDraft === original ? null : textDraft;
-        if (pending !== override) {
-          override = pending;
-          // keep UI state consistent with what we are about to build
-          setPages((prev) => prev.map((q, k) => (k === i ? { ...q, textOverride: pending } : q)));
+  const buildFinalPagesWithColors = useCallback(
+    async (effective: PageState[]): Promise<FinalPage[]> => {
+      const mod = await import('@/lib/converters/pdf');
+      const out: FinalPage[] = [];
+      for (const p of effective) {
+        const edited = p.blocks.filter((b) => b.editedText != null && b.editedText !== b.text);
+        const colors = new Map<string, { bg: [number, number, number]; fg: [number, number, number] }>();
+        if (edited.length > 0) {
+          let canvas: HTMLCanvasElement | null = null;
+          if (p.pageNum === page?.pageNum && canvasRef.current && canvasRef.current.width > 0) {
+            canvas = canvasRef.current; // selected page: reuse the original render
+          } else {
+            canvas = await renderPageOffscreen(p.pageNum, 1.5);
+          }
+          const ctx = canvas?.getContext('2d', { willReadFrequently: true }) ?? null;
+          if (canvas && ctx) {
+            let img: ImageData | null = null;
+            try {
+              img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            } catch {
+              img = null;
+            }
+            if (img) {
+              for (const b of edited) {
+                const key = `${p.pageNum}:${b.id}`;
+                let c = colorCache.current.get(key);
+                if (!c) {
+                  const layout = await mod.layoutEditedBlock(
+                    { ...b, text: b.editedText ?? b.text },
+                    p.width
+                  );
+                  const s = mod.sampleBlockColors(
+                    { data: img.data, width: img.width, height: img.height },
+                    p.width,
+                    p.height,
+                    layout
+                  );
+                  c = {
+                    bg: [s.bg.r, s.bg.g, s.bg.b],
+                    fg: [s.fg.r, s.fg.g, s.fg.b],
+                  };
+                  colorCache.current.set(key, c);
+                }
+                colors.set(b.id, c);
+              }
+            }
+          }
         }
+        out.push({
+          pageNum: p.pageNum,
+          blocks: p.blocks.map((b) => {
+            const fin = b.editedText ?? b.text;
+            const isEdited = b.editedText != null && b.editedText !== b.text;
+            const c = colors.get(b.id);
+            return {
+              ...b,
+              text: fin,
+              edited: isEdited,
+              bgRgb: c ? { r: c.bg[0], g: c.bg[1], b: c.bg[2] } : undefined,
+              fgRgb: c ? { r: c.fg[0], g: c.fg[1], b: c.fg[2] } : undefined,
+            };
+          }),
+        });
       }
-      return {
-        pageNum: p.pageNum,
-        textOverride: override,
-        blocks: p.blocks.map((b) => ({
-          ...b,
-          text: b.editedText ?? b.text,
-          edited: b.editedText != null && b.editedText !== b.text,
-        })),
-      };
-    });
-  }, [pages, sel, view, textDraft, page]);
+      return out;
+    },
+    [page?.pageNum, renderPageOffscreen]
+  );
 
   const pushOutput = useCallback((blob: Blob, filename: string, label: string) => {
     const url = URL.createObjectURL(blob);
     setOutputs((os) => [...os.filter((o) => o.label !== label), { blob, filename, label, url }]);
   }, []);
+
+  /**
+   * Commit any pending Text-view draft, then build color-sampled FinalPages.
+   * Single choke point for Preview/Downloads so fresh typing is never missed.
+   */
+  const prepareFinalPages = useCallback(async (): Promise<FinalPage[] | null> => {
+    const mod = await import('@/lib/converters/pdf');
+    const effective = applyDraftPure(pages, sel, view, textDraft, mod.diffTextViewToBlocks);
+    if (effective !== pages) setPages(effective);
+    return buildFinalPagesWithColors(effective);
+  }, [pages, sel, view, textDraft, buildFinalPagesWithColors]);
 
   const downloadPdf = useCallback(async () => {
     if (!srcRef.current || working) return;
@@ -398,9 +502,11 @@ export default function PdfEditor() {
     setError(null);
     try {
       const mod = await import('@/lib/converters/pdf');
+      const final = await prepareFinalPages();
+      if (!final) throw new Error('Could not prepare the pages.');
       const r = await mod.renderEditedPdf(
         srcRef.current.slice(0),
-        getEffectiveFinalPages(),
+        final,
         `${baseName(fileLabel)}-edited.pdf`
       );
       pushOutput(r.blob, r.filename, 'PDF');
@@ -409,23 +515,25 @@ export default function PdfEditor() {
     } finally {
       setWorking(false);
     }
-  }, [working, getEffectiveFinalPages, fileLabel, pushOutput]);
+  }, [working, prepareFinalPages, fileLabel, pushOutput]);
 
   const downloadClean = useCallback(async () => {
     if (working) return;
     setWorking(true);
-    setWorkLabel('Building a clean PDF…');
+    setWorkLabel('Building a plain-text PDF…');
     setError(null);
     try {
       const mod = await import('@/lib/converters/pdf');
-      const r = await mod.renderCleanPdf(getEffectiveFinalPages(), `${baseName(fileLabel)}-clean.pdf`);
-      pushOutput(r.blob, r.filename, 'Clean PDF');
+      const final = await prepareFinalPages();
+      if (!final) throw new Error('Could not prepare the pages.');
+      const r = await mod.renderCleanPdf(final, `${baseName(fileLabel)}-plain-text.pdf`);
+      pushOutput(r.blob, r.filename, 'Plain-text PDF');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not build the PDF. Please try again.');
     } finally {
       setWorking(false);
     }
-  }, [working, getEffectiveFinalPages, fileLabel, pushOutput]);
+  }, [working, prepareFinalPages, fileLabel, pushOutput]);
 
   const downloadDocx = useCallback(async () => {
     if (working) return;
@@ -434,14 +542,16 @@ export default function PdfEditor() {
     setError(null);
     try {
       const mod = await import('@/lib/converters/pdf');
-      const r = await mod.renderEditedDocx(getEffectiveFinalPages(), `${baseName(fileLabel)}-edited.docx`);
+      const final = await prepareFinalPages();
+      if (!final) throw new Error('Could not prepare the pages.');
+      const r = await mod.renderEditedDocx(final, `${baseName(fileLabel)}-edited.docx`);
       pushOutput(r.blob, r.filename, 'Word');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not build the Word file. Please try again.');
     } finally {
       setWorking(false);
     }
-  }, [working, getEffectiveFinalPages, fileLabel, pushOutput]);
+  }, [working, prepareFinalPages, fileLabel, pushOutput]);
 
   const closePreview = useCallback(() => {
     previewToken.current += 1;
@@ -464,9 +574,12 @@ export default function PdfEditor() {
     const token = ++previewToken.current;
     try {
       const mod = await import('@/lib/converters/pdf');
+      const final = await prepareFinalPages();
+      if (!final) throw new Error('Could not prepare the pages.');
+      if (token !== previewToken.current) return;
       const r = await mod.renderEditedPdf(
         srcRef.current.slice(0),
-        getEffectiveFinalPages(),
+        final,
         `${baseName(fileLabel)}-edited.pdf`
       );
       if (token !== previewToken.current) return;
@@ -505,7 +618,7 @@ export default function PdfEditor() {
       setError(e instanceof Error ? e.message : 'Could not build the preview. Please try again.');
       setWorking(false);
     }
-  }, [working, getEffectiveFinalPages, fileLabel]);
+  }, [working, prepareFinalPages, fileLabel]);
 
   /** Download the exact bytes shown in the preview — no rebuild. */
   const downloadPreviewBytes = useCallback(() => {
@@ -535,8 +648,6 @@ export default function PdfEditor() {
       document.body.style.overflow = prevOverflow;
     };
   }, [preview, closePreview]);
-
-  const locked = !!page?.textOverride;
 
   return (
     <div className="widget widget-wide" aria-label="Edit PDF tool">
@@ -607,8 +718,7 @@ export default function PdfEditor() {
                 )}
                 <span className="edit-thumb-n">
                   {p.pageNum}
-                  {(p.textOverride != null ||
-                    p.blocks.some((b) => b.editedText != null && b.editedText !== b.text)) && (
+                  {p.blocks.some((b) => b.editedText != null && b.editedText !== b.text) && (
                     <span className="edit-dot" aria-label="edited"> ●</span>
                   )}
                 </span>
@@ -639,11 +749,15 @@ export default function PdfEditor() {
                   {page.blocks.map((b) => {
                     const isEditing = editingId === b.id;
                     const isEdited = b.editedText != null && b.editedText !== b.text;
+                    // Overlay box: straddle the baseline (descenders dip below it),
+                    // so the outline sits on the visible glyphs, not above them.
+                    const boxH = b.height * 1.35;
+                    const boxBottom = b.y - b.height * 0.25;
                     const style = {
                       left: `${(b.x / page.width) * 100}%`,
-                      top: `${((page.height - (b.y + b.height)) / page.height) * 100}%`,
+                      top: `${((page.height - (boxBottom + boxH)) / page.height) * 100}%`,
                       width: `${(b.width / page.width) * 100}%`,
-                      minHeight: `${((b.height * 1.3) / page.height) * 100}%`,
+                      height: `${(boxH / page.height) * 100}%`,
                     } as React.CSSProperties;
                     if (isEditing) {
                       return (
@@ -654,6 +768,18 @@ export default function PdfEditor() {
                           contentEditable
                           suppressContentEditableWarning
                           spellCheck={false}
+                          ref={(el) => {
+                            // Focus once so the caret appears immediately after click.
+                            if (el && document.activeElement !== el) {
+                              el.focus();
+                              const range = document.createRange();
+                              range.selectNodeContents(el);
+                              range.collapse(false);
+                              const sel = window.getSelection();
+                              sel?.removeAllRanges();
+                              sel?.addRange(range);
+                            }
+                          }}
                           onBlur={(e) => {
                             if ((e.currentTarget as HTMLElement).dataset.cancel === '1') {
                               delete (e.currentTarget as HTMLElement).dataset.cancel;
@@ -678,29 +804,17 @@ export default function PdfEditor() {
                     return (
                       <div
                         key={b.id}
-                        className={`edit-block${isEdited ? ' edited' : ''}${showOutlines ? ' outlined' : ''}${locked ? ' locked' : ''}`}
+                        className={`edit-block${isEdited ? ' edited' : ''}${showOutlines ? ' outlined' : ''}`}
                         style={style}
-                        title={locked ? 'Page edited in Text view' : 'Click to edit'}
-                        onClick={() => {
-                          if (!locked) setEditingId(b.id);
-                        }}
+                        title="Click to edit"
+                        onClick={() => setEditingId(b.id)}
                       />
                     );
                   })}
                 </div>
-                {locked && (
-                  <div className="alert ok" style={{ marginTop: '0.75rem' }}>
-                    This page was edited in Text view — the original layout is shown above.{' '}
-                    <button type="button" className="mini-btn" onClick={discardTextView}>
-                      Discard text-view edits
-                    </button>
-                  </div>
-                )}
-                {!locked && (
-                  <p className="opt-hint" style={{ marginTop: '0.5rem' }}>
-                    Click any text on the page to edit it in place. Edited blocks are highlighted.
-                  </p>
-                )}
+                <p className="opt-hint" style={{ marginTop: '0.5rem' }}>
+                  Click any text on the page to edit it in place. Edited blocks are highlighted.
+                </p>
               </div>
             ) : (
               <div className="edit-textview">
@@ -726,14 +840,14 @@ export default function PdfEditor() {
                   <button type="button" className="btn" onClick={applyTextView}>
                     Apply text to page {page.pageNum}
                   </button>
-                  {page.textOverride != null && (
+                  {page.tvTouched.length > 0 && (
                     <button type="button" className="btn secondary" onClick={discardTextView}>
                       Discard text-view edits
                     </button>
                   )}
                 </div>
                 <p className="opt-hint">
-                  Edit freely, then apply — the page keeps its place in the document and downloads with your new text.
+                  Edit freely, then apply — your changes land on the matching text blocks and the page keeps its design.
                 </p>
               </div>
             )}
@@ -751,15 +865,25 @@ export default function PdfEditor() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem', alignItems: 'flex-end' }}>
               {outputs.length === 0 ? (
                 <>
-                  <button className="btn" onClick={openPreview} disabled={working || totalEdits === 0}>
-                    {working ? 'Working…' : '👁 Review & Download'}
-                  </button>
-                  <button className="btn secondary" onClick={downloadClean} disabled={working}>
-                    Download as clean PDF
-                  </button>
+                  <div>
+                    <button className="btn" onClick={openPreview} disabled={working || totalEdits === 0}>
+                      {working ? 'Working…' : '👁 Review & Download'}
+                    </button>
+                    <div className="opt-hint" style={{ marginTop: '0.25rem' }}>
+                      Keeps your design — only your edited words change.
+                    </div>
+                  </div>
+                  <div>
+                    <button className="btn secondary" onClick={downloadClean} disabled={working}>
+                      Download as plain-text PDF
+                    </button>
+                    <div className="opt-hint" style={{ marginTop: '0.25rem' }}>
+                      Simple layout — colors and styling are not kept.
+                    </div>
+                  </div>
                   <button className="btn secondary" onClick={downloadDocx} disabled={working}>
                     Download as Word (.docx)
                   </button>
@@ -778,7 +902,7 @@ export default function PdfEditor() {
               </button>
             </div>
             {totalEdits === 0 && outputs.length === 0 && (
-              <p className="opt-hint">Make at least one edit to enable “Review & Download” — or grab a clean rebuild any time.</p>
+              <p className="opt-hint">Make at least one edit to enable “Review & Download” — or grab a plain-text rebuild any time.</p>
             )}
             {error && (
               <div className="alert err" role="alert" style={{ marginTop: '1rem' }}>
@@ -838,9 +962,12 @@ export default function PdfEditor() {
             <div className="opt-row">
               <span className="opt-label">Good to know</span>
               <span className="opt-hint">
-                Best for text-based PDFs (reports, contracts, resumes). Complex layouts or tables
-                may shift slightly, and original fonts are approximated. Scanned PDFs (pictures of
-                text) can’t be edited — they need OCR first.
+                Best for text-based PDFs (reports, contracts, resumes). Only the words you edit
+                are redrawn — colors, images and layout stay as they were. Longer replacement
+                text grows its box to the right; nearby content never moves. Complex tables may
+                shift slightly. Redrawn text uses a matching font (Noto Sans for Noto-based PDFs,
+                Helvetica otherwise); non-Latin scripts may still show as ?. Scanned PDFs
+                (pictures of text) can’t be edited — they need OCR first.
               </span>
             </div>
           </aside>

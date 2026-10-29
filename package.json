@@ -3,12 +3,14 @@
     "@ffmpeg/core": "0.12.10",
     "@ffmpeg/ffmpeg": "0.12.15",
     "@ffmpeg/util": "0.12.2",
+    "@pdf-lib/fontkit": "^1.1.1",
     "docx": "^9.15.0",
     "heic2any": "^0.0.4",
     "js-yaml": "^4.1.0",
     "jszip": "^3.10.2",
     "marked": "^16.4.1",
     "next": "^15.5.4",
+    "pako": "^3.0.3",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.4.299",
     "react": "^19.1.1",
@@ -28,7 +30,7 @@
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
-    "prebuild": "node scripts/copy-ffmpeg-core.mjs && node scripts/copy-pdfjs-worker.mjs && node scripts/generate-llms-txt.mjs"
+    "prebuild": "node scripts/copy-ffmpeg-core.mjs && node scripts/copy-pdfjs-worker.mjs && node scripts/fetch-editor-fonts.mjs && node scripts/generate-llms-txt.mjs"
   },
   "version": "1.0.0"
 }

@@ -554,6 +554,15 @@ export interface EditorBlock {
   height: number;
   fontSize: number;
   bold: boolean;
+  /** Raw pdf.js font name (lowercased), for font-family matching. */
+  fontName: string;
+}
+
+/** RGB color as 0..1 floats (for sampled design colors). */
+export interface SampledRgb {
+  r: number;
+  g: number;
+  b: number;
 }
 
 export interface EditorPageData {
@@ -567,19 +576,126 @@ export interface EditorPageData {
 /** Resolved page passed to the render functions: text is final (edited). */
 export interface FinalBlock extends EditorBlock {
   edited: boolean;
+  /** Sampled from the original page render — cover fill for surgical redraw. */
+  bgRgb?: SampledRgb;
+  /** Sampled from the original page render — redrawn text color. */
+  fgRgb?: SampledRgb;
 }
 
 export interface FinalPage {
   pageNum: number; // 1-based index into the source document
   blocks: FinalBlock[];
-  /** When set (Text view), the whole page text is replaced by this. */
-  textOverride: string | null;
 }
 
 const EDITOR_MAX_PAGES = 50;
 
-/** Group pdf.js text items into clickable lines/blocks by y-proximity. */
-function groupTextItems(items: unknown[], pageNum: number): EditorBlock[] {
+/**
+ * Clean a PDF BaseFont name for matching: strip the leading '/', a subset
+ * prefix like "ABCDEF+", and pdf-lib-style numeric suffixes ("-9742").
+ */
+export function cleanBaseFontName(n: string): string {
+  return n
+    .replace(/^\//, '')
+    .replace(/^[A-Z]{6}\+/, '')
+    .replace(/-\d{3,}$/, '');
+}
+
+/**
+ * Map pdf.js's per-item `fontName` (an internal key like "g_d0_f1") to the
+ * PDF's real BaseFont name (e.g. "NotoSans-Bold"). pdf.js never exposes the
+ * real name in getTextContent, so we recover it:
+ *
+ * - pdf-lib reads each page's /Resources /Font dict: resource name -> BaseFont.
+ * - The page's content stream is scanned for "Tf" (set-font) operators;
+ *   pdf.js loads fonts in first-appearance order, so the k-th distinct
+ *   loadedName in the page's operator list corresponds to the k-th distinct
+ *   font resource in the stream.
+ *
+ * `pages` carries each page's distinct pdf.js loadedNames in setFont order
+ * (from page.getOperatorList()). Returns per pageNum: { loadedName: baseFont }.
+ * Anything unmapped stays absent — callers fall back to the loadedName heuristic.
+ */
+export async function mapLoadedFontsToBaseFonts(
+  srcBytes: Uint8Array,
+  pages: Array<{ pageNum: number; loadedNames: string[] }>
+): Promise<Record<number, Record<string, string>>> {
+  const { PDFDocument, PDFName, PDFDict, PDFArray, PDFRawStream } = await import('pdf-lib');
+  const doc = await PDFDocument.load(srcBytes, { ignoreEncryption: true });
+  const out: Record<number, Record<string, string>> = {};
+  for (const { pageNum, loadedNames } of pages) {
+    const map: Record<string, string> = {};
+    out[pageNum] = map;
+    if (!loadedNames.length) continue;
+    try {
+      const page = doc.getPage(pageNum - 1);
+      const resources = page.node.Resources();
+      const fontDict = resources ? resources.lookup(PDFName.of('Font')) : undefined;
+      const baseByResource: Record<string, string> = {};
+      if (fontDict instanceof PDFDict) {
+        for (const key of fontDict.keys()) {
+          const f = fontDict.lookup(key) as unknown as { lookup?: (n: unknown) => unknown } | null;
+          const bf = f && typeof f.lookup === 'function' ? f.lookup(PDFName.of('BaseFont')) : null;
+          if (bf) {
+            baseByResource[key.toString().replace(/^\//, '')] = cleanBaseFontName(
+              String(bf).replace(/^\//, '')
+            );
+          }
+        }
+      }
+      const order: string[] = [];
+      const seen = new Set<string>();
+      const contentsRef = page.node.get(PDFName.of('Contents'));
+      const resolved = doc.context.lookup(contentsRef);
+      const streams: unknown[] = [];
+      if (resolved instanceof PDFArray) {
+        for (let i = 0; i < resolved.size(); i++) streams.push(doc.context.lookup(resolved.get(i)));
+      } else if (resolved) {
+        streams.push(resolved);
+      }
+      const decode = new TextDecoder('windows-1252');
+      const { inflate } = await import('pako');
+      for (const s of streams) {
+        if (!(s instanceof PDFRawStream)) continue;
+        // Content streams are usually FlateDecode-compressed; pdf-lib hands
+        // us the raw stored bytes, so inflate first when needed.
+        let raw = s.contents as Uint8Array;
+        try {
+          const filterObj = s.dict.lookup(PDFName.of('Filter'));
+          const names: string[] = [];
+          if (filterObj instanceof PDFName) names.push(filterObj.toString());
+          else if (filterObj instanceof PDFArray) {
+            for (let i = 0; i < filterObj.size(); i++) names.push(String(filterObj.get(i)));
+          }
+          if (names.some((f) => f.includes('FlateDecode'))) raw = inflate(raw);
+        } catch {
+          continue;
+        }
+        const txt = decode.decode(raw);
+        const re = /\/([A-Za-z0-9_+\-.]+)\s+[+-]?[\d.]+\s+Tf/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(txt))) {
+          const rn = m[1];
+          if (!seen.has(rn) && baseByResource[rn]) {
+            seen.add(rn);
+            order.push(rn);
+          }
+        }
+      }
+      const n = Math.min(order.length, loadedNames.length);
+      for (let i = 0; i < n; i++) map[loadedNames[i]] = baseByResource[order[i]];
+    } catch {
+      // leave the map empty; the caller falls back to the loadedName heuristic
+    }
+  }
+  return out;
+}
+
+/** Group pdf.js text items into clickable lines/blocks by y-proximity. Exported for tests. */
+export function groupTextItems(
+  items: unknown[],
+  pageNum: number,
+  fontMap?: Record<string, string>
+): EditorBlock[] {
   interface Row { y: number; items: ItemBox[] }
   interface ItemBox {
     str: string; x: number; y: number; w: number; h: number;
@@ -600,7 +716,9 @@ function groupTextItems(items: unknown[], pageNum: number): EditorBlock[] {
       w: raw.width || 0,
       h: raw.height || fontSize * 1.2,
       fontSize,
-      fontName: (raw.fontName || '').toLowerCase(),
+      // Map pdf.js's internal loadedName (e.g. "g_d0_f1") to the real BaseFont
+      // via fontMap; fall back to the raw name when unmapped.
+      fontName: (fontMap?.[raw.fontName ?? ''] ?? raw.fontName ?? '').toLowerCase(),
     });
   }
   boxes.sort((a, b) => b.y - a.y || a.x - b.x);
@@ -641,6 +759,7 @@ function groupTextItems(items: unknown[], pageNum: number): EditorBlock[] {
         height: h,
         fontSize: fs,
         bold,
+        fontName: cur.map((c) => c.fontName).sort().join('|'),
       });
       cur = [];
     };
@@ -654,7 +773,395 @@ function groupTextItems(items: unknown[], pageNum: number): EditorBlock[] {
     });
     flush();
   }
-  return blocks;
+  // Drop decoration artifacts: zero-area boxes and blocks whose text is a
+  // tiny run of punctuation with no letters/digits (e.g. "/.", "///" that
+  // some generators emit as text). Common lone bullets are kept.
+  const LONE_BULLETS = new Set(['•', '·', '-', '–', '—', '*', '›', '»', '▪', '◦', '○']);
+  return blocks.filter((b) => {
+    const s = b.text.replace(/\s+/g, '');
+    if (!s) return false;
+    if (b.width < 0.5 || b.height < 0.5) return false;
+    if (s.length <= 3 && !/[A-Za-z0-9]/.test(s) && !LONE_BULLETS.has(s)) return false;
+    return true;
+  });
+}
+
+/**
+ * Map a Text-view draft back to per-block edits (never a page-level reflow).
+ *
+ * The draft was built as blocks.join('\n\n'); we split it the same way and
+ * align paragraphs to blocks with an LCS diff so insertions/deletions don't
+ * scramble everything. Returns one entry per block: newText === null means
+ * unchanged, '' means deleted.
+ */
+export interface BlockTextEdit {
+  blockId: string;
+  newText: string | null;
+}
+
+function splitParas(s: string): string[] {
+  return s
+    .split(/\n[ \t]*\n/)
+    .map((p) =>
+      p
+        .split('\n')
+        .map((ln) => ln.replace(/[ \t]+/g, ' ').trimEnd())
+        .join('\n')
+        .trim()
+    )
+    .filter((p) => p.length > 0);
+}
+
+/** LCS alignment of two paragraph arrays -> [origIdx|null, editedIdx|null] pairs. */
+function lcsAlign(a: string[], b: string[]): Array<[number | null, number | null]> {
+  const n = a.length;
+  const m = b.length;
+  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i][j] =
+        a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const pairs: Array<[number | null, number | null]> = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      pairs.push([i, j]);
+      i++;
+      j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      pairs.push([i, null]);
+      i++;
+    } else {
+      pairs.push([null, j]);
+      j++;
+    }
+  }
+  while (i < n) pairs.push([i++, null]);
+  while (j < m) pairs.push([null, j++]);
+  return pairs;
+}
+
+export function diffTextViewToBlocks(
+  origBlocks: Array<{ id: string; text: string }>,
+  draft: string
+): BlockTextEdit[] {
+  const origParas = origBlocks.map((b) => b.text);
+  const editParas = splitParas(draft);
+  const edits = new Map<string, string | null>();
+  const appendTo = (blockIdx: number, para: string) => {
+    const id = origBlocks[blockIdx].id;
+    const cur = edits.get(id);
+    // NB: cur may be '' when the same block was already marked deleted by the
+    // LCS walk (e.g. a typo'd paragraph aligns as delete+insert) — treat it
+    // as empty so we don't produce a leading "\n\n".
+    edits.set(id, cur ? `${cur}\n\n${para}` : para);
+  };
+  let lastAnchor = -1;
+  for (const [oi, ej] of lcsAlign(origParas, editParas)) {
+    if (oi !== null && ej !== null) {
+      if (origParas[oi] !== editParas[ej]) edits.set(origBlocks[oi].id, editParas[ej]);
+      lastAnchor = oi;
+    } else if (oi !== null) {
+      // deleted paragraph -> empty the block (covered, draws nothing)
+      edits.set(origBlocks[oi].id, '');
+      lastAnchor = oi;
+    } else if (ej !== null) {
+      // inserted paragraph -> attach to nearest preceding block (or first)
+      appendTo(Math.max(0, lastAnchor), editParas[ej as number]);
+    }
+  }
+  return origBlocks.map((b) => ({ blockId: b.id, newText: edits.has(b.id) ? (edits.get(b.id) as string) : null }));
+}
+
+// ---------------------------------------------------------------------------
+// Design-preserving color sampling
+// ---------------------------------------------------------------------------
+
+/**
+ * Sample background/foreground colors for an edited block from the original
+ * page render. Takes raw pixels (ImageData-like) so it is testable in Node.
+ *
+ * - bg: median color of a ring around the cover rect (near-black text pixels
+ *   excluded from the vote; falls back to all ring pixels when the ring is
+ *   mostly dark, e.g. a navy header).
+ * - fg: median color of pixels inside the rect that differ strongly from bg
+ *   (the glyph pixels) — works for dark-on-light AND light-on-dark.
+ */
+export function sampleBlockColors(
+  px: { data: Uint8ClampedArray; width: number; height: number },
+  pageW: number,
+  pageH: number,
+  rect: { x: number; y: number; w: number; h: number } // PDF points, y = bottom
+): { bg: SampledRgb; fg: SampledRgb } {
+  const white = { r: 1, g: 1, b: 1 };
+  const black = { r: 0, g: 0, b: 0 };
+  const sx = px.width / pageW;
+  const sy = px.height / pageH;
+  const clampX = (v: number) => Math.max(0, Math.min(px.width - 1, Math.round(v)));
+  const clampY = (v: number) => Math.max(0, Math.min(px.height - 1, Math.round(v)));
+  const ix0 = clampX(rect.x * sx);
+  const ix1 = clampX((rect.x + rect.w) * sx);
+  const iyTop = clampY((pageH - (rect.y + rect.h)) * sy);
+  const iyBot = clampY((pageH - rect.y) * sy);
+  if (ix1 <= ix0 || iyBot <= iyTop) return { bg: white, fg: black };
+  const D = 12; // ring thickness, backing-store px
+  const ox0 = clampX(ix0 - D);
+  const ox1 = clampX(ix1 + D);
+  const oy0 = clampY(iyTop - D);
+  const oy1 = clampY(iyBot + D);
+  const lum = (r: number, g: number, b: number) => 0.299 * r + 0.587 * g + 0.114 * b;
+  const at = (x: number, y: number): [number, number, number] => {
+    const o = (y * px.width + x) * 4;
+    return [px.data[o], px.data[o + 1], px.data[o + 2]];
+  };
+  const medianOf = (arr: Array<[number, number, number]>): SampledRgb => {
+    if (!arr.length) return white;
+    const ch = (k: 0 | 1 | 2) => arr.map((c) => c[k]).sort((a, b) => a - b);
+    const mid = (s: number[]) => s[Math.floor(s.length / 2)] / 255;
+    return { r: mid(ch(0)), g: mid(ch(1)), b: mid(ch(2)) };
+  };
+  // Background vote from the ring (dilated rect minus inner rect).
+  const ringBright: Array<[number, number, number]> = [];
+  const ringAll: Array<[number, number, number]> = [];
+  for (let y = oy0; y <= oy1; y++) {
+    for (let x = ox0; x <= ox1; x++) {
+      if (x >= ix0 && x <= ix1 && y >= iyTop && y <= iyBot) continue;
+      const c = at(x, y);
+      ringAll.push(c);
+      if (lum(c[0], c[1], c[2]) >= 25) ringBright.push(c);
+    }
+  }
+  const bgPool = ringBright.length >= ringAll.length * 0.25 ? ringBright : ringAll;
+  const bg = medianOf(bgPool);
+  const bg255: [number, number, number] = [bg.r * 255, bg.g * 255, bg.b * 255];
+  // Foreground: pixels inside the rect far from the background color.
+  const glyph: Array<[number, number, number]> = [];
+  let inner = 0;
+  for (let y = iyTop; y <= iyBot; y++) {
+    for (let x = ix0; x <= ix1; x++) {
+      inner++;
+      const c = at(x, y);
+      const d = Math.sqrt(
+        (c[0] - bg255[0]) ** 2 + (c[1] - bg255[1]) ** 2 + (c[2] - bg255[2]) ** 2
+      );
+      if (d > 60) glyph.push(c);
+    }
+  }
+  let fg: SampledRgb;
+  if (glyph.length >= inner * 0.02 && glyph.length > 0) {
+    fg = medianOf(glyph);
+  } else {
+    fg = lum(bg255[0], bg255[1], bg255[2]) > 128 ? black : white;
+  }
+  return { bg, fg };
+}
+
+// ---------------------------------------------------------------------------
+// Editor font matching: embedded Noto Sans TTFs (bundled at build time)
+// ---------------------------------------------------------------------------
+
+/** Cached TTF bytes for the editor's matched fonts (fail-soft -> Helvetica). */
+const editorFontBytes: { regular: Uint8Array | null; bold: Uint8Array | null; tried: boolean } = {
+  regular: null,
+  bold: null,
+  tried: false,
+};
+
+async function fetchEditorFontBytes(): Promise<void> {
+  if (editorFontBytes.tried || typeof fetch === 'undefined') return;
+  editorFontBytes.tried = true;
+  const get = async (url: string): Promise<Uint8Array | null> => {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const buf = new Uint8Array(await res.arrayBuffer());
+      return buf.length > 50_000 ? buf : null;
+    } catch {
+      return null;
+    }
+  };
+  const [reg, bold] = await Promise.all([
+    get('/fonts/NotoSans-Regular.ttf'),
+    get('/fonts/NotoSans-Bold.ttf'),
+  ]);
+  editorFontBytes.regular = reg;
+  editorFontBytes.bold = bold;
+}
+
+type EditorFontKind = 'noto' | 'notoB' | 'helv' | 'helvB';
+
+/**
+ * Match the original font name to an available font.
+ * 'noto' in name -> embedded Noto Sans (measured from the owner's files:
+ * Noto-Sans-Bold headers etc.); helvetica/arial -> standard Helvetica;
+ * anything else -> Helvetica fallback. Exported for tests.
+ */
+export function pickEditorFontKind(block: { fontName: string; bold: boolean }): EditorFontKind {
+  const name = (block.fontName || '').toLowerCase();
+  const isBold = block.bold || /bold|black|heavy|demi/.test(name);
+  if (name.includes('noto')) return isBold ? 'notoB' : 'noto';
+  return isBold ? 'helvB' : 'helv';
+}
+
+interface EditorFontKit {
+  noto: unknown | null;
+  notoB: unknown | null;
+  helv: unknown;
+  helvB: unknown;
+}
+
+/** Embed the editor fonts into a pdf-lib document (TTFs cached, fail-soft). */
+async function embedEditorFonts(
+  doc: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    embedFont: (font: string | Uint8Array, options?: any) => Promise<any>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    registerFontkit?: (fk: any) => void;
+  },
+  StandardFonts: { Helvetica: string; HelveticaBold: string }
+): Promise<EditorFontKit> {
+  await fetchEditorFontBytes();
+  // TTF embedding needs fontkit registered on the document instance.
+  try {
+    const { default: fontkit } = await import('@pdf-lib/fontkit');
+    doc.registerFontkit?.(fontkit);
+  } catch {
+    // fall through: TTF embeds below will fail-soft to Helvetica
+  }
+  let noto: unknown | null = null;
+  let notoB: unknown | null = null;
+  try {
+    if (editorFontBytes.regular) noto = await doc.embedFont(editorFontBytes.regular);
+  } catch {
+    noto = null;
+  }
+  try {
+    if (editorFontBytes.bold) notoB = await doc.embedFont(editorFontBytes.bold);
+  } catch {
+    notoB = null;
+  }
+  return {
+    noto,
+    notoB,
+    helv: await doc.embedFont(StandardFonts.Helvetica),
+    helvB: await doc.embedFont(StandardFonts.HelveticaBold),
+  };
+}
+
+function kitFontFor(
+  kit: EditorFontKit,
+  kind: EditorFontKind
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
+  if (kind === 'noto') return kit.noto ?? kit.helv;
+  if (kind === 'notoB') return kit.notoB ?? kit.helvB;
+  if (kind === 'helvB') return kit.helvB;
+  return kit.helv;
+}
+
+/**
+ * Shared cover-rect layout for a surgical block redraw. The SAME function is
+ * used by renderEditedPdf and by the UI's color sampler, so the sampled ring
+ * always matches the drawn rectangle.
+ *
+ * Sizing rule (owner-tested): the box is sized to the NEW text, left/top
+ * anchored. A paragraph that fits on one line before the page edge grows the
+ * box to the right; otherwise it wraps at the original block width and the
+ * box grows taller. We never reflow/shift surrounding content.
+ */
+export interface CoverLayout {
+  x: number;
+  y: number; // bottom, PDF points
+  w: number;
+  h: number;
+  lines: string[];
+  lineH: number;
+}
+
+export async function layoutEditedBlock(
+  block: {
+    text: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    fontSize: number;
+    bold: boolean;
+    fontName?: string;
+  },
+  pageW: number
+): Promise<CoverLayout> {
+  const { PDFDocument, StandardFonts } = await import('pdf-lib');
+  const probe = await PDFDocument.create();
+  const kit = await embedEditorFonts(probe, StandardFonts);
+  const font = kitFontFor(kit, pickEditorFontKind({ fontName: block.fontName ?? '', bold: block.bold }));
+  const size = block.fontSize;
+  const lineH = size * 1.25;
+  const EDGE = 8; // keep text off the page edge
+  const wrapW = Math.max(40, block.width);
+  const lines: string[] = [];
+  const measure = (s: string) => font.widthOfTextAtSize(safeWinAnsi(s), size);
+  for (const para of block.text.split('\n')) {
+    const clean = para.split(/\s+/).filter(Boolean).join(' ');
+    if (!clean) {
+      lines.push('');
+      continue;
+    }
+    if (block.x + measure(clean) + 4 <= pageW - EDGE) {
+      lines.push(clean); // fits on one line — box grows right
+    } else {
+      // wrap at the original block width — box grows taller instead
+      let line = '';
+      for (const w of clean.split(' ')) {
+        if (w.length > 1 && measure(w) > wrapW) {
+          // a single word longer than the wrap width (URL, long string):
+          // hard-break it instead of letting the box explode off the page
+          if (line) {
+            lines.push(line);
+            line = '';
+          }
+          let rest = w;
+          while (rest.length > 1 && measure(rest) > wrapW) {
+            let lo = 1;
+            let hi = rest.length;
+            while (lo < hi) {
+              const mid = (lo + hi + 1) >> 1;
+              if (measure(rest.slice(0, mid)) <= wrapW) lo = mid;
+              else hi = mid - 1;
+            }
+            lines.push(rest.slice(0, lo));
+            rest = rest.slice(lo);
+          }
+          line = rest;
+          continue;
+        }
+        const test = line ? `${line} ${w}` : w;
+        if (measure(test) > wrapW && line) {
+          lines.push(line);
+          line = w;
+        } else {
+          line = test;
+        }
+      }
+      lines.push(line);
+    }
+  }
+  let maxW = block.width;
+  for (const ln of lines) {
+    if (ln) maxW = Math.max(maxW, measure(ln));
+  }
+  const h = Math.max(block.height + 6, lines.length * lineH + 4);
+  return {
+    x: block.x - 2,
+    y: block.y - 4,
+    w: maxW + 4,
+    h,
+    lines,
+    lineH,
+  };
 }
 
 /**
@@ -678,21 +1185,51 @@ export async function extractEditablePages(file: File): Promise<EditorPageData[]
   }
   const pages: EditorPageData[] = [];
   try {
+    // Collect each page's distinct pdf.js loadedNames in setFont order so we
+    // can map them to the PDF's real BaseFont names (pdf.js never exposes
+    // those in getTextContent — items only carry "g_d0_f1"-style keys).
+    const setFontOp = lib.OPS?.setFont as number | undefined;
+    const pageFontInputs: Array<{ pageNum: number; loadedNames: string[] }> = [];
+    const pageTexts: Array<{ pageNum: number; vp: { width: number; height: number }; items: unknown[] }> = [];
     for (let p = 1; p <= pdf.numPages; p++) {
       const page = (await pdf.getPage(p)) as {
         getViewport: (o: { scale: number }) => { width: number; height: number };
         getTextContent: () => Promise<{ items: unknown[] }>;
+        getOperatorList: () => Promise<{ fnArray: number[]; argsArray: unknown[][] }>;
         cleanup: () => void;
       };
       const vp = page.getViewport({ scale: 1 });
       const tc = await page.getTextContent();
-      pages.push({
-        pageNum: p,
-        width: vp.width,
-        height: vp.height,
-        blocks: groupTextItems(tc.items, p),
-      });
+      const loadedNames: string[] = [];
+      if (setFontOp !== undefined) {
+        try {
+          const ops = await page.getOperatorList();
+          const seen = new Set<string>();
+          for (let i = 0; i < ops.fnArray.length; i++) {
+            if (ops.fnArray[i] === setFontOp) {
+              const nm = String((ops.argsArray[i] as unknown[])[0] ?? '');
+              if (nm && !seen.has(nm)) {
+                seen.add(nm);
+                loadedNames.push(nm);
+              }
+            }
+          }
+        } catch {
+          // font mapping degrades to the loadedName heuristic
+        }
+      }
+      pageFontInputs.push({ pageNum: p, loadedNames });
+      pageTexts.push({ pageNum: p, vp, items: tc.items });
       page.cleanup();
+    }
+    const fontMaps = await mapLoadedFontsToBaseFonts(new Uint8Array(data), pageFontInputs);
+    for (const pt of pageTexts) {
+      pages.push({
+        pageNum: pt.pageNum,
+        width: pt.vp.width,
+        height: pt.vp.height,
+        blocks: groupTextItems(pt.items, pt.pageNum, fontMaps[pt.pageNum]),
+      });
     }
   } catch (e) {
     throw friendlyPdfError(e);
@@ -708,7 +1245,7 @@ export async function extractEditablePages(file: File): Promise<EditorPageData[]
 }
 
 /** Standard PDF fonts only speak Latin — sanitize anything else. */
-function safeWinAnsi(s: string): string {
+export function safeWinAnsi(s: string): string {
   return s.replace(/[^\x00-\xFF]/g, '?');
 }
 
@@ -741,9 +1278,11 @@ function wrapLines(
 }
 
 /**
- * Surgical redraw: copy every page as-is; for edited blocks paint a white
- * rectangle over the original and draw the new text at the same position.
- * Pages edited via Text view get their text area whited out and reflowed.
+ * Surgical redraw: copy every page as-is (unedited pages are byte-identical);
+ * for edited blocks ONLY, paint a rectangle in the block's sampled background
+ * color over the original and draw the new text in the sampled foreground
+ * color at the original size/position. Design (colors, images, layout) is
+ * preserved everywhere else.
  */
 export async function renderEditedPdf(
   srcBytes: ArrayBuffer,
@@ -753,46 +1292,33 @@ export async function renderEditedPdf(
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
   const src = await PDFDocument.load(srcBytes, { ignoreEncryption: true });
   const out = await PDFDocument.create();
-  const helv = await out.embedFont(StandardFonts.Helvetica);
-  const helvB = await out.embedFont(StandardFonts.HelveticaBold);
-  const white = rgb(1, 1, 1);
-  const black = rgb(0, 0, 0);
+  const kit = await embedEditorFonts(out, StandardFonts);
   for (const fp of pages) {
     const [copied] = await out.copyPages(src, [fp.pageNum - 1]);
     out.addPage(copied);
-    if (fp.textOverride != null) {
-      const sized = fp.blocks.filter((b) => b.width > 0);
-      if (sized.length) {
-        const ux0 = Math.min(...sized.map((b) => b.x));
-        const ux1 = Math.max(...sized.map((b) => b.x + b.width));
-        const utop = Math.max(...sized.map((b) => b.y + b.height));
-        const ubot = Math.min(...sized.map((b) => b.y));
-        copied.drawRectangle({
-          x: ux0 - 2, y: ubot - 4, width: ux1 - ux0 + 4, height: utop - ubot + 8, color: white,
-        });
-        const size = 11;
-        const lines = wrapLines(fp.textOverride, helv, size, ux1 - ux0);
-        let cy = utop - size;
-        for (const ln of lines) {
-          if (cy < ubot) break;
-          copied.drawText(safeWinAnsi(ln), { x: ux0, y: cy, size, font: helv, color: black });
-          cy -= size * 1.4;
-        }
-      }
-      continue;
-    }
+    const pageW = copied.getWidth();
     for (const b of fp.blocks) {
       if (!b.edited) continue;
-      const font = b.bold ? helvB : helv;
-      const lines = b.text.split('\n');
-      const lh = b.fontSize * 1.25;
-      const rectH = Math.max(b.height + 4, lines.length * lh + 2);
+      const layout = await layoutEditedBlock(b, pageW);
+      const bgc = b.bgRgb ?? { r: 1, g: 1, b: 1 };
+      const fgc = b.fgRgb ?? { r: 0, g: 0, b: 0 };
       copied.drawRectangle({
-        x: b.x - 1, y: b.y - 3, width: b.width + 2, height: rectH, color: white,
+        x: layout.x,
+        y: layout.y,
+        width: layout.w,
+        height: layout.h,
+        color: rgb(bgc.r, bgc.g, bgc.b),
+        borderWidth: 0,
       });
-      lines.forEach((ln, i) => {
+      const font = kitFontFor(kit, pickEditorFontKind(b));
+      layout.lines.forEach((ln, i) => {
+        if (!ln) return;
         copied.drawText(safeWinAnsi(ln), {
-          x: b.x, y: b.y - i * lh, size: b.fontSize, font, color: black,
+          x: b.x,
+          y: b.y - i * layout.lineH,
+          size: b.fontSize,
+          font,
+          color: rgb(fgc.r, fgc.g, fgc.b),
         });
       });
     }
@@ -833,7 +1359,7 @@ export async function renderCleanPdf(pages: FinalPage[], outName: string): Promi
   };
   pages.forEach((fp, pi) => {
     if (pi > 0) y -= 12;
-    const paras = fp.textOverride != null ? fp.textOverride.split('\n') : fp.blocks.map((b) => b.text);
+    const paras = fp.blocks.map((b) => b.text);
     paras.forEach(drawPara);
   });
   const bytes = await out.save();
@@ -846,7 +1372,7 @@ export async function renderEditedDocx(pages: FinalPage[], outName: string): Pro
   const children: InstanceType<typeof Paragraph>[] = [];
   pages.forEach((fp, pi) => {
     if (pi > 0) children.push(new Paragraph({ children: [new TextRun({ text: '', break: 1 })] }));
-    const paras = fp.textOverride != null ? fp.textOverride.split('\n') : fp.blocks.map((b) => b.text);
+    const paras = fp.blocks.map((b) => b.text);
     paras.forEach((p) => {
       const t = p.trim();
       if (!t) return;
