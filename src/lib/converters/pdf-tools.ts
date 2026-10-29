@@ -206,10 +206,10 @@ export async function extractImagesFromPdf(file: File): Promise<ToolFileResult[]
     const page = await doc.getPage(p);
     const opList = await page.getOperatorList();
     let imgIdx = 0;
-    for (let i = 0; i < opList.fn.length; i++) {
-      const fn = opList.fn[i];
+    for (let i = 0; i < opList.fnArray.length; i++) {
+      const fn = opList.fnArray[i];
       if (fn !== OPS.paintImageXObject && fn !== OPS.paintJpegXObject) continue;
-      const name = opList.args[i]?.[0];
+      const name = opList.argsArray[i]?.[0];
       if (!name) continue;
       imgIdx++;
       const img: any = await new Promise((resolve) => {
@@ -272,8 +272,10 @@ export async function redactPdf(file: File, phrases: string[]): Promise<ToolFile
   const lib = await loadPdfJs();
   const { PDFDocument, rgb } = await loadPdfLib();
   const bytes = await file.arrayBuffer();
-  const doc = await lib.getDocument({ data: new Uint8Array(bytes) }).promise;
-  const pdf = await PDFDocument.load(bytes.slice(0));
+  // pdf.js may detach/transfer the buffer it receives — give it its own copy
+  // and keep the original for pdf-lib. (QC: detached ArrayBuffer crash.)
+  const doc = await lib.getDocument({ data: new Uint8Array(bytes.slice(0)) }).promise;
+  const pdf = await PDFDocument.load(bytes);
   for (let p = 1; p <= doc.numPages; p++) {
     const page = await doc.getPage(p);
     const tc = await page.getTextContent();
