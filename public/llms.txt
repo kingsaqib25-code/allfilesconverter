@@ -1,10 +1,10 @@
-# All Files Converter
+# Quick Files Converter
 
 > Free online file converters that run 100% in your browser. No uploads, no sign-up, no watermarks, no accounts.
 
 ## What this site is
 
-All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conversion website. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API). There is no server-side processing, no database and no user accounts.
+Quick Files Converter (https://allfilesconverter.vercel.app/) is a free file-conversion website. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API). There is no server-side processing, no database and no user accounts.
 
 ## Privacy / no-upload policy
 
@@ -19,7 +19,7 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter (iPhone photos to universal JPG).
 - https://allfilesconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter (extract 192 kbps audio from video).
 
-## All converters (80)
+## All converters (90)
 
 ### PDF Converters
 
@@ -34,6 +34,14 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/pdf-to-word/ — PDF to Word Converter
 - https://allfilesconverter.vercel.app/convert/edit-pdf/ — Edit PDF Online
 - https://allfilesconverter.vercel.app/convert/merge-images-pdf/ — Merge Images to PDF
+- https://allfilesconverter.vercel.app/convert/rotate-pdf/ — Rotate PDF
+- https://allfilesconverter.vercel.app/convert/watermark-pdf/ — Watermark PDF
+- https://allfilesconverter.vercel.app/convert/page-numbers-pdf/ — Add Page Numbers to PDF
+- https://allfilesconverter.vercel.app/convert/unlock-pdf/ — Unlock PDF
+- https://allfilesconverter.vercel.app/convert/extract-images-pdf/ — Extract Images from PDF
+- https://allfilesconverter.vercel.app/convert/redact-pdf/ — Redact PDF
+- https://allfilesconverter.vercel.app/convert/delete-pages-pdf/ — Delete Pages from PDF
+- https://allfilesconverter.vercel.app/convert/crop-pdf/ — Crop PDF
 
 ### Image Converters
 
@@ -62,6 +70,8 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/heic-to-pdf/ — HEIC to PDF Converter
 - https://allfilesconverter.vercel.app/convert/merge-images-jpg/ — Merge Images to JPG
 - https://allfilesconverter.vercel.app/convert/merge-images-png/ — Merge Images to PNG
+- https://allfilesconverter.vercel.app/convert/image-resize/ — Resize Images
+- https://allfilesconverter.vercel.app/convert/image-rotate/ — Rotate Images
 
 ### Text Converters
 

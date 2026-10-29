@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import AiSummarize from '@/components/AiSummarize';
+import { ToolCard } from '@/components/ToolCard';
 import { BRAND, CATEGORIES, convertersByCategory, categoryMeta } from '@/lib/converters/registry';
 import { SITE_URL } from '@/lib/site';
 
@@ -48,12 +49,12 @@ export default async function CategoryPage({
       <AiSummarize
         summaryText={`${meta.name} converters on ${BRAND}. ${meta.description} TL;DR: every tool on this page is free forever with no sign-up, and your files never leave your device because all conversions run on-device in your browser.`}
       />
-      <div className="grid c3">
+      <div className="tools-grid">
         {converters.map((c) => (
-          <Link key={c.id} href={`/convert/${c.id}`} className="card">
-            <div className="card-t">{c.title}</div>
-            <div className="card-d">{c.description}</div>
-          </Link>
+          <ToolCard
+            key={c.id}
+            entry={{ id: c.id, title: c.title, description: c.description, category: c.category }}
+          />
         ))}
       </div>
       <p style={{ marginTop: '2rem' }}>

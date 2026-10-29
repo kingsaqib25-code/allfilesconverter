@@ -94,3 +94,103 @@ export async function convertImage(
     bitmap.close();
   }
 }
+
+/* ------------------------- bulk resize / rotate ------------------------ */
+/* Used by the bulk widget: one file in, one file out, original format kept. */
+
+function imgBase(name: string): string {
+  return name.replace(/\.[^.]+$/, '') || 'image';
+}
+
+function imgExt(name: string): string {
+  const e = name.split('.').pop()?.toLowerCase() ?? 'png';
+  return e === 'jpeg' ? 'jpg' : e;
+}
+
+async function encodeCanvas(
+  canvas: HTMLCanvasElement,
+  file: File,
+  suffix: string
+): Promise<ConvertedImage> {
+  const ext = imgExt(file.name);
+  const mime = mimeForExt(ext) ?? 'image/png';
+  if (mime === 'image/jpeg') {
+    // JPEG has no transparency — paint white behind, like convertImage does.
+    const bg = document.createElement('canvas');
+    bg.width = canvas.width;
+    bg.height = canvas.height;
+    const bctx = bg.getContext('2d')!;
+    bctx.fillStyle = '#ffffff';
+    bctx.fillRect(0, 0, bg.width, bg.height);
+    bctx.drawImage(canvas, 0, 0);
+    canvas = bg;
+  }
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, mime, 0.92)
+  );
+  if (!blob) throw new Error('This browser refused to encode the image. Try PNG or JPG.');
+  return { blob, filename: `${imgBase(file.name)}-${suffix}.${ext}` };
+}
+
+/**
+ * Resize by percent, or to an exact width/height (aspect ratio kept).
+ * mode: 'percent' | 'width' | 'height'; value: % or px.
+ */
+export async function resizeImage(
+  file: File,
+  mode: 'percent' | 'width' | 'height',
+  value: number
+): Promise<ConvertedImage> {
+  const v = Number(value);
+  if (!Number.isFinite(v) || v <= 0) throw new Error('Enter a valid resize value.');
+  const bitmap = await createImageBitmap(file);
+  try {
+    let w = bitmap.width;
+    let h = bitmap.height;
+    if (mode === 'percent') {
+      if (v < 5 || v > 400) throw new Error('Percent must be between 5 and 400.');
+      w = Math.round((w * v) / 100);
+      h = Math.round((h * v) / 100);
+    } else if (mode === 'width') {
+      if (v < 1 || v > 12000) throw new Error('Width must be between 1 and 12000 px.');
+      h = Math.round((h * v) / w);
+      w = Math.round(v);
+    } else {
+      if (v < 1 || v > 12000) throw new Error('Height must be between 1 and 12000 px.');
+      w = Math.round((w * v) / h);
+      h = Math.round(v);
+    }
+    w = Math.max(1, w);
+    h = Math.max(1, h);
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d')!;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    return encodeCanvas(canvas, file, `${w}x${h}`);
+  } finally {
+    bitmap.close();
+  }
+}
+
+/** Rotate 90/180/270 degrees clockwise. */
+export async function rotateImageFile(
+  file: File,
+  angle: 90 | 180 | 270
+): Promise<ConvertedImage> {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const swap = angle === 90 || angle === 270;
+    const canvas = document.createElement('canvas');
+    canvas.width = swap ? bitmap.height : bitmap.width;
+    canvas.height = swap ? bitmap.width : bitmap.height;
+    const ctx = canvas.getContext('2d')!;
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((angle * Math.PI) / 180);
+    ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
+    return encodeCanvas(canvas, file, `rot${angle}`);
+  } finally {
+    bitmap.close();
+  }
+}

@@ -96,7 +96,9 @@ export default async function ConvertPage({
         <span className="pill">
           {isEdit
             ? '.pdf → edited .pdf'
-            : `${entry.fromExts.map((e) => '.' + e).join(', ')} → .${entry.toExt}`}
+            : entry.from === entry.to
+              ? `${entry.fromExts.map((e) => '.' + e).join(', ')} → same format`
+              : `${entry.fromExts.map((e) => '.' + e).join(', ')} → .${entry.toExt}`}
         </span>
         <h1>Free {entry.title}</h1>
         <p className="lead">{entry.description}</p>

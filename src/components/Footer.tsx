@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CATEGORIES, CONVERTERS } from '@/lib/converters/registry';
+import FeedbackButton from './FeedbackButton';
 
 export default function Footer() {
   const popular = ['heic-to-jpg', 'png-to-jpg', 'jpg-to-webp', 'mp4-to-mp3', 'json-to-csv', 'srt-to-vtt']
@@ -45,6 +46,7 @@ export default function Footer() {
               <li><Link href="/about">About</Link></li>
               <li><Link href="/privacy">Privacy policy</Link></li>
               <li><Link href="/contact">Contact</Link></li>
+              <li><FeedbackButton /></li>
             </ul>
           </div>
         </div>

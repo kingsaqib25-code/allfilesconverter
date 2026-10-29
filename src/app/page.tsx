@@ -1,19 +1,11 @@
 import Link from 'next/link';
 import HeroDropZone from '@/components/HeroDropZone';
 import AiSummarize from '@/components/AiSummarize';
-import { BRAND, TAGLINE, CATEGORIES, CONVERTERS, convertersByCategory } from '@/lib/converters/registry';
+import ToolsGrid from '@/components/ToolsGrid';
+import { ToolCard } from '@/components/ToolCard';
+import { BRAND, TAGLINE, CONVERTERS } from '@/lib/converters/registry';
 import { SITE_URL } from '@/lib/site';
 import { ldScript, websiteOrgJsonLd } from '@/lib/jsonld';
-
-const CAT_EMOJI: Record<string, string> = {
-  pdf: '📄',
-  image: '🖼️',
-  video: '🎬',
-  audio: '🎵',
-  text: '📝',
-  data: '🧮',
-  subtitle: '💬',
-};
 
 const POPULAR_IDS = [
   'edit-pdf',
@@ -40,7 +32,7 @@ export default function Home() {
         <div className="wrap">
           <span className="kicker">100% free · No sign-up</span>
           <h1>Free File Converter</h1>
-          <p className="lead">{BRAND} — {TAGLINE} Convert PDF, images, video, audio, text, data and subtitles between {CONVERTERS.length}+ formats — right here in your browser.</p>
+          <p className="lead">{BRAND} — {TAGLINE} Your files never leave your device.</p>
           <HeroDropZone />
         </div>
       </section>
@@ -55,30 +47,16 @@ export default function Home() {
           <span className="badge">🚫 No sign-up</span>
         </div>
 
-        <h2>Browse by category</h2>
-        <div className="grid c4">
-          {CATEGORIES.map((cat) => (
-            <Link key={cat.id} href={`/categories/${cat.id}`} className="card cat-card">
-              <div className="cat-emoji" aria-hidden="true">{CAT_EMOJI[cat.id]}</div>
-              <div className="card-t">{cat.name}</div>
-              <div className="card-d">
-                {cat.tagline} ({convertersByCategory(cat.id).length} tools)
-              </div>
-            </Link>
-          ))}
-        </div>
+        <h2>All converter tools</h2>
+        <ToolsGrid />
 
         <h2>Popular conversions</h2>
-        <div className="grid c4">
+        <div className="tools-grid">
           {popular.map((c) => (
-            <Link key={c.id} href={`/convert/${c.id}`} className="card">
-              <div className="card-t">{c.title}</div>
-              <div className="card-d">
-                {c.id === 'edit-pdf'
-                  ? '.pdf → edited .pdf'
-                  : `${c.fromExts.map((e) => '.' + e).join(', ')} → .${c.toExt}`}
-              </div>
-            </Link>
+            <ToolCard
+              key={c.id}
+              entry={{ id: c.id, title: c.title, description: c.description, category: c.category }}
+            />
           ))}
         </div>
 

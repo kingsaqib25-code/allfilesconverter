@@ -20,7 +20,7 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-const MULTI_IDS = new Set(['jpg-to-pdf', 'png-to-pdf', 'webp-to-pdf', 'gif-to-pdf', 'bmp-to-pdf', 'heic-to-pdf', 'merge-pdf']);
+const MULTI_IDS = new Set(['jpg-to-pdf', 'png-to-pdf', 'webp-to-pdf', 'gif-to-pdf', 'bmp-to-pdf', 'heic-to-pdf', 'merge-pdf', 'compress-pdf']);
 
 export default function PdfWidget({ entryId }: Props) {
   const entry = getConverter(entryId) as ConverterEntry;
@@ -34,6 +34,15 @@ export default function PdfWidget({ entryId }: Props) {
   const [range, setRange] = useState('');
   const [compressLevel, setCompressLevel] = useState<'high' | 'medium' | 'low'>('medium');
   const [quality, setQuality] = useState(92);
+  // Second-wave PDF tools (competitor-gap round).
+  const [angle, setAngle] = useState<'90' | '180' | '270'>('90');
+  const [wmText, setWmText] = useState('');
+  const [wmOpacity, setWmOpacity] = useState(25);
+  const [wmSize, setWmSize] = useState<'32' | '48' | '72'>('48');
+  const [pnPosition, setPnPosition] = useState('bottom-center');
+  const [password, setPassword] = useState('');
+  const [redactWords, setRedactWords] = useState('');
+  const [cropMargin, setCropMargin] = useState(10);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const clearOutputs = useCallback(() => {
@@ -146,8 +155,10 @@ export default function PdfWidget({ entryId }: Props) {
           break;
         }
         case 'compress-pdf': {
-          const r = await mod.compressPdf(files[0], compressLevel);
-          outs.push({ blob: r.blob, filename: r.filename });
+          for (const f of files) {
+            const r = await mod.compressPdf(f, compressLevel);
+            outs.push({ blob: r.blob, filename: r.filename, label: r.filename });
+          }
           break;
         }
         case 'pdf-to-text': {
@@ -157,6 +168,64 @@ export default function PdfWidget({ entryId }: Props) {
         }
         case 'pdf-to-word': {
           const r = await mod.pdfToWord(files[0]);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'rotate-pdf': {
+          const tools = await import('@/lib/converters/pdf-tools');
+          const r = await tools.rotatePdf(files[0], parseInt(angle, 10) as 90 | 180 | 270, range);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'watermark-pdf': {
+          if (!wmText.trim()) throw new Error('Type the watermark text first.');
+          const tools = await import('@/lib/converters/pdf-tools');
+          const r = await tools.watermarkPdf(files[0], wmText, wmOpacity / 100, parseInt(wmSize, 10));
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'page-numbers-pdf': {
+          const tools = await import('@/lib/converters/pdf-tools');
+          const r = await tools.addPageNumbers(
+            files[0],
+            pnPosition as 'bottom-center' | 'bottom-right' | 'bottom-left' | 'top-center' | 'top-right'
+          );
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'unlock-pdf': {
+          const tools = await import('@/lib/converters/pdf-tools');
+          const r = await tools.unlockPdf(files[0], password);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'extract-images-pdf': {
+          const tools = await import('@/lib/converters/pdf-tools');
+          const imgs = await tools.extractImagesFromPdf(files[0]);
+          imgs.forEach((im) => outs.push({ blob: im.blob, filename: im.filename }));
+          break;
+        }
+        case 'redact-pdf': {
+          const words = redactWords
+            .split(/[\n,]+/)
+            .map((w) => w.trim())
+            .filter((w) => w.length > 0);
+          if (words.length === 0) throw new Error('Type at least one word or phrase to redact.');
+          const tools = await import('@/lib/converters/pdf-tools');
+          const r = await tools.redactPdf(files[0], words);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'delete-pages-pdf': {
+          if (!range.trim()) throw new Error('Tell us which pages to delete, e.g. "1-3, 5".');
+          const tools = await import('@/lib/converters/pdf-tools');
+          const r = await tools.deletePagesFromPdf(files[0], range);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'crop-pdf': {
+          const tools = await import('@/lib/converters/pdf-tools');
+          const r = await tools.cropPdf(files[0], cropMargin);
           outs.push({ blob: r.blob, filename: r.filename });
           break;
         }
@@ -172,7 +241,7 @@ export default function PdfWidget({ entryId }: Props) {
       setLoadNote(null);
       setWorking(false);
     }
-  }, [files, working, entry, range, compressLevel, quality, clearOutputs]);
+  }, [files, working, entry, range, compressLevel, quality, clearOutputs, angle, wmText, wmOpacity, wmSize, pnPosition, password, redactWords, cropMargin]);
 
   const downloadZip = useCallback(async () => {
     if (outputs.length === 0) return;
@@ -208,7 +277,24 @@ export default function PdfWidget({ entryId }: Props) {
     entry.id === 'bmp-to-pdf' ||
     entry.id === 'heic-to-pdf';
   const showReorder = entry.id === 'merge-pdf';
-  const hasOptions = showRange || showCompress || showQuality;
+  const showRotate = entry.id === 'rotate-pdf';
+  const showWatermark = entry.id === 'watermark-pdf';
+  const showPageNumbers = entry.id === 'page-numbers-pdf';
+  const showUnlock = entry.id === 'unlock-pdf';
+  const showRedact = entry.id === 'redact-pdf';
+  const showDeleteRange = entry.id === 'delete-pages-pdf';
+  const showCrop = entry.id === 'crop-pdf';
+  const hasOptions =
+    showRange ||
+    showCompress ||
+    showQuality ||
+    showRotate ||
+    showWatermark ||
+    showPageNumbers ||
+    showUnlock ||
+    showRedact ||
+    showDeleteRange ||
+    showCrop;
   const showSidebar = hasOptions && outputs.length === 0;
 
   return (
@@ -362,6 +448,166 @@ export default function PdfWidget({ entryId }: Props) {
                   value={quality}
                   onChange={(e) => setQuality(Number(e.target.value))}
                   aria-label="Quality"
+                />
+              </label>
+            )}
+            {showRotate && (
+              <>
+                <label className="opt-row">
+                  <span className="opt-label">Rotation</span>
+                  <select
+                    value={angle}
+                    onChange={(e) => setAngle(e.target.value as '90' | '180' | '270')}
+                    aria-label="Rotation angle"
+                  >
+                    <option value="90">90° clockwise</option>
+                    <option value="180">180° (upside down)</option>
+                    <option value="270">90° counter-clockwise</option>
+                  </select>
+                </label>
+                <label className="opt-row">
+                  <span className="opt-label">
+                    Pages <span className="opt-hint">(blank = all pages, e.g. 1-3, 5)</span>
+                  </span>
+                  <input
+                    type="text"
+                    value={range}
+                    onChange={(e) => setRange(e.target.value)}
+                    placeholder="all pages"
+                    aria-label="Pages to rotate"
+                    style={{ maxWidth: '12rem' }}
+                  />
+                </label>
+              </>
+            )}
+            {showWatermark && (
+              <>
+                <label className="opt-row">
+                  <span className="opt-label">Watermark text</span>
+                  <input
+                    type="text"
+                    value={wmText}
+                    onChange={(e) => setWmText(e.target.value)}
+                    placeholder="e.g. DRAFT, CONFIDENTIAL"
+                    aria-label="Watermark text"
+                    style={{ maxWidth: '12rem' }}
+                  />
+                </label>
+                <label className="opt-row">
+                  <span className="opt-label">Text size</span>
+                  <select
+                    value={wmSize}
+                    onChange={(e) => setWmSize(e.target.value as '32' | '48' | '72')}
+                    aria-label="Watermark text size"
+                  >
+                    <option value="32">Small</option>
+                    <option value="48">Medium</option>
+                    <option value="72">Large</option>
+                  </select>
+                </label>
+                <label className="opt-row">
+                  <span className="opt-label">
+                    Opacity: <strong>{wmOpacity}%</strong>
+                  </span>
+                  <input
+                    type="range"
+                    min={5}
+                    max={90}
+                    value={wmOpacity}
+                    onChange={(e) => setWmOpacity(Number(e.target.value))}
+                    aria-label="Watermark opacity"
+                  />
+                </label>
+              </>
+            )}
+            {showPageNumbers && (
+              <label className="opt-row">
+                <span className="opt-label">Position</span>
+                <select
+                  value={pnPosition}
+                  onChange={(e) => setPnPosition(e.target.value)}
+                  aria-label="Page number position"
+                >
+                  <option value="bottom-center">Bottom center</option>
+                  <option value="bottom-right">Bottom right</option>
+                  <option value="bottom-left">Bottom left</option>
+                  <option value="top-center">Top center</option>
+                  <option value="top-right">Top right</option>
+                </select>
+              </label>
+            )}
+            {showUnlock && (
+              <>
+                <label className="opt-row">
+                  <span className="opt-label">PDF password</span>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter the PDF password"
+                    aria-label="PDF password"
+                    autoComplete="off"
+                    style={{ maxWidth: '12rem' }}
+                  />
+                </label>
+                <p className="opt-hint">
+                  Your password is used once, inside your browser, and never stored or sent
+                  anywhere. Note: the unlocked PDF is rebuilt from page images, so text is no
+                  longer selectable.
+                </p>
+              </>
+            )}
+            {showRedact && (
+              <>
+                <label className="opt-row">
+                  <span className="opt-label">
+                    Words/phrases to black out{' '}
+                    <span className="opt-hint">(comma or line separated)</span>
+                  </span>
+                  <textarea
+                    value={redactWords}
+                    onChange={(e) => setRedactWords(e.target.value)}
+                    placeholder={'secret-project\n123-45-6789'}
+                    aria-label="Words to redact"
+                    rows={3}
+                    style={{ maxWidth: '12rem' }}
+                  />
+                </label>
+                <p className="opt-hint">
+                  Visual redaction: matches are covered with black boxes. The underlying text
+                  data stays in the file — for legally watertight redaction, use desktop
+                  software.
+                </p>
+              </>
+            )}
+            {showDeleteRange && (
+              <label className="opt-row">
+                <span className="opt-label">
+                  Pages to delete <span className="opt-hint">(e.g. 1-3, 5)</span>
+                </span>
+                <input
+                  type="text"
+                  value={range}
+                  onChange={(e) => setRange(e.target.value)}
+                  placeholder="1-3, 5"
+                  aria-label="Pages to delete"
+                  style={{ maxWidth: '12rem' }}
+                />
+              </label>
+            )}
+            {showCrop && (
+              <label className="opt-row">
+                <span className="opt-label">
+                  Margin to trim: <strong>{cropMargin}%</strong>{' '}
+                  <span className="opt-hint">(all four sides)</span>
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={40}
+                  value={cropMargin}
+                  onChange={(e) => setCropMargin(Number(e.target.value))}
+                  aria-label="Crop margin percent"
                 />
               </label>
             )}

@@ -48,7 +48,7 @@ while ((m = convRe.exec(src)) !== null) {
 const catName = (id) => (categories.find((c) => c.id === id) || { name: id }).name;
 
 const lines = [];
-lines.push('# All Files Converter');
+lines.push('# Quick Files Converter');
 lines.push('');
 lines.push(
   '> Free online file converters that run 100% in your browser. No uploads, no sign-up, no watermarks, no accounts.'
@@ -57,7 +57,7 @@ lines.push('');
 lines.push('## What this site is');
 lines.push('');
 lines.push(
-  `All Files Converter (${SITE_URL}/) is a free file-conversion website. Every tool converts files ` +
+  `Quick Files Converter (${SITE_URL}/) is a free file-conversion website. Every tool converts files ` +
     `entirely on the visitor's device using web technology (Canvas, WebAssembly, File API). ` +
     `There is no server-side processing, no database and no user accounts.`
 );

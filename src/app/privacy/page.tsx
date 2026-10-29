@@ -50,12 +50,21 @@ export default function Privacy() {
           summary request, never uploaded and never shared with the AI provider
           or anyone else.
         </p>
-        <h2>5. Contact form</h2>
+        <h2>5. Suggestions &amp; feedback</h2>
+        <p>
+          The search box lets you suggest a converter we don&apos;t have yet, and
+          the footer has a feedback form. If you use them, we store{' '}
+          <strong>only what you type</strong> — your suggestion or message, the
+          page you were on, and a contact address <em>only if you choose to give
+          one</em>. Your files are never included, never uploaded and never
+          shared with anyone.
+        </p>
+        <h2>6. Contact form</h2>
         <p>
           If you email us via the <a href="/contact">contact page</a>, we receive
           only what you choose to write. We do not share it with anyone.
         </p>
-        <h2>6. Changes</h2>
+        <h2>7. Changes</h2>
         <p>
           If this policy ever changes, the change will be described here in plain
           language. The on-device promise is the foundation of this site — it is

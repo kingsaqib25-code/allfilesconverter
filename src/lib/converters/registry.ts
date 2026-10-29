@@ -14,7 +14,7 @@
  * (File/Blob/Canvas/WebAssembly). No uploads, no API routes, no server.
  */
 
-import { convertImage } from './image';
+import { convertImage, resizeImage, rotateImageFile } from './image';
 import { convertHeic } from './heic';
 import {
   mdToHtml,
@@ -38,7 +38,7 @@ export type ConvertOptions = Record<string, string | number>;
 export interface OptionDef {
   id: string;
   label: string;
-  type: 'slider' | 'select';
+  type: 'slider' | 'select' | 'number';
   min?: number;
   max?: number;
   step?: number;
@@ -139,14 +139,14 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'PDF Converters',
     tagline: 'Convert PDF to JPG, JPG to PDF, merge, split and compress PDFs.',
     description:
-      'Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GIF, BMP and HEIC images, TXT, Markdown and CSV files into PDF documents — or convert PDF to JPG/PNG images, merge, split, compress and edit PDFs, and extract text — your documents are never uploaded anywhere.',
+      'Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GIF, BMP and HEIC images, TXT, Markdown and CSV files into PDF documents — or convert PDF to JPG/PNG images, merge, split, compress, rotate, watermark, add page numbers, redact, crop, delete pages, unlock and edit PDFs, and extract text and images — your documents are never uploaded anywhere.',
   },
   {
     id: 'image',
     name: 'Image Converters',
     tagline: 'Convert photos and graphics between PNG, JPG, WebP, AVIF, HEIC and more.',
     description:
-      'Free online image converters that run entirely in your browser. Change PNG to JPG, WebP to PNG, HEIC to JPG and more — including PNG to PDF, JPG to PDF, WebP to PDF, GIF to PDF, BMP to PDF and HEIC to PDF for documents — your photos are never uploaded anywhere.',
+      'Free online image converters that run entirely in your browser. Change PNG to JPG, WebP to PNG, HEIC to JPG and more — resize and rotate images in bulk, or create PNG to PDF, JPG to PDF, WebP to PDF, GIF to PDF, BMP to PDF and HEIC to PDF documents — your photos are never uploaded anywhere.',
   },
   {
     id: 'text',
@@ -249,6 +249,7 @@ import type { ArgBuilder } from './video';
 const FFMPEG_NOTE = 'Preparing converter… (~30 MB one-time download)';
 
 const PDF_ENGINE_NOTE = 'Loading the PDF engine… (one-time download)';
+const IMAGE_ENGINE_NOTE = 'Preparing the image engine…';
 
 const vid =
   (buildArgs: ArgBuilder, outExt: string, mime: string, loadingNote = FFMPEG_NOTE) =>
@@ -2392,7 +2393,7 @@ const PAIRS: PairSpec[] = [
       },
       {
         q: 'Will the layout stay the same after editing?',
-        a: 'For text-based PDFs, yes — each edited block is covered and your new text is drawn back at the exact same position in a matching style. One honest detail: the cover is a white box, so on pages with background colors or images behind the text you may notice it. Original fonts are approximated with standard PDF fonts.',
+        a: 'For text-based PDFs, yes — only the words you edit are redrawn, at the exact same position and size. The cover box is painted in the sampled background color and your text in the sampled text color, so headers and colored sections keep their look. Redrawn text uses a matching font (Noto Sans for Noto-based PDFs, Helvetica otherwise). Longer replacement text grows its box to the right; nearby content never moves.',
       },
       {
         q: 'What about scanned PDFs?',
@@ -2543,6 +2544,379 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Which bitrate should I choose?',
         a: '192 kbps is the sweet spot for voice and most music. 320 kbps for critical listening, 128 kbps for the smallest files.',
+      },
+    ],
+  },
+  /* -------------------- competitor-gap round: PDF tools -------------------- */
+  {
+    id: 'rotate-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Rotate PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Fix sideways or upside-down PDF pages in seconds. Rotate all pages — or just pages 1-3, 5 — by 90°, 180° or 270°, right in your browser.',
+    faqQ: 'How do I rotate a PDF that opens sideways?',
+    faqA: 'Drop the PDF, pick 90° clockwise (or 180° / 90° counter-clockwise), and optionally limit it to certain pages like "1-3, 5". Download the fixed PDF — the rotation is saved permanently.',
+    aboutFrom: 'Scanned PDFs and phone exports often open sideways or upside-down, making them unreadable without tilting your head.',
+    aboutTo: 'A rotated PDF opens correctly everywhere — the new orientation is baked into the file, not just your viewer.',
+    useCases: [
+      'Fixing a scanned contract that opens sideways',
+      'Straightening phone-scanned receipts before sending',
+      'Flipping landscape slides back to portrait',
+    ],
+    tip: 'Leave the page box empty to rotate every page; type "1-3, 5" to rotate only some.',
+    extraFaqs: [
+      {
+        q: 'Is the rotation permanent?',
+        a: 'Yes — the rotation is written into the PDF file itself, so it opens correctly in every reader, on every device.',
+      },
+      {
+        q: 'Can I rotate only some pages?',
+        a: 'Yes. Type the pages in the Pages box (e.g. "1-3, 5") and only those rotate. Leave it blank to rotate the whole document.',
+      },
+      {
+        q: 'Does rotating reduce quality?',
+        a: 'No. Rotation only changes page orientation metadata — your text and images are untouched, with zero quality loss.',
+      },
+      {
+        q: 'My PDF is upside down. Which option fixes it?',
+        a: 'Choose 180°. Use 90° clockwise for pages lying on their side, 90° counter-clockwise if they lean the other way.',
+      },
+    ],
+  },
+  {
+    id: 'watermark-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Watermark PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Stamp DRAFT, CONFIDENTIAL or your brand across every PDF page. Diagonal text watermark with adjustable size and transparency — free, no sign-up.',
+    faqQ: 'How do I add a DRAFT watermark to a PDF?',
+    faqA: 'Drop your PDF, type your watermark text (e.g. DRAFT or CONFIDENTIAL), pick a size and transparency, and download. The watermark is stamped diagonally across every page.',
+    aboutFrom: 'Sharing unfinished or sensitive documents without a watermark invites misuse — anyone can pass them off as final.',
+    aboutTo: 'A watermarked PDF carries your mark on every page: clear ownership, clear status, still perfectly readable underneath.',
+    useCases: [
+      'Marking a proposal DRAFT before sending it out',
+      'Stamping CONFIDENTIAL on internal reports',
+      'Adding your brand name to free samples and portfolios',
+    ],
+    tip: '25–40% opacity keeps the watermark visible without hurting readability. Go bolder only for "do not distribute" documents.',
+    extraFaqs: [
+      {
+        q: 'Can I control how strong the watermark looks?',
+        a: 'Yes — set the opacity from 5% (barely-there) to 90% (impossible to miss), plus three text sizes. 25% is the sweet spot for drafts.',
+      },
+      {
+        q: 'Where does the watermark appear?',
+        a: 'Diagonally across the center of every page, behind nothing and over everything — visible on all pages at once.',
+      },
+      {
+        q: 'Will the watermark cover my text?',
+        a: 'It sits over the page but at partial transparency, so your content stays readable underneath. Lower the opacity if it feels heavy.',
+      },
+      {
+        q: 'Can I remove a watermark later?',
+        a: 'A stamped watermark becomes part of the PDF — that is the point. Keep an unstamped copy if you will need a clean version later.',
+      },
+    ],
+  },
+  {
+    id: 'page-numbers-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Add Page Numbers to PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Number every page of your PDF automatically — "Page 1 of 12" in the footer or header, five positions to choose from. Perfect for reports and ebooks.',
+    faqQ: 'How do I add page numbers to a PDF?',
+    faqA: 'Drop the PDF, choose where the numbers go (bottom center is classic), and download. Every page gets "Page X of Y" stamped in a clean, subtle style.',
+    aboutFrom: 'Long PDFs without page numbers are a navigation nightmare — "see page 47" means nothing when pages are not numbered.',
+    aboutTo: 'Numbered pages make any document referenceable: printouts, reviews, and citations all just work.',
+    useCases: [
+      'Numbering a thesis or report before submission',
+      'Adding page numbers to an ebook draft',
+      'Preparing a contract where clauses reference page numbers',
+    ],
+    tip: 'Bottom center is the classic choice for reports; bottom right suits business documents.',
+    extraFaqs: [
+      {
+        q: 'What format do the numbers use?',
+        a: '"Page 1 of 12" — total count included, so readers always know how far along they are.',
+      },
+      {
+        q: 'Can I choose where the numbers appear?',
+        a: 'Yes: bottom center, bottom left, bottom right, top center, or top right — five positions.',
+      },
+      {
+        q: 'Will it cover my content?',
+        a: 'Numbers sit in the margin area in small grey type, well clear of typical content. If your pages run edge-to-edge, pick a top position.',
+      },
+      {
+        q: 'Does it work on scanned PDFs?',
+        a: 'Yes — page numbers are drawn onto the page regardless of whether the content is text or scanned images.',
+      },
+    ],
+  },
+  {
+    id: 'unlock-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Unlock PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Remove the password from a PDF you own. Enter the password once — it never leaves your browser — and download a freely usable copy.',
+    faqQ: 'How do I remove a password from a PDF?',
+    faqA: 'Drop the locked PDF, type its password, and download the unlocked copy. Your password is used once inside your browser and never stored or sent anywhere.',
+    aboutFrom: 'Password-protected PDFs you legitimately own become a daily friction: every open, print, or merge demands the password again.',
+    aboutTo: 'An unlocked copy opens instantly everywhere — same pages, no more password prompts.',
+    useCases: [
+      'Removing the password from your own bank statements for archiving',
+      'Unlocking a protected ebook you bought so it opens on every device',
+      'Preparing a locked PDF for merging or editing',
+    ],
+    tip: 'You must know the password — no tool can (or should) crack a password you do not have.',
+    extraFaqs: [
+      {
+        q: 'Is my password safe?',
+        a: 'Yes. It is typed into your own browser, used once to open the file, and never stored, logged, or uploaded. The file never leaves your device either.',
+      },
+      {
+        q: 'What if I forgot the password?',
+        a: 'Then it cannot be unlocked — that is what the password is for. Contact whoever set it.',
+      },
+      {
+        q: 'Will the unlocked PDF look the same?',
+        a: 'Pages are rebuilt as high-quality images, so the look is preserved — but text is no longer selectable or searchable. For full fidelity, ask the document owner for an unprotected original.',
+      },
+      {
+        q: 'Does it remove print/copy restrictions too?',
+        a: 'Yes — the rebuilt copy carries no passwords and no restrictions.',
+      },
+    ],
+  },
+  {
+    id: 'extract-images-pdf', from: 'PDF', to: 'Images', fromExts: ['pdf'], toExt: 'png', category: 'pdf',
+    title: 'Extract Images from PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Pull every embedded photo and graphic out of a PDF as PNG files. Download them individually or all at once as a ZIP — original resolution kept.',
+    faqQ: 'How do I save pictures from a PDF?',
+    faqA: 'Drop the PDF and every embedded image is listed for download as a PNG — grab them one by one or take them all as a ZIP. Images come out at their original embedded resolution.',
+    aboutFrom: 'Photos trapped inside PDFs cannot be right-click-saved — screenshots are the usual sad workaround, at screen resolution.',
+    aboutTo: 'Extracted PNGs are the real embedded files at full resolution — ready to reuse, edit, or archive.',
+    useCases: [
+      'Recovering product photos from a supplier catalogue PDF',
+      'Pulling charts out of a report for a presentation',
+      'Saving illustrations from an ebook',
+    ],
+    tip: 'If a "photo" does not appear, it is probably vector clip-art (drawn shapes), not an embedded image — those cannot be extracted as files.',
+    extraFaqs: [
+      {
+        q: 'What quality are the extracted images?',
+        a: 'Original embedded resolution — whatever the PDF author put in. No re-compression, no screenshots.',
+      },
+      {
+        q: 'What format do I get?',
+        a: 'PNG files, named by page and image number (e.g. report-p2-img1.png), or all of them in one ZIP.',
+      },
+      {
+        q: 'Why is an image missing?',
+        a: 'Only true embedded raster images extract. Vector drawings, icons, and backgrounds drawn with shapes are not image files.',
+      },
+      {
+        q: 'Is there a limit?',
+        a: 'No file-count limit — a 200-image catalogue extracts just fine, though very large PDFs take a moment.',
+      },
+    ],
+  },
+  {
+    id: 'redact-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Redact PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Black out names, ID numbers, or any sensitive words across a whole PDF at once. Type the words — every occurrence gets covered.',
+    faqQ: 'How do I black out text in a PDF?',
+    faqA: 'Drop the PDF, type the words or phrases to hide (comma or line separated), and download. Every occurrence on every page is covered with a solid black box.',
+    aboutFrom: 'Sharing documents with visible personal data — names, ID numbers, salaries — is a privacy accident waiting to happen.',
+    aboutTo: 'A redacted PDF hides every listed term behind black boxes, safe to share or publish.',
+    useCases: [
+      'Hiding ID numbers before sharing a document publicly',
+      'Redacting names from a report for blind review',
+      'Covering salaries in a shared HR export',
+    ],
+    tip: 'List every variant ("John", "J. Smith") — matching is literal, so think like a finder, not a reader.',
+    extraFaqs: [
+      {
+        q: 'Is the redaction permanent and secure?',
+        a: 'Honest answer: this is visual redaction — the words are covered with black boxes, but the underlying text data remains in the file. For legally watertight redaction (court filings, medical records), use desktop software that strips the data too.',
+      },
+      {
+        q: 'Is matching case-sensitive?',
+        a: 'No — "Secret", "SECRET" and "secret" are all caught.',
+      },
+      {
+        q: 'Can I redact phrases, not just single words?',
+        a: 'Yes — type full phrases like "Project Nightingale". Each phrase is matched wherever it appears on one line.',
+      },
+      {
+        q: 'What about scanned PDFs?',
+        a: 'Scanned pages are images, not text — there is nothing to match. Those need OCR first, which the browser version does not do yet.',
+      },
+    ],
+  },
+  {
+    id: 'delete-pages-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Delete Pages from PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Remove unwanted pages from a PDF — blank pages, covers, or mistakes. Type "1-3, 5" and download the trimmed document.',
+    faqQ: 'How do I delete pages from a PDF?',
+    faqA: 'Drop the PDF, type which pages to remove (e.g. "1-3, 5"), and download. The remaining pages keep their order and quality — nothing else changes.',
+    aboutFrom: 'PDFs collect cruft: blank pages, duplicate scans, cover sheets you do not need — bloating the file and confusing readers.',
+    aboutTo: 'A trimmed PDF contains only the pages that matter — smaller, cleaner, professional.',
+    useCases: [
+      'Removing blank pages from a scan',
+      'Cutting the cover sheet off a downloaded report',
+      'Deleting a botched page from an otherwise good document',
+    ],
+    tip: 'Double-check the page numbers first — open the PDF and note which pages to cut before you type the range.',
+    extraFaqs: [
+      {
+        q: 'How do I specify the pages?',
+        a: 'Type ranges like "1-3, 5" — pages 1 through 3 plus page 5 get removed. Everything else stays in order.',
+      },
+      {
+        q: 'Does deleting pages reduce quality?',
+        a: 'No — remaining pages are copied untouched. Only the file gets smaller (fewer pages).',
+      },
+      {
+        q: 'Can I delete all pages?',
+        a: 'No — at least one page must remain. The tool stops you before making an empty PDF.',
+      },
+      {
+        q: 'What is the difference from Split PDF?',
+        a: 'Split keeps the pages you name; Delete removes the pages you name. Two ways to reach the same trimmed document.',
+      },
+    ],
+  },
+  {
+    id: 'crop-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Crop PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Trim ugly margins and whitespace off every PDF page. Slide to crop 0–40% from all sides — great for cleaning up scans and slides.',
+    faqQ: 'How do I crop white margins off a PDF?',
+    faqA: 'Drop the PDF and drag the margin slider — every page is trimmed by that percentage on all four sides. Preview-friendly and instant.',
+    aboutFrom: 'Scans and exported slides drown in white margins — content floats in a sea of nothing, tiny on screen and wasteful in print.',
+    aboutTo: 'A cropped PDF puts content front and center: bigger on screen, tighter in print, no information lost.',
+    useCases: [
+      'Trimming scanner bed margins off receipts',
+      'Tightening up exported presentation slides',
+      'Removing dark scan edges from book pages',
+    ],
+    tip: 'Start at 10% — enough to kill most scanner margins without touching content. Push higher only for truly empty borders.',
+    extraFaqs: [
+      {
+        q: 'Does cropping delete content?',
+        a: 'Cropping hides the outer margins; the underlying page data stays in the file. Most readers respect the crop box, showing the trimmed view.',
+      },
+      {
+        q: 'Can I crop each side differently?',
+        a: 'This tool trims all four sides equally — the fast path that fixes 95% of margin problems. For asymmetric crops, use a desktop editor.',
+      },
+      {
+        q: 'What percentage should I use?',
+        a: '10% handles typical scan margins. 20%+ is for documents that are mostly border.',
+      },
+      {
+        q: 'Does it work on every page at once?',
+        a: 'Yes — one slider, all pages. Perfect for consistently-margined scans.',
+      },
+    ],
+  },
+  /* ------------------ competitor-gap round: image tools ------------------ */
+  {
+    id: 'image-resize', from: 'Image', to: 'Image', fromExts: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'], toExt: 'png', category: 'image',
+    title: 'Resize Images',
+    loadingNote: IMAGE_ENGINE_NOTE,
+    blurb: 'Resize images in bulk — by percent, exact width, or exact height. Drop a whole folder of photos, get them all back at the new size, zipped.',
+    faqQ: 'How do I resize multiple images at once?',
+    faqA: 'Drop all your images, choose percent (e.g. 50%), an exact width, or an exact height — aspect ratio is always kept — and download everything as a ZIP. Your original format is preserved per file.',
+    aboutFrom: 'Oversized photos choke uploads, slow websites, and eat phone storage — yet resizing them one by one is soul-crushing.',
+    aboutTo: 'Right-sized images load fast and fit everywhere: same pictures, sensible dimensions, smaller files.',
+    useCases: [
+      'Shrinking product photos to a uniform 1200px width for a store',
+      'Halving vacation photos before emailing them',
+      'Preparing uniform thumbnails for a gallery',
+    ],
+    tip: 'Percent mode is fastest for batches; exact-width mode is best when a platform demands specific dimensions.',
+    options: [
+      { id: 'mode', label: 'Resize by', type: 'select', default: 'percent', choices: [
+        { value: 'percent', label: 'Percent of original' },
+        { value: 'width', label: 'Exact width (px)' },
+        { value: 'height', label: 'Exact height (px)' },
+      ] },
+      { id: 'value', label: 'Value', type: 'number', min: 1, max: 12000, default: 50, hint: '% or px, depending on mode' },
+    ],
+    convert: (file, opts) =>
+      resizeImage(
+        file,
+        ((opts?.mode as 'percent' | 'width' | 'height') ?? 'percent'),
+        Number(opts?.value ?? 50)
+      ),
+    extraFaqs: [
+      {
+        q: 'Will my images get stretched?',
+        a: 'Never — the aspect ratio is always locked. Set a width and the height follows automatically (and vice versa).',
+      },
+      {
+        q: 'Does it keep my file format?',
+        a: 'Yes. A JPG stays a JPG, a PNG stays a PNG — each file keeps its original format.',
+      },
+      {
+        q: 'How many images can I resize at once?',
+        a: 'Dozens at a time work fine; they process one by one and download as a ZIP.',
+      },
+      {
+        q: 'Does resizing reduce quality?',
+        a: 'Downscaling with high-quality smoothing keeps images crisp. Avoid upscaling beyond ~200% — pixels cannot be invented.',
+      },
+    ],
+  },
+  {
+    id: 'image-rotate', from: 'Image', to: 'Image', fromExts: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'], toExt: 'png', category: 'image',
+    title: 'Rotate Images',
+    loadingNote: IMAGE_ENGINE_NOTE,
+    blurb: 'Fix sideways photos in bulk — rotate any number of images 90°, 180° or 270° and download them all as a ZIP. Format preserved.',
+    faqQ: 'How do I rotate many photos at once?',
+    faqA: 'Drop all the sideways photos, pick 90° clockwise (or 180° / counter-clockwise), and download the fixed set as a ZIP. Each photo keeps its original format.',
+    aboutFrom: 'Phone photos often save sideways thanks to orientation metadata — and some viewers ignore that metadata entirely.',
+    aboutTo: 'Rotated images open correctly everywhere, because the pixels themselves are turned — no metadata roulette.',
+    useCases: [
+      'Fixing a batch of sideways vacation photos',
+      'Straightening scanned documents saved as images',
+      'Preparing product shots in consistent orientation',
+    ],
+    tip: 'Most phone photos need 90° clockwise. If they lean the other way, use 90° counter-clockwise.',
+    options: [
+      { id: 'angle', label: 'Rotation', type: 'select', default: '90', choices: [
+        { value: '90', label: '90° clockwise' },
+        { value: '180', label: '180°' },
+        { value: '270', label: '90° counter-clockwise' },
+      ] },
+    ],
+    convert: (file, opts) =>
+      rotateImageFile(file, (Number(opts?.angle ?? 90) as 90 | 180 | 270)),
+    extraFaqs: [
+      {
+        q: 'Does rotating lose quality?',
+        a: 'For 90°/180°/270° turns, pixels are only rearranged — no resampling blur. (Arbitrary angles would be a different story.)',
+      },
+      {
+        q: 'Why do my photos open sideways in some apps?',
+        a: 'Phones store orientation as metadata, and not every viewer reads it. Rotating the actual pixels fixes it everywhere, permanently.',
+      },
+      {
+        q: 'Does it keep my file format?',
+        a: 'Yes — JPG stays JPG, PNG stays PNG, per file.',
+      },
+      {
+        q: 'Can I rotate just one image?',
+        a: 'Of course — drop one file and it works exactly the same.',
       },
     ],
   },
