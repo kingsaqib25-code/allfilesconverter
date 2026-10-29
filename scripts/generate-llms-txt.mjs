@@ -32,7 +32,17 @@ const converters = [];
 const convRe =
   /    id: '([^']+)', from: '((?:[^'\\]|\\.)*)', to: '((?:[^'\\]|\\.)*)', fromExts: \[[^\]]*\], toExt: '[^']*', category: '(\w+)',/g;
 while ((m = convRe.exec(src)) !== null) {
-  converters.push({ id: m[1], from: unesc(m[2]), to: unesc(m[3]), category: m[4] });
+  const after = src.slice(m.index + m[0].length, m.index + m[0].length + 80);
+  const t = after.match(/^\n    title: '([^']+)',/);
+  const fromU = unesc(m[2]);
+  const toU = unesc(m[3]);
+  converters.push({
+    id: m[1],
+    from: fromU,
+    to: toU,
+    category: m[4],
+    title: t ? t[1] : `${fromU} to ${toU} Converter`,
+  });
 }
 
 const catName = (id) => (categories.find((c) => c.id === id) || { name: id }).name;
@@ -77,7 +87,7 @@ for (const cat of categories) {
   lines.push(`### ${cat.name}`);
   lines.push('');
   for (const c of converters.filter((x) => x.category === cat.id)) {
-    lines.push(`- ${SITE_URL}/convert/${c.id}/ \u2014 ${c.from} to ${c.to} Converter`);
+    lines.push(`- ${SITE_URL}/convert/${c.id}/ \u2014 ${c.title}`);
   }
   lines.push('');
 }

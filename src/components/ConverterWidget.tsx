@@ -1,7 +1,12 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { getConverter, type ConverterEntry } from '@/lib/converters/registry';
+import {
+  getConverter,
+  type ConverterEntry,
+  type ConvertOptions,
+  type OptionDef,
+} from '@/lib/converters/registry';
 
 interface Props {
   entryId: string;
@@ -25,6 +30,53 @@ export default function ConverterWidget({ entryId }: Props) {
   const [doneName, setDoneName] = useState<string>('');
   const [doneSize, setDoneSize] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
+  // Per-converter option controls (quality slider, bitrate, …) — forwarded to convert().
+  const [optValues, setOptValues] = useState<ConvertOptions>(() => {
+    const init: ConvertOptions = {};
+    for (const o of entry.options ?? []) init[o.id] = o.default;
+    return init;
+  });
+
+  const renderOption = (opt: OptionDef) => {
+    const val = optValues[opt.id] ?? opt.default;
+    if (opt.type === 'slider') {
+      return (
+        <label key={opt.id} className="opt-row">
+          <span className="opt-label">
+            {opt.label}: <strong>{val}</strong>
+            {opt.hint ? <span className="opt-hint"> ({opt.hint})</span> : null}
+          </span>
+          <input
+            type="range"
+            min={opt.min ?? 1}
+            max={opt.max ?? 100}
+            step={opt.step ?? 1}
+            value={Number(val)}
+            onChange={(e) =>
+              setOptValues((v) => ({ ...v, [opt.id]: Number(e.target.value) }))
+            }
+            aria-label={opt.label}
+          />
+        </label>
+      );
+    }
+    return (
+      <label key={opt.id} className="opt-row">
+        <span className="opt-label">{opt.label}</span>
+        <select
+          value={String(val)}
+          onChange={(e) => setOptValues((v) => ({ ...v, [opt.id]: e.target.value }))}
+          aria-label={opt.label}
+        >
+          {(opt.choices ?? []).map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  };
 
   const pickFile = useCallback(
     (f: File | undefined | null) => {
@@ -73,7 +125,8 @@ export default function ConverterWidget({ entryId }: Props) {
           setLoadNote(s === 'loading' ? entry.loadingNote ?? null : null)
         );
       }
-      const { blob, filename } = await entry.convert(file);
+      if (!entry.convert) throw new Error('This converter needs its dedicated tool interface.');
+      const { blob, filename } = await entry.convert(file, optValues);
       const url = URL.createObjectURL(blob);
       setDoneUrl(url);
       setDoneName(filename);
@@ -89,7 +142,7 @@ export default function ConverterWidget({ entryId }: Props) {
       setLoadNote(null);
       setWorking(false);
     }
-  }, [file, working, entry]);
+  }, [file, working, entry, optValues]);
 
   const reset = useCallback(() => {
     setFile(null);
@@ -149,6 +202,11 @@ export default function ConverterWidget({ entryId }: Props) {
           ) : doneUrl ? (
             <div className="alert ok">
               Done! Your {entry.to} file is ready ({doneSize}).
+            </div>
+          ) : null}
+          {entry.options && entry.options.length > 0 && !doneUrl ? (
+            <div className="opt-block" aria-label="Conversion options">
+              {entry.options.map(renderOption)}
             </div>
           ) : null}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>

@@ -26,8 +26,15 @@ export interface ConvertResult {
   filename: string;
 }
 
+/** Per-conversion options forwarded from the widget (quality presets etc.). */
+export type ConvertOptions = Record<string, string | number>;
+
 /** Builds the ffmpeg argv for a single-pass conversion. */
-export type ArgBuilder = (input: string, output: string) => string[];
+export type ArgBuilder = (
+  input: string,
+  output: string,
+  opts?: ConvertOptions
+) => string[];
 
 // ---------------------------------------------------------------------------
 // Load-state events (so the UI can show "Preparing converter…" while loading)
@@ -135,7 +142,8 @@ export async function convertMedia(
   file: File,
   buildArgs: ArgBuilder,
   outExt: string,
-  mime: string
+  mime: string,
+  opts?: ConvertOptions
 ): Promise<ConvertResult> {
   guardSize(file);
   const ff = await getFfmpeg();
@@ -144,7 +152,7 @@ export async function convertMedia(
   const output = `output.${outExt}`;
   try {
     await ff.writeFile(input, await fetchFile(file));
-    const code = await ff.exec(buildArgs(input, output));
+    const code = await ff.exec(buildArgs(input, output, opts));
     if (code !== 0) throw new Error(`ffmpeg failed with code ${code}`);
     const data = (await ff.readFile(output)) as Uint8Array;
     if (!data || data.length === 0) {
@@ -247,6 +255,76 @@ export async function videoToGif(file: File, opts: GifOptions): Promise<ConvertR
     for (const f of [input, palette, output]) {
       try {
         await ff.deleteFile(f);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Concat: join several media files into one (merge-video / merge-audio)
+// ---------------------------------------------------------------------------
+
+/**
+ * Join multiple media files. Tries the fast concat-demuxer path with stream
+ * copy first (no re-encode when the files share a codec); falls back to a
+ * full re-encode so mixed inputs still work.
+ */
+export async function concatMedia(
+  files: File[],
+  outExt: string,
+  mime: string,
+  kind: 'video' | 'audio',
+  opts?: ConvertOptions
+): Promise<ConvertResult> {
+  if (files.length < 2) {
+    throw new Error('Merging needs at least 2 files — add another one.');
+  }
+  if (files.length > 20) {
+    throw new Error('Please merge at most 20 files at once — browsers run out of memory beyond that.');
+  }
+  files.forEach(guardSize);
+  const ff = await getFfmpeg();
+  const output = `merged.${outExt}`;
+  const names: string[] = [];
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const ext = (files[i].name.split('.').pop() || 'bin').toLowerCase().slice(0, 8);
+      const name = `part${i}.${ext}`;
+      names.push(name);
+      await ff.writeFile(name, await fetchFile(files[i]));
+    }
+    const list = names.map((n) => `file '${n}'`).join('\n');
+    await ff.writeFile('list.txt', new TextEncoder().encode(list));
+
+    // Fast path: concat demuxer + stream copy (no quality loss, quick).
+    let code = await ff.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', output]);
+    if (code !== 0) {
+      // Fallback: re-encode everything so mixed codecs/containers still join.
+      const crf = String(opts?.crf ?? '23');
+      const bitrate = String(opts?.bitrate ?? '192k');
+      const args =
+        kind === 'video'
+          ? ['-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c:v', 'libx264', '-crf', crf, '-preset', 'veryfast', '-c:a', 'aac', output]
+          : ['-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c:a', 'libmp3lame', '-b:a', bitrate, output];
+      code = await ff.exec(args);
+      if (code !== 0) throw new Error(`ffmpeg failed with code ${code}`);
+    }
+    const data = (await ff.readFile(output)) as Uint8Array;
+    if (!data || data.length === 0) {
+      throw new Error(
+        'Merging produced no output — the files may use incompatible codecs or be damaged.'
+      );
+    }
+    return { blob: new Blob([data as unknown as BlobPart], { type: mime }), filename: `merged.${outExt}` };
+  } catch (e) {
+    if (isKnownError(e)) throw e;
+    throw friendlyError(e);
+  } finally {
+    for (const n of [...names, 'list.txt', output]) {
+      try {
+        await ff.deleteFile(n);
       } catch {
         /* ignore */
       }

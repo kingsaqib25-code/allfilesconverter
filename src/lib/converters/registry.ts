@@ -29,7 +29,57 @@ import {
 } from './text';
 import { convertSubtitle, type SubExt } from './subtitle';
 
-export type Category = 'image' | 'text' | 'data' | 'subtitle' | 'video' | 'audio';
+export type Category = 'image' | 'text' | 'data' | 'subtitle' | 'video' | 'audio' | 'pdf';
+
+/** Per-conversion options forwarded from the widget (quality sliders etc.). */
+export type ConvertOptions = Record<string, string | number>;
+
+/** Declarative widget control rendered above the Convert button. */
+export interface OptionDef {
+  id: string;
+  label: string;
+  type: 'slider' | 'select';
+  min?: number;
+  max?: number;
+  step?: number;
+  default: string | number;
+  choices?: { value: string; label: string }[];
+  hint?: string;
+}
+
+export const IMAGE_QUALITY_OPTION: OptionDef = {
+  id: 'quality',
+  label: 'Quality',
+  type: 'slider',
+  min: 1,
+  max: 100,
+  default: 92,
+  hint: 'Lower = smaller file',
+};
+
+export const VIDEO_CRF_OPTION: OptionDef = {
+  id: 'crf',
+  label: 'Quality',
+  type: 'select',
+  default: '23',
+  choices: [
+    { value: '18', label: 'High quality (larger file)' },
+    { value: '23', label: 'Balanced' },
+    { value: '28', label: 'Small file' },
+  ],
+};
+
+export const AUDIO_BITRATE_OPTION: OptionDef = {
+  id: 'bitrate',
+  label: 'Bitrate',
+  type: 'select',
+  default: '192k',
+  choices: [
+    { value: '128k', label: '128 kbps — smaller file' },
+    { value: '192k', label: '192 kbps — balanced' },
+    { value: '320k', label: '320 kbps — best quality' },
+  ],
+};
 
 export interface Faq {
   q: string;
@@ -51,7 +101,12 @@ export interface ConverterEntry {
   title: string; // 'HEIC to JPG Converter'
   description: string; // 1-2 unique lines, used for meta description
   faqs: Faq[]; // 3 base; flagship pages carry 6-8
-  convert: (file: File) => Promise<ConvertResult>;
+  /** Optional for entries with a custom widget (pdf/merge) that calls module functions directly. */
+  convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
+  /** Declarative option controls rendered by the widget (quality slider etc.). */
+  options?: OptionDef[];
+  /** Which widget renders this entry: default single-file, pdf (custom PDF UI), merge (multi-file). */
+  widget?: 'default' | 'pdf' | 'merge';
   /** Shown while a heavy engine (ffmpeg.wasm) initializes. */
   loadingNote?: string;
   /** "When to use this conversion" section (every page). */
@@ -77,6 +132,13 @@ export const BRAND = 'All Files Converter';
 export const TAGLINE = 'Free file converter. Your files never leave your device.';
 
 export const CATEGORIES: CategoryMeta[] = [
+  {
+    id: 'pdf',
+    name: 'PDF Converters',
+    tagline: 'Convert PDF to JPG, JPG to PDF, merge, split and compress PDFs.',
+    description:
+      'Free online PDF tools that run entirely in your browser. Convert PDF to JPG or PNG images, turn JPG/PNG images into a PDF, merge multiple PDFs into one, split pages out of a PDF, compress a PDF to a smaller size, and extract text — your documents are never uploaded anywhere.',
+  },
   {
     id: 'image',
     name: 'Image Converters',
@@ -141,7 +203,9 @@ interface PairSpec {
   blurb: string;
   faqQ: string;
   faqA: string;
-  convert: (file: File) => Promise<ConvertResult>;
+  convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
+  options?: OptionDef[];
+  widget?: 'default' | 'pdf' | 'merge';
   loadingNote?: string;
   /** 1-2 lines: what the SOURCE format is (unique per page). */
   aboutFrom: string;
@@ -154,10 +218,22 @@ interface PairSpec {
   /** Extra FAQs for flagship pages (appended before the free + privacy FAQs). */
   extraFaqs?: Faq[];
   flagship?: boolean;
+  /** Override the auto "X to Y Converter" title (for merge/split tools). */
+  title?: string;
 }
 
-const img = (toExt: string) => (file: File) => convertImage(file, toExt);
-const heic = (toExt: 'jpg' | 'png') => (file: File) => convertHeic(file, toExt);
+const qualityOf = (opts?: ConvertOptions): number => {
+  const q = Number(opts?.quality ?? 92);
+  return Math.min(100, Math.max(1, isFinite(q) ? q : 92)) / 100;
+};
+
+const img = (toExt: string) => (file: File, opts?: ConvertOptions) =>
+  convertImage(file, toExt, qualityOf(opts));
+const heic = (toExt: 'jpg' | 'png') => async (file: File, opts?: ConvertOptions) => {
+  // heic2any handles its own quality; wire the slider through when supported.
+  const mod = await import('./heic');
+  return mod.convertHeic(file, toExt, qualityOf(opts));
+};
 const sub = (fromExt: SubExt, toExt: SubExt) => (file: File) =>
   convertSubtitle(file, fromExt, toExt);
 
@@ -168,11 +244,13 @@ import type { ArgBuilder } from './video';
 
 const FFMPEG_NOTE = 'Preparing converter… (~30 MB one-time download)';
 
+const PDF_ENGINE_NOTE = 'Loading the PDF engine… (one-time download)';
+
 const vid =
   (buildArgs: ArgBuilder, outExt: string, mime: string, loadingNote = FFMPEG_NOTE) =>
-  async (file: File) => {
+  async (file: File, opts?: ConvertOptions) => {
     const mod = await import('./video');
-    return mod.convertMedia(file, buildArgs, outExt, mime);
+    return mod.convertMedia(file, buildArgs, outExt, mime, opts);
   };
 
 const vgif = () => async (file: File) => {
@@ -188,28 +266,28 @@ const vgif = () => async (file: File) => {
   });
 };
 
-// Shared ffmpeg recipes
-const TO_MP3: ArgBuilder = (i, o) => ['-i', i, '-vn', '-b:a', '192k', o];
-const TO_MP4: ArgBuilder = (i, o) => [
+// Shared ffmpeg recipes (quality/bitrate come from widget options when present)
+const TO_MP3: ArgBuilder = (i, o, opts) => ['-i', i, '-vn', '-b:a', String(opts?.bitrate ?? '192k'), o];
+const TO_MP4: ArgBuilder = (i, o, opts) => [
   '-i',
   i,
   '-c:v',
   'libx264',
   '-crf',
-  '23',
+  String(opts?.crf ?? '23'),
   '-preset',
   'veryfast',
   '-c:a',
   'aac',
   o,
 ];
-const TO_WEBM: ArgBuilder = (i, o) => [
+const TO_WEBM: ArgBuilder = (i, o, opts) => [
   '-i',
   i,
   '-c:v',
   'libvpx-vp9',
   '-crf',
-  '30',
+  String(opts?.crf ?? '30'),
   '-b:v',
   '0',
   '-c:a',
@@ -222,6 +300,7 @@ const PAIRS: PairSpec[] = [
   // ---------------- IMAGE (canvas) ----------------
   {
     id: 'png-to-jpg', from: 'PNG', to: 'JPG', fromExts: ['png'], toExt: 'jpg', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Turn PNG screenshots, logos and graphics into much smaller JPG files. Perfect when a PNG is too big to email or upload — same picture, a fraction of the size.',
     faqQ: 'Will converting PNG to JPG reduce quality?',
     faqA: 'JPG uses lossy compression, so files get dramatically smaller with only a tiny, usually invisible quality change. If your PNG has transparency, note that JPG does not support it — transparent areas become white.',
@@ -256,6 +335,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'png-to-webp', from: 'PNG', to: 'WebP', fromExts: ['png'], toExt: 'webp', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert PNG images to WebP, the modern format that keeps transparency while shrinking files by 25–35%. Ideal for faster websites and smaller uploads.',
     faqQ: 'Why convert PNG to WebP instead of JPG?',
     faqA: 'WebP keeps transparency like PNG but compresses far better — typically 25–35% smaller than PNG and even smaller than JPG at similar quality. All modern browsers display WebP natively.',
@@ -281,6 +361,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'png-to-avif', from: 'PNG', to: 'AVIF', fromExts: ['png'], toExt: 'avif', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert PNG to AVIF, the cutting-edge image format with the best compression available today. Great for web developers squeezing every kilobyte.',
     faqQ: 'My browser says AVIF is not supported. What now?',
     faqA: 'AVIF encoding needs a recent browser — Chrome or Edge work best. If yours does not support it, convert to WebP instead: nearly as small and supported everywhere.',
@@ -306,6 +387,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'jpg-to-png', from: 'JPG', to: 'PNG', fromExts: ['jpg', 'jpeg'], toExt: 'png', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert JPG photos to PNG when you need lossless quality or plan to edit further. Note: this will not restore quality already lost to JPG compression — but it stops further loss.',
     faqQ: 'Does JPG to PNG improve image quality?',
     faqA: 'No — conversion cannot recover detail that JPG compression already removed. But PNG is lossless, so editing and re-saving a PNG will not degrade it further the way re-saving a JPG does.',
@@ -331,6 +413,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'jpg-to-webp', from: 'JPG', to: 'WebP', fromExts: ['jpg', 'jpeg'], toExt: 'webp', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Shrink JPG photos into WebP files that look identical but load faster. The easiest win for bloggers and shop owners speeding up their pages.',
     faqQ: 'How much smaller is WebP than JPG?',
     faqA: 'Typically 25–35% smaller at the same visual quality. A 500 KB JPG often becomes a 320–370 KB WebP with no visible difference.',
@@ -365,6 +448,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'jpg-to-avif', from: 'JPG', to: 'AVIF', fromExts: ['jpg', 'jpeg'], toExt: 'avif', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert JPG photos to AVIF for the smallest possible file at high quality. Best for modern browsers and performance-obsessed websites.',
     faqQ: 'My browser says AVIF is not supported. What now?',
     faqA: 'AVIF encoding needs a recent browser — Chrome or Edge work best. If yours does not support it, convert to WebP instead: nearly as small and supported everywhere.',
@@ -390,6 +474,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'webp-to-png', from: 'WebP', to: 'PNG', fromExts: ['webp'], toExt: 'png', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert WebP images back to PNG for maximum compatibility — older software, editors and platforms that do not understand WebP yet.',
     faqQ: 'Why would I convert WebP back to PNG?',
     faqA: 'Some desktop editors, print services and older platforms still do not accept WebP. PNG opens everywhere, so converting back is the safe choice when compatibility matters more than file size.',
@@ -415,6 +500,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'webp-to-jpg', from: 'WebP', to: 'JPG', fromExts: ['webp'], toExt: 'jpg', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Turn WebP images into universally compatible JPGs. Handy when a site or app rejects WebP uploads — JPG works absolutely everywhere.',
     faqQ: 'Does WebP to JPG lose transparency?',
     faqA: 'Yes — JPG has no transparency, so transparent areas become white. If you need to keep transparency, convert to PNG instead.',
@@ -449,6 +535,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'webp-to-avif', from: 'WebP', to: 'AVIF', fromExts: ['webp'], toExt: 'avif', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Move from WebP to AVIF for even better compression. For image-heavy sites where every kilobyte of bandwidth counts.',
     faqQ: 'Is AVIF really better than WebP?',
     faqA: 'Yes, AVIF typically compresses 20–30% better than WebP at the same quality. The trade-off is slower encoding and slightly narrower support — which is why we check your browser first.',
@@ -474,6 +561,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'gif-to-png', from: 'GIF', to: 'PNG', fromExts: ['gif'], toExt: 'png', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Extract a still frame from a GIF as a crisp PNG image. We convert the first frame — perfect for thumbnails and previews.',
     faqQ: 'Does this convert the whole animation?',
     faqA: 'No — a PNG is a still image, so we convert the first frame of the GIF. For the full animation, keep it as a GIF or convert to WebP.',
@@ -499,6 +587,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'gif-to-jpg', from: 'GIF', to: 'JPG', fromExts: ['gif'], toExt: 'jpg', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Turn a GIF frame into a compact JPG. Useful when you need a lightweight still from an animation for a document or post.',
     faqQ: 'Does this convert the whole animation?',
     faqA: 'No — JPG is a still format, so we convert the first frame. The result is a small, widely compatible photo-style image.',
@@ -524,6 +613,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'gif-to-webp', from: 'GIF', to: 'WebP', fromExts: ['gif'], toExt: 'webp', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert GIFs to WebP stills at a fraction of the size. Great for previews and thumbnails taken from animations.',
     faqQ: 'Why convert GIF to WebP?',
     faqA: 'Even as a still, WebP compresses far better than GIF — often 50%+ smaller — while keeping full color. We convert the first frame of the animation.',
@@ -549,6 +639,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'bmp-to-png', from: 'BMP', to: 'PNG', fromExts: ['bmp', 'dib'], toExt: 'png', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert bulky BMP files to efficient PNGs with zero quality loss. BMPs are uncompressed — PNG keeps every pixel and slashes the size.',
     faqQ: 'How much smaller will my BMP become?',
     faqA: 'Often 50–70% smaller with identical pixels. BMP stores every pixel raw; PNG compresses that data losslessly, so nothing visual changes at all.',
@@ -574,6 +665,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'bmp-to-jpg', from: 'BMP', to: 'JPG', fromExts: ['bmp', 'dib'], toExt: 'jpg', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Shrink huge BMP files down to small JPGs for sharing and the web. The fastest way to make a BMP emailable.',
     faqQ: 'Will I lose quality converting BMP to JPG?',
     faqA: 'JPG is lossy, so there is a small quality trade-off — but BMPs are so large that the size saving (often 90%+) is worth it for photos and screenshots meant for sharing.',
@@ -599,6 +691,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'bmp-to-webp', from: 'BMP', to: 'WebP', fromExts: ['bmp', 'dib'], toExt: 'webp', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert BMP to WebP for the best of both worlds: dramatically smaller files with excellent quality for web use.',
     faqQ: 'BMP to WebP or BMP to PNG — which should I pick?',
     faqA: 'Pick WebP for the web (smallest), PNG when you need lossless editing or maximum compatibility. Both are big upgrades over BMP.',
@@ -626,6 +719,7 @@ const PAIRS: PairSpec[] = [
   // ---------------- HEIC (heic2any) ----------------
   {
     id: 'heic-to-jpg', from: 'HEIC', to: 'JPG', fromExts: ['heic'], toExt: 'jpg', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert iPhone HEIC photos to JPG so they open everywhere — Windows, Android, email and the web. The fix for "my iPhone photo will not upload".',
     faqQ: 'Why do my iPhone photos need converting?',
     faqA: 'iPhones save photos as HEIC by default, which many Windows apps, websites and older devices cannot open. Converting to JPG makes the photo universally compatible.',
@@ -665,6 +759,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'heic-to-png', from: 'HEIC', to: 'PNG', fromExts: ['heic'], toExt: 'png', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert HEIC photos to lossless PNG when quality matters most — for editing, design work or archiving your iPhone shots.',
     faqQ: 'HEIC to PNG or HEIC to JPG?',
     faqA: 'JPG for sharing and small files; PNG when you plan to edit the photo or need every bit of quality preserved. PNG files are larger.',
@@ -690,6 +785,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'heif-to-jpg', from: 'HEIF', to: 'JPG', fromExts: ['heif'], toExt: 'jpg', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert HEIF images to JPG for universal compatibility. Same idea as HEIC — HEIF is simply the format name without the "container" distinction.',
     faqQ: 'What is the difference between HEIC and HEIF?',
     faqA: 'HEIF is the format standard; HEIC is HEIF using HEVC compression — what iPhones actually produce. Both open the same way here: drop the file and convert.',
@@ -715,6 +811,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'heif-to-png', from: 'HEIF', to: 'PNG', fromExts: ['heif'], toExt: 'png', category: 'image',
+    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert HEIF images to lossless PNG for editing and archiving without any further quality loss.',
     faqQ: 'Will the PNG be much bigger than my HEIF?',
     faqA: 'Yes — HEIF is extremely efficient, so the PNG will be several times larger. That is the price of a lossless, universally editable file.',
@@ -1273,6 +1370,7 @@ const PAIRS: PairSpec[] = [
   // ---------------- VIDEO (ffmpeg.wasm) ----------------
   {
     id: 'mp4-to-mp3', from: 'MP4', to: 'MP3', fromExts: ['mp4'], toExt: 'mp3', category: 'video',
+    options: [AUDIO_BITRATE_OPTION],
     blurb: 'Extract the audio from any MP4 video as a high-quality MP3. Perfect for saving podcast audio, lectures, music and voice from video files.',
     faqQ: 'What audio quality do I get?',
     faqA: '192 kbps MP3 — transparent quality for music and voice that sounds identical to the original for the vast majority of listeners.',
@@ -1308,6 +1406,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'mov-to-mp4', from: 'MOV', to: 'MP4', fromExts: ['mov'], toExt: 'mp4', category: 'video',
+    options: [VIDEO_CRF_OPTION],
     blurb: 'Convert Apple MOV videos to universal MP4 so they play on Windows, Android, smart TVs and every video editor.',
     faqQ: 'Will I lose quality converting MOV to MP4?',
     faqA: 'Visually, no. We re-encode with H.264 at CRF 23 — the sweet spot where compression is strong but artifacts are invisible in normal viewing.',
@@ -1334,6 +1433,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'mkv-to-mp4', from: 'MKV', to: 'MP4', fromExts: ['mkv'], toExt: 'mp4', category: 'video',
+    options: [VIDEO_CRF_OPTION],
     blurb: 'Convert MKV videos to MP4 for playback on phones, smart TVs, tablets and anything that refuses Matroska files.',
     faqQ: 'What happens to subtitles or extra audio tracks in my MKV?',
     faqA: 'The main video and audio tracks convert. Extra audio tracks, subtitles and chapters are not carried into the MP4.',
@@ -1360,6 +1460,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'webm-to-mp4', from: 'WebM', to: 'MP4', fromExts: ['webm'], toExt: 'mp4', category: 'video',
+    options: [VIDEO_CRF_OPTION],
     blurb: 'Convert WebM videos to MP4 for editing in Premiere, DaVinci or CapCut — and for playback on devices that ignore WebM.',
     faqQ: 'Where do WebM files usually come from?',
     faqA: 'Mostly browsers: screen recordings, downloaded web videos, and some Android apps save video as WebM.',
@@ -1386,6 +1487,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'avi-to-mp4', from: 'AVI', to: 'MP4', fromExts: ['avi'], toExt: 'mp4', category: 'video',
+    options: [VIDEO_CRF_OPTION],
     blurb: 'Convert ancient AVI files to modern MP4 — far smaller files that play on every current device.',
     faqQ: 'Why are my AVI files so big?',
     faqA: 'Many AVIs use 20-year-old codecs with poor compression. Modern H.264 does the same job at a fraction of the size.',
@@ -1412,6 +1514,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'mp4-to-webm', from: 'MP4', to: 'WebM', fromExts: ['mp4'], toExt: 'webm', category: 'video',
+    options: [VIDEO_CRF_OPTION],
     blurb: 'Convert MP4 to WebM (VP9 + Opus) — the open, royalty-free video format for HTML5 players and open-web publishing.',
     faqQ: 'Why convert MP4 to WebM?',
     faqA: 'For open-web publishing: WebM is royalty-free, so you avoid H.264 licensing concerns on your own platform — and it streams beautifully in browsers.',
@@ -1464,6 +1567,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'm4v-to-mp4', from: 'M4V', to: 'MP4', fromExts: ['m4v'], toExt: 'mp4', category: 'video',
+    options: [VIDEO_CRF_OPTION],
     blurb: 'Convert Apple M4V videos to standard MP4 for playback on Android, Windows and everything else.',
     faqQ: 'What is the difference between M4V and MP4?',
     faqA: 'Technically very little — M4V is Apple\u2019s variant of MP4. Conversion is quick and preserves quality.',
@@ -1490,6 +1594,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: '3gp-to-mp4', from: '3GP', to: 'MP4', fromExts: ['3gp'], toExt: 'mp4', category: 'video',
+    options: [VIDEO_CRF_OPTION],
     blurb: 'Convert old 3GP mobile videos to MP4 so they play on modern phones, computers and the web.',
     faqQ: 'Will the quality improve?',
     faqA: 'No — conversion preserves the original quality exactly. 3GP was low-resolution by design, made for tiny early-2000s phone screens.',
@@ -1516,6 +1621,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'flv-to-mp4', from: 'FLV', to: 'MP4', fromExts: ['flv'], toExt: 'mp4', category: 'video',
+    options: [VIDEO_CRF_OPTION],
     blurb: 'Convert Flash-era FLV videos to MP4 — rescuing old downloads into a format that plays today.',
     faqQ: 'Why won\u2019t anything play my FLV?',
     faqA: 'Flash was discontinued in 2020 and browsers removed support. Converting to MP4 is the fix.',
@@ -1544,6 +1650,7 @@ const PAIRS: PairSpec[] = [
   // ---------------- AUDIO (ffmpeg.wasm) ----------------
   {
     id: 'wav-to-mp3', from: 'WAV', to: 'MP3', fromExts: ['wav'], toExt: 'mp3', category: 'audio',
+    options: [AUDIO_BITRATE_OPTION],
     blurb: 'Convert huge WAV files to compact MP3s at 192 kbps — about 7x smaller with no audible difference.',
     faqQ: 'Will I hear a difference?',
     faqA: 'Almost certainly not — 192 kbps MP3 is transparent for the vast majority of listeners, even on good headphones.',
@@ -1570,6 +1677,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'flac-to-mp3', from: 'FLAC', to: 'MP3', fromExts: ['flac'], toExt: 'mp3', category: 'audio',
+    options: [AUDIO_BITRATE_OPTION],
     blurb: 'Convert lossless FLAC music to universal MP3 for car stereos, phones and anywhere FLAC won\u2019t play.',
     faqQ: 'Isn\u2019t FLAC better than MP3?',
     faqA: 'Technically yes — FLAC is lossless. But in blind tests almost nobody can tell 192 kbps MP3 from FLAC. Compatibility and size are MP3\u2019s wins.',
@@ -1596,6 +1704,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'ogg-to-mp3', from: 'OGG', to: 'MP3', fromExts: ['ogg', 'oga'], toExt: 'mp3', category: 'audio',
+    options: [AUDIO_BITRATE_OPTION],
     blurb: 'Convert OGG Vorbis audio to MP3 for playback on iPhones, car stereos and everything that ignores OGG.',
     faqQ: 'Where do OGG files come from?',
     faqA: 'Spotify\u2019s local files, many video games, and open-source projects. OGG is excellent — just not universal.',
@@ -1622,6 +1731,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'm4a-to-mp3', from: 'M4A', to: 'MP3', fromExts: ['m4a'], toExt: 'mp3', category: 'audio',
+    options: [AUDIO_BITRATE_OPTION],
     blurb: 'Convert Apple M4A audio to MP3 for old MP3 players, DJ software and maximum compatibility.',
     faqQ: 'Is M4A better than MP3?',
     faqA: 'Marginally more efficient at the same bitrate. In practice 192 kbps of either sounds identical — pick based on compatibility.',
@@ -1648,6 +1758,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'aac-to-mp3', from: 'AAC', to: 'MP3', fromExts: ['aac'], toExt: 'mp3', category: 'audio',
+    options: [AUDIO_BITRATE_OPTION],
     blurb: 'Convert AAC audio to MP3 — the compatibility baseline every device supports.',
     faqQ: 'AAC vs MP3 quality?',
     faqA: 'AAC is more efficient on paper, but at 192 kbps both are transparent to human hearing. This conversion is about compatibility.',
@@ -1726,6 +1837,7 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'wma-to-mp3', from: 'WMA', to: 'MP3', fromExts: ['wma'], toExt: 'mp3', category: 'audio',
+    options: [AUDIO_BITRATE_OPTION],
     blurb: 'Convert old Windows WMA rips to MP3 — rescuing 2000s music collections for modern playback.',
     faqQ: 'Where do WMA files come from?',
     faqA: 'Windows Media Player CD rips from the 2000s. If you ripped CDs on Windows back then, you probably have WMAs.',
@@ -1750,6 +1862,435 @@ const PAIRS: PairSpec[] = [
     convert: vid(TO_MP3, 'mp3', 'audio/mpeg'),
     loadingNote: FFMPEG_NOTE,
   },
+
+  // ---------------- PDF (pdf.js + pdf-lib, lazy-loaded) ----------------
+  {
+    id: 'pdf-to-jpg', from: 'PDF', to: 'JPG', fromExts: ['pdf'], toExt: 'jpg', category: 'pdf',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Convert every page of a PDF into crisp JPG images — download pages individually or all at once as a ZIP. Perfect for sharing document pages as images, posting to social media, or pulling figures out of a report.',
+    faqQ: 'How do I turn PDF pages into JPG images?',
+    faqA: 'Drop your PDF above and hit convert. Each page renders as a high-resolution JPG you can download individually — or grab every page at once as a ZIP file. Everything happens in your browser; the PDF is never uploaded.',
+    aboutFrom: 'PDF is the universal document format — contracts, ebooks, reports and forms. But PDF pages can\u2019t be posted as images or opened in every photo app.',
+    aboutTo: 'JPG is the world\u2019s most compatible image format. As page images, your document opens anywhere — phones, social apps, email and websites that don\u2019t accept PDFs.',
+    useCases: [
+      'Sharing a document page as an image on WhatsApp or social media',
+      'Extracting charts and figures from a PDF report',
+      'Converting PDF pages for a presentation when the venue PC has no PDF reader',
+    ],
+    tip: 'Pages render at double resolution (2x) so text stays sharp — and each JPG downloads individually, so you can grab just the pages you need.',
+    flagship: true,
+    extraFaqs: [
+      {
+        q: 'What resolution are the JPG images?',
+        a: 'Each page renders at 2x scale — roughly 1700\u00d72200 px for a standard A4 page — so text stays crisp even when zoomed.',
+      },
+      {
+        q: 'Can I download all pages at once?',
+        a: 'Yes — "Download all as ZIP" gives you every page image in one file, or download pages individually.',
+      },
+      {
+        q: 'Is there a page limit?',
+        a: 'PDFs up to 150 pages convert in the browser. For larger documents, split them first with our free Split PDF tool.',
+      },
+      {
+        q: 'Do password-protected PDFs work?',
+        a: 'No — the browser version cannot open password-protected PDFs. Remove the password in your desktop PDF reader first, then convert.',
+      },
+      {
+        q: 'PDF to JPG or PDF to PNG?',
+        a: 'JPG for the smallest files (great for sharing); PNG when you need pixel-perfect quality for print or archiving.',
+      },
+    ],
+  },
+  {
+    id: 'pdf-to-png', from: 'PDF', to: 'PNG', fromExts: ['pdf'], toExt: 'png', category: 'pdf',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Convert PDF pages to lossless PNG images at high resolution. Choose PNG when every pixel matters — print, archiving, or documents with fine text and diagrams.',
+    faqQ: 'Why convert PDF pages to PNG instead of JPG?',
+    faqA: 'PNG is lossless — text edges and diagrams stay razor-sharp with zero compression artifacts. Files are bigger than JPG, but quality is pixel-perfect.',
+    aboutFrom: 'PDF pages mix text, vector graphics and images in one document. When you need a page as a picture with no quality compromise, PNG is the answer.',
+    aboutTo: 'PNG preserves every pixel exactly — the right choice for print, archiving, and documents where fine text must stay perfectly legible.',
+    useCases: [
+      'Archiving important document pages as pixel-perfect images',
+      'Extracting diagrams from a PDF for a print publication',
+      'Converting pages for OCR software that prefers PNG input',
+    ],
+    tip: 'PNGs are bigger than JPGs — if you are just sharing on chat, PDF to JPG gives much smaller files.',
+    extraFaqs: [
+      {
+        q: 'How big will the PNG files be?',
+        a: 'Bigger than JPG — a full A4 page at 2x can be 1\u20133 MB. That is the price of lossless quality.',
+      },
+      {
+        q: 'Does PNG keep the text selectable?',
+        a: 'No — the output is an image of the page. Use our PDF to Text tool if you need the actual words.',
+      },
+    ],
+  },
+  {
+    id: 'jpg-to-pdf', from: 'JPG', to: 'PDF', fromExts: ['jpg', 'jpeg'], toExt: 'pdf', category: 'pdf',
+    widget: 'pdf',
+    options: [IMAGE_QUALITY_OPTION],
+    blurb: 'Turn JPG photos and scans into a single PDF document — one image per page, in the order you choose. The classic fix for "please send it as a PDF".',
+    faqQ: 'How do I combine JPG images into one PDF?',
+    faqA: 'Drop your JPGs above — pick several at once — arrange them if needed, set quality, and download a single PDF with one image per page. All in your browser, nothing uploaded.',
+    aboutFrom: 'JPGs are how phones save photos and scans — but offices, universities and forms almost always ask for PDF.',
+    aboutTo: 'PDF packages your images into one professional document that prints cleanly and opens identically everywhere.',
+    useCases: [
+      'Turning phone photos of documents into a single PDF for email',
+      'Combining scanned pages into one file for a job or visa application',
+      'Converting JPG screenshots into a PDF report',
+    ],
+    tip: 'Drop multiple JPGs at once — they become pages in order. Quality 92 is perfect for documents; go lower if the PDF must stay tiny for upload forms.',
+    flagship: true,
+    extraFaqs: [
+      {
+        q: 'Can I add multiple JPGs to one PDF?',
+        a: 'Yes — select several images at once and each becomes a page, in the order shown. This is the main reason people use this tool.',
+      },
+      {
+        q: 'What page size will the PDF use?',
+        a: 'Each page matches its image\u2019s dimensions, so nothing is stretched or cropped — photos keep their exact aspect ratio.',
+      },
+      {
+        q: 'How do I keep the PDF small for uploads?',
+        a: 'Lower the quality slider to 70\u201380. For scanned documents the difference is invisible and the file shrinks dramatically.',
+      },
+      {
+        q: 'JPG to PDF or PNG to PDF?',
+        a: 'JPG to PDF for photos and scans (smaller). PNG to PDF when the images have sharp text you cannot afford to soften.',
+      },
+      {
+        q: 'Will the PDF look the same when printed?',
+        a: 'Yes — each page is your image at full resolution, so printing reproduces it faithfully.',
+      },
+    ],
+  },
+  {
+    id: 'png-to-pdf', from: 'PNG', to: 'PDF', fromExts: ['png'], toExt: 'pdf', category: 'pdf',
+    widget: 'pdf',
+    options: [IMAGE_QUALITY_OPTION],
+    blurb: 'Convert PNG screenshots and graphics into a clean PDF — one image per page. Ideal when a form or office asks for PDF but all you have are PNGs.',
+    faqQ: 'Why would I convert PNG to PDF?',
+    faqA: 'Forms, applications and offices standardize on PDF. This tool wraps your PNGs — screenshots, designs, scans — into a proper PDF document in seconds.',
+    aboutFrom: 'PNG is the format of screenshots and crisp graphics — lossless, but not what forms and offices accept.',
+    aboutTo: 'PDF is the document standard: one file, printable, accepted by every institution and upload form.',
+    useCases: [
+      'Submitting PNG screenshots as a PDF for a support ticket or application',
+      'Turning design mockups into a presentable PDF',
+      'Converting scanned PNGs into a single document',
+    ],
+    tip: 'PNG sources stay sharp — the PDF embeds them at full quality, so text screenshots remain perfectly readable.',
+    extraFaqs: [
+      {
+        q: 'Can I merge several PNGs into one PDF?',
+        a: 'Yes — drop multiple PNGs and each becomes a page in order.',
+      },
+      {
+        q: 'Will transparency in my PNGs survive?',
+        a: 'Transparent areas become white in the PDF, since PDF pages have a white background.',
+      },
+    ],
+  },
+  {
+    id: 'merge-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Merge PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Combine multiple PDF files into one document — arrange pages in any order with up/down controls. The fastest way to join contracts, chapters or scanned batches.',
+    faqQ: 'How do I merge two PDFs into one?',
+    faqA: 'Drop both PDFs above, arrange them in the order you want with the up/down arrows, and download one combined PDF. The original files are never modified or uploaded.',
+    aboutFrom: 'PDFs arrive in pieces — separate chapters, scanned batches, a contract plus its annex. Reading or sending them one by one is a hassle.',
+    aboutTo: 'One merged PDF reads front-to-back like a proper document and attaches to a single email instead of five.',
+    useCases: [
+      'Joining a contract and its signed annex into one file',
+      'Combining separately scanned chapters into a single ebook',
+      'Merging monthly statements into one yearly PDF',
+    ],
+    tip: 'Use the up/down arrows to set the final order before merging — the first file in the list becomes the first pages of the result.',
+    flagship: true,
+    extraFaqs: [
+      {
+        q: 'How many PDFs can I merge at once?',
+        a: 'As many as your browser memory allows — a dozen typical documents merge in seconds. Truly huge files (hundreds of MB) may strain a phone browser.',
+      },
+      {
+        q: 'Does merging change quality?',
+        a: 'No — pages are copied exactly as they are, with no re-rendering. Text stays selectable and vector graphics stay sharp.',
+      },
+      {
+        q: 'Can I remove a file before merging?',
+        a: 'Yes — each file in the list has a remove button, plus up/down arrows to reorder.',
+      },
+      {
+        q: 'Will bookmarks or form fields survive merging?',
+        a: 'Page content merges perfectly. Interactive form fields and bookmarks from the originals are not carried over in the browser version.',
+      },
+      {
+        q: 'Is there a file size limit?',
+        a: 'No hard limit, but very large PDFs (500+ MB combined) can exhaust phone browser memory — merge those on a desktop.',
+      },
+    ],
+  },
+  {
+    id: 'split-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Split PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Extract pages from a PDF — enter a range like "1-3, 5" and download just those pages as a new PDF. Pull one chapter out of a manual or one invoice out of a batch.',
+    faqQ: 'How do I extract specific pages from a PDF?',
+    faqA: 'Drop your PDF, type the pages you want — single pages like "5", ranges like "1-3", or combined "1-3, 5, 8-10" — and download a new PDF with exactly those pages.',
+    aboutFrom: 'Big PDFs bundle everything together — but you often need just a chapter, a receipt, or three pages for a form.',
+    aboutTo: 'A split PDF contains only the pages you asked for: smaller, focused, and ready to send.',
+    useCases: [
+      'Pulling one invoice out of a monthly batch PDF',
+      'Extracting a single chapter from an ebook',
+      'Sending only the relevant pages of a long report',
+    ],
+    tip: 'Page numbers start at 1 (the first page). Ranges like 1-3 and lists like 1-3, 5, 8-10 both work.',
+    extraFaqs: [
+      {
+        q: 'What page-range formats work?',
+        a: 'Single pages ("5"), ranges ("1-3") and combinations ("1-3, 5, 8-10"). Pages are extracted in ascending order.',
+      },
+      {
+        q: 'Does splitting reduce quality?',
+        a: 'No — pages are copied exactly, so text and images keep their original quality.',
+      },
+    ],
+  },
+  {
+    id: 'compress-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Compress PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Shrink an oversized PDF so it fits email and upload limits. Re-compresses page images at High, Balanced or Small — best for scanned and image-heavy PDFs.',
+    faqQ: 'How much smaller will my PDF get?',
+    faqA: 'It depends on the PDF: scanned and image-heavy PDFs often shrink 50\u201380%, while text-only PDFs (already small) shrink less. Try "Balanced" first — it is the sweet spot.',
+    aboutFrom: 'PDFs balloon when they are full of scanned images — a 40-page scan can be 100 MB, far over email and form limits.',
+    aboutTo: 'A compressed PDF keeps every page readable at a fraction of the bytes — the same document, emailable again.',
+    useCases: [
+      'Shrinking a scanned application to fit a 10 MB upload limit',
+      'Making a photo-heavy PDF emailable',
+      'Reducing a large ebook for phone storage',
+    ],
+    tip: 'This works best on scanned/image PDFs. If your PDF is mostly text and already small, there is little left to squeeze — that is normal.',
+    extraFaqs: [
+      {
+        q: 'Will my text stay sharp?',
+        a: 'At High and Balanced settings, yes for normal reading. "Smallest file" visibly softens fine print — use it only when size matters more than crispness.',
+      },
+      {
+        q: 'Honest note: how does this compression work?',
+        a: 'It re-renders each page as an optimized image — that is why it excels on scanned PDFs and does little for text-only ones. Nothing is uploaded; it all happens on your device.',
+      },
+    ],
+  },
+  {
+    id: 'pdf-to-text', from: 'PDF', to: 'Text', fromExts: ['pdf'], toExt: 'txt', category: 'pdf',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Extract all the text from a PDF into a clean .txt file. Copy quotes from ebooks, pull data from reports, or archive document content as plain text.',
+    faqQ: 'How do I copy all text out of a PDF?',
+    faqA: 'Drop the PDF and download a .txt file with the document\u2019s text, page by page, paragraphs preserved. No selecting, no copy-paste marathons.',
+    aboutFrom: 'PDF text is trapped inside the document — copying it manually page by page is tedious and error-prone.',
+    aboutTo: 'Plain text is the universal editable format: searchable, quotable, and readable by every app ever made.',
+    useCases: [
+      'Pulling quotes from an ebook for notes',
+      'Extracting report text for analysis',
+      'Archiving document content in a future-proof format',
+    ],
+    tip: 'Tables and multi-column layouts extract as flowing text — great for reading, but don\u2019t expect spreadsheet structure.',
+    extraFaqs: [
+      {
+        q: 'What about scanned PDFs?',
+        a: 'Scanned PDFs are pictures of text, not text — extraction finds nothing. Those need OCR, which the browser version doesn\u2019t do yet.',
+      },
+      {
+        q: 'Is the reading order correct?',
+        a: 'For normal single-column documents, yes. Complex multi-column magazine layouts may read out of order.',
+      },
+    ],
+  },
+  {
+    id: 'pdf-to-word', from: 'PDF', to: 'Word', fromExts: ['pdf'], toExt: 'docx', category: 'pdf',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Extract your PDF\u2019s text into an editable Word (.docx) document — free, in your browser. Honest note: this extracts the text; complex layouts, tables and images are not preserved.',
+    faqQ: 'Is this a full PDF to Word conversion with layout?',
+    faqA: 'Honest answer: no. This tool extracts the PDF\u2019s text into a clean, editable Word document — headings detected, paragraphs preserved. Complex layouts, tables, images and exact formatting are not preserved. For pixel-perfect layout conversion you would need desktop software; for getting editable text out, this does the job in seconds.',
+    aboutFrom: 'PDFs lock text into fixed pages — great for reading, terrible when you need to edit, quote or reuse the words.',
+    aboutTo: 'A Word document frees the text: editable, reflowable, ready for your own formatting in Word, Google Docs or LibreOffice.',
+    useCases: [
+      'Getting editable text out of a PDF report for rewriting',
+      'Extracting contract text to quote in an email',
+      'Turning an ebook chapter into an editable draft',
+    ],
+    tip: 'Think of it as "text extraction", not "layout cloning" — the words come out clean and editable; the original design doesn\u2019t.',
+    flagship: true,
+    extraFaqs: [
+      {
+        q: 'Why doesn\u2019t it keep the exact layout?',
+        a: 'True layout-preserving PDF-to-Word needs heavy desktop engines (and usually a server). Browsers can\u2019t run those — so we do the honest version: clean, editable text. No fake promises.',
+      },
+      {
+        q: 'Will tables convert properly?',
+        a: 'Table text extracts in reading order, but the table grid itself isn\u2019t rebuilt. For data tables, PDF to Text plus manual cleanup works best.',
+      },
+      {
+        q: 'What about scanned PDFs?',
+        a: 'Scanned PDFs contain images of text, not text — nothing extracts. They need OCR first, which the browser version doesn\u2019t do yet.',
+      },
+      {
+        q: 'Can I open the .docx in Google Docs?',
+        a: 'Yes — the file is a standard Word document and opens in Word, Google Docs, LibreOffice and WPS alike.',
+      },
+      {
+        q: 'Is my document uploaded anywhere?',
+        a: 'Never. Extraction runs entirely in your browser — that is exactly why we offer the honest text version instead of a server round-trip.',
+      },
+    ],
+  },
+
+  // ---------------- MERGE tools ----------------
+  {
+    id: 'merge-images-jpg', from: 'Images', to: 'JPG', fromExts: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'], toExt: 'jpg', category: 'image',
+    title: 'Merge Images to JPG',
+    widget: 'merge',
+    options: [IMAGE_QUALITY_OPTION],
+    blurb: 'Combine multiple images into one JPG — pick Grid 2\u00d72, Grid 3\u00d73, a horizontal strip or a vertical strip. Perfect for collages, before/after shots and comparison images.',
+    faqQ: 'How do I join two photos side by side?',
+    faqA: 'Drop both images, choose the Horizontal strip layout, and download one wide JPG with your photos next to each other. Lower the quality slider if the file must stay small.',
+    aboutFrom: 'Photos arrive one by one — but collages, comparisons and contact sheets need them in a single frame.',
+    aboutTo: 'One merged JPG tells the whole story in a single shareable image that opens everywhere.',
+    useCases: [
+      'Making a before/after comparison image',
+      'Joining screenshots into one long vertical strip for a tutorial',
+      'Creating a 2\u00d72 photo collage for social media',
+    ],
+    tip: 'For before/after shots use Horizontal strip; for step-by-step tutorials use Vertical strip — readers scroll naturally.',
+    extraFaqs: [
+      {
+        q: 'How many images can I merge?',
+        a: 'Up to 16 at once. Grids arrange them in 2 or 3 columns; strips line them all up in one row or column.',
+      },
+      {
+        q: 'Will different-sized images look odd?',
+        a: 'No — each image is scaled to fit its cell while keeping its aspect ratio, centered on a clean white background.',
+      },
+    ],
+  },
+  {
+    id: 'merge-images-png', from: 'Images', to: 'PNG', fromExts: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'], toExt: 'png', category: 'image',
+    title: 'Merge Images to PNG',
+    widget: 'merge',
+    blurb: 'Merge multiple images into one lossless PNG collage — Grid 2\u00d72, Grid 3\u00d73, horizontal or vertical layouts. Best when sharpness matters more than file size.',
+    faqQ: 'Merge to PNG or JPG — which should I pick?',
+    faqA: 'PNG for screenshots, text and graphics (razor-sharp, larger file). JPG for photos (much smaller, tiny quality trade-off).',
+    aboutFrom: 'Collages of screenshots and UI graphics need pixel-perfect sharpness that JPG\u2019s compression would soften.',
+    aboutTo: 'A merged PNG keeps every edge crisp — the right choice for tutorials, documentation and design comparisons.',
+    useCases: [
+      'Combining UI screenshots into one tutorial image',
+      'Making a sharp 2\u00d72 comparison of design mockups',
+      'Joining diagrams into a single figure',
+    ],
+    tip: 'PNG collages are bigger than JPG — if you are posting to chat or social, Merge Images to JPG gives far smaller files.',
+    extraFaqs: [
+      {
+        q: 'Why is my merged PNG so big?',
+        a: 'PNG is lossless — a 2\u00d72 collage of screenshots can easily be several MB. That is normal; use JPG if size matters.',
+      },
+      {
+        q: 'Do transparent PNGs keep transparency?',
+        a: 'Cells render on a white background, so transparency becomes white — consistent and print-friendly.',
+      },
+    ],
+  },
+  {
+    id: 'merge-images-pdf', from: 'Images', to: 'PDF', fromExts: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'], toExt: 'pdf', category: 'pdf',
+    title: 'Merge Images to PDF',
+    widget: 'merge',
+    options: [IMAGE_QUALITY_OPTION],
+    blurb: 'Turn a stack of images into one PDF — choose 1, 2 or 4 images per page. The quick way from a phone\u2019s camera roll to a proper multi-page document.',
+    faqQ: 'How do I make a PDF with several photos per page?',
+    faqA: 'Drop your images, pick 1, 2 or 4 per page, and download a single PDF. Great for contact sheets, photo albums and document batches.',
+    aboutFrom: 'Phone galleries hold dozens of loose photos — but applications and archives want one PDF document.',
+    aboutTo: 'One PDF with your images laid out 1, 2 or 4 per page: organized, printable, universally accepted.',
+    useCases: [
+      'Turning photographed document pages into one PDF',
+      'Making a photo contact sheet as a PDF',
+      'Combining receipts into a single expense PDF',
+    ],
+    tip: 'Use 1 per page for full-size document scans, 4 per page for compact photo overviews.',
+    extraFaqs: [
+      {
+        q: 'What page size does it use?',
+        a: 'Standard A4-ish pages with margins — images are scaled to fit their slots without distortion.',
+      },
+      {
+        q: 'Can I reorder the images?',
+        a: 'Yes — use the up/down arrows on each image to set the final page order before merging.',
+      },
+    ],
+  },
+  {
+    id: 'merge-videos', from: 'Videos', to: 'MP4', fromExts: ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v'], toExt: 'mp4', category: 'video',
+    title: 'Merge Videos',
+    widget: 'merge',
+    loadingNote: 'Preparing converter… (~30 MB one-time download)',
+    options: [VIDEO_CRF_OPTION],
+    blurb: 'Join multiple video clips into one MP4 — interviews, takes, or parts of a vlog. Same-codec clips merge instantly with no quality loss; mixed clips are re-encoded automatically.',
+    faqQ: 'How do I combine several video clips into one?',
+    faqA: 'Drop your clips in order (rearrange with up/down arrows), hit merge, and download one MP4. Clips from the same camera merge with zero quality loss; different sources are smoothly re-encoded to match.',
+    aboutFrom: 'Videos are shot in pieces — takes, scenes, clips from different days. Players and platforms want one file.',
+    aboutTo: 'One merged MP4 plays start-to-finish with no gaps — ready to upload, share or archive.',
+    useCases: [
+      'Joining interview takes into one continuous video',
+      'Combining vlog clips shot across a day',
+      'Merging screen recordings into a single tutorial',
+    ],
+    tip: 'Clips from the same camera and settings merge fastest with zero quality loss. Mixed sources still work — they are re-encoded to a common format automatically.',
+    extraFaqs: [
+      {
+        q: 'Will merging reduce quality?',
+        a: 'Not when clips share the same codec — they join with stream copy, bit-for-bit. Mixed clips get re-encoded once at your chosen quality.',
+      },
+      {
+        q: 'What if my clips have different resolutions?',
+        a: 'They still merge — the re-encode fallback normalizes them. For cleanest results, shoot all clips at the same resolution.',
+      },
+    ],
+  },
+  {
+    id: 'merge-audios', from: 'Audio', to: 'MP3', fromExts: ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'], toExt: 'mp3', category: 'audio',
+    title: 'Merge Audio',
+    widget: 'merge',
+    loadingNote: 'Preparing converter… (~30 MB one-time download)',
+    options: [AUDIO_BITRATE_OPTION],
+    blurb: 'Join audio clips into one MP3 — podcast segments, voice memos, or music parts. Arrange the order, pick a bitrate, and download a single seamless file.',
+    faqQ: 'How do I join voice memos into one file?',
+    faqA: 'Drop your recordings in order, rearrange with the arrows if needed, choose a bitrate, and download one MP3. Everything runs in your browser.',
+    aboutFrom: 'Voice memos, interview segments and music ideas pile up as separate files — hard to share or play in order.',
+    aboutTo: 'One merged MP3 plays seamlessly and shares like any single audio file.',
+    useCases: [
+      'Joining podcast segments into one episode',
+      'Combining voice memos into a single recording',
+      'Merging music stems or practice takes',
+    ],
+    tip: 'MP3 segments join with no re-encoding (no quality loss). Mixed formats are converted to MP3 at your chosen bitrate.',
+    extraFaqs: [
+      {
+        q: 'Does merging MP3s lose quality?',
+        a: 'No — MP3 segments join via stream copy with zero re-encoding. Only non-MP3 inputs get encoded once.',
+      },
+      {
+        q: 'Which bitrate should I choose?',
+        a: '192 kbps is the sweet spot for voice and most music. 320 kbps for critical listening, 128 kbps for the smallest files.',
+      },
+    ],
+  },
 ];
 
 function buildEntry(spec: PairSpec): ConverterEntry {
@@ -1760,7 +2301,7 @@ function buildEntry(spec: PairSpec): ConverterEntry {
     fromExts: spec.fromExts,
     toExt: spec.toExt,
     category: spec.category,
-    title: `${spec.from} to ${spec.to} Converter`,
+    title: spec.title ?? `${spec.from} to ${spec.to} Converter`,
     description: spec.blurb,
     faqs: [
       { q: spec.faqQ, a: spec.faqA },
@@ -1769,6 +2310,8 @@ function buildEntry(spec: PairSpec): ConverterEntry {
       PRIVACY_FAQ,
     ],
     convert: spec.convert,
+    options: spec.options,
+    widget: spec.widget,
     loadingNote: spec.loadingNote,
     useCases: spec.useCases,
     flagship: spec.flagship,

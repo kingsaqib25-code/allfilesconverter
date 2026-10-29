@@ -6,3 +6,5 @@ out/
 .vercel
 public/ffmpeg-core/
 .vercel-files-manifest.json
+public/pdfjs/
+tsconfig.tsbuildinfo

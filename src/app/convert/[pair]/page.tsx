@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import ConverterWidget from '@/components/ConverterWidget';
+import PdfWidget from '@/components/PdfWidget';
+import MergeWidget from '@/components/MergeWidget';
 import AiSummarize from '@/components/AiSummarize';
 import { buildSummaryPrompt } from '@/lib/ai';
 import {
@@ -93,7 +95,13 @@ export default async function ConvertPage({
         prompt={buildSummaryPrompt(pageUrl, `the ${entry.title} on ${BRAND}`)}
       />
 
-      <ConverterWidget entryId={entry.id} />
+      {entry.widget === 'pdf' ? (
+        <PdfWidget entryId={entry.id} />
+      ) : entry.widget === 'merge' ? (
+        <MergeWidget entryId={entry.id} />
+      ) : (
+        <ConverterWidget entryId={entry.id} />
+      )}
 
       {entry.id === 'video-to-gif' ? (
         <div className="cta-band slim">

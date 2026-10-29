@@ -7,6 +7,7 @@ import { SITE_URL } from '@/lib/site';
 import { ldScript, websiteOrgJsonLd } from '@/lib/jsonld';
 
 const CAT_EMOJI: Record<string, string> = {
+  pdf: '📄',
   image: '🖼️',
   video: '🎬',
   audio: '🎵',
@@ -16,6 +17,10 @@ const CAT_EMOJI: Record<string, string> = {
 };
 
 const POPULAR_IDS = [
+  'pdf-to-jpg',
+  'jpg-to-pdf',
+  'merge-pdf',
+  'pdf-to-word',
   'heic-to-jpg',
   'mp4-to-mp3',
   'png-to-jpg',
@@ -24,8 +29,6 @@ const POPULAR_IDS = [
   'mov-to-mp4',
   'json-to-csv',
   'srt-to-vtt',
-  'md-to-html',
-  'wav-to-mp3',
 ];
 
 export default function Home() {
@@ -37,7 +40,7 @@ export default function Home() {
         <div className="wrap">
           <span className="kicker">100% free · No sign-up</span>
           <h1>Free File Converter</h1>
-          <p className="lead">{BRAND} — {TAGLINE} Convert images, video, audio, text, data and subtitles between {CONVERTERS.length}+ formats — right here in your browser.</p>
+          <p className="lead">{BRAND} — {TAGLINE} Convert PDF, images, video, audio, text, data and subtitles between {CONVERTERS.length}+ formats — right here in your browser.</p>
           <HeroDropZone />
         </div>
       </section>

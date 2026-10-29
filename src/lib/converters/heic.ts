@@ -5,7 +5,8 @@
 
 export async function convertHeic(
   file: File,
-  toExt: 'jpg' | 'png'
+  toExt: 'jpg' | 'png',
+  quality = 0.92
 ): Promise<{ blob: Blob; filename: string }> {
   // Dynamic import: heic2any touches browser APIs, so it must only load in the browser.
   const mod = await import('heic2any');
@@ -20,7 +21,7 @@ export async function convertHeic(
     result = await heic2any({
       blob: file,
       toType: toExt === 'jpg' ? 'image/jpeg' : 'image/png',
-      quality: 0.92,
+      quality,
     });
   } catch {
     throw new Error(
