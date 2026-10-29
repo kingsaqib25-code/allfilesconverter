@@ -297,7 +297,10 @@ const TO_WEBM: ArgBuilder = (i, o, opts) => [
   '-i',
   i,
   '-c:v',
-  'libvpx-vp9',
+  // VP8, not VP9: libvpx-vp9 crashes the wasm build with
+  // "RuntimeError: index out of bounds". VP8 WebM is valid and stable.
+  // (QC 2026-10-30: verified 8s encode vs VP9 hard crash.)
+  'libvpx',
   '-crf',
   String(opts?.crf ?? '30'),
   '-b:v',
@@ -1521,17 +1524,17 @@ const PAIRS: PairSpec[] = [
   {
     id: 'mp4-to-webm', from: 'MP4', to: 'WebM', fromExts: ['mp4'], toExt: 'webm', category: 'video',
     options: [VIDEO_CRF_OPTION],
-    blurb: 'Convert MP4 to WebM (VP9 + Opus) — the open, royalty-free video format for HTML5 players and open-web publishing.',
+    blurb: 'Convert MP4 to WebM (VP8 + Opus) — the open, royalty-free video format for HTML5 players and open-web publishing.',
     faqQ: 'Why convert MP4 to WebM?',
     faqA: 'For open-web publishing: WebM is royalty-free, so you avoid H.264 licensing concerns on your own platform — and it streams beautifully in browsers.',
     aboutFrom: 'MP4/H.264 is universal but patent-encumbered; for open web projects, royalty-free matters.',
-    aboutTo: 'WebM (VP9 + Opus) is the open, royalty-free web video format — ideal for HTML5 video on your own site.',
+    aboutTo: 'WebM (VP8 + Opus) is the open, royalty-free web video format — ideal for HTML5 video on your own site.',
     useCases: [
       'Preparing videos for a website’s HTML5 player',
       'Creating royalty-free video assets for open-source projects',
       'Publishing video where open codecs are required',
     ],
-    tip: 'VP9 encoding is slower than H.264 — give it time on longer videos. The result is worth it for web use.',
+    tip: 'WebM encoding runs entirely in your browser — give it time on longer videos. The result is worth it for web use.',
     extraFaqs: [
       {
         q: 'Why convert MP4 to WebM?',
