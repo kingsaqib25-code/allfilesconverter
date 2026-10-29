@@ -391,7 +391,6 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'jpg-to-png', from: 'JPG', to: 'PNG', fromExts: ['jpg', 'jpeg'], toExt: 'png', category: 'image',
-    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert JPG photos to PNG when you need lossless quality or plan to edit further. Note: this will not restore quality already lost to JPG compression — but it stops further loss.',
     faqQ: 'Does JPG to PNG improve image quality?',
     faqA: 'No — conversion cannot recover detail that JPG compression already removed. But PNG is lossless, so editing and re-saving a PNG will not degrade it further the way re-saving a JPG does.',
@@ -478,7 +477,6 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'webp-to-png', from: 'WebP', to: 'PNG', fromExts: ['webp'], toExt: 'png', category: 'image',
-    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert WebP images back to PNG for maximum compatibility — older software, editors and platforms that do not understand WebP yet.',
     faqQ: 'Why would I convert WebP back to PNG?',
     faqA: 'Some desktop editors, print services and older platforms still do not accept WebP. PNG opens everywhere, so converting back is the safe choice when compatibility matters more than file size.',
@@ -565,7 +563,6 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'gif-to-png', from: 'GIF', to: 'PNG', fromExts: ['gif'], toExt: 'png', category: 'image',
-    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Extract a still frame from a GIF as a crisp PNG image. We convert the first frame — perfect for thumbnails and previews.',
     faqQ: 'Does this convert the whole animation?',
     faqA: 'No — a PNG is a still image, so we convert the first frame of the GIF. For the full animation, keep it as a GIF or convert to WebP.',
@@ -643,7 +640,6 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'bmp-to-png', from: 'BMP', to: 'PNG', fromExts: ['bmp', 'dib'], toExt: 'png', category: 'image',
-    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert bulky BMP files to efficient PNGs with zero quality loss. BMPs are uncompressed — PNG keeps every pixel and slashes the size.',
     faqQ: 'How much smaller will my BMP become?',
     faqA: 'Often 50–70% smaller with identical pixels. BMP stores every pixel raw; PNG compresses that data losslessly, so nothing visual changes at all.',
@@ -763,7 +759,6 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'heic-to-png', from: 'HEIC', to: 'PNG', fromExts: ['heic'], toExt: 'png', category: 'image',
-    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert HEIC photos to lossless PNG when quality matters most — for editing, design work or archiving your iPhone shots.',
     faqQ: 'HEIC to PNG or HEIC to JPG?',
     faqA: 'JPG for sharing and small files; PNG when you plan to edit the photo or need every bit of quality preserved. PNG files are larger.',
@@ -815,7 +810,6 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'heif-to-png', from: 'HEIF', to: 'PNG', fromExts: ['heif'], toExt: 'png', category: 'image',
-    options: [IMAGE_QUALITY_OPTION],
     blurb: 'Convert HEIF images to lossless PNG for editing and archiving without any further quality loss.',
     faqQ: 'Will the PNG be much bigger than my HEIF?',
     faqA: 'Yes — HEIF is extremely efficient, so the PNG will be several times larger. That is the price of a lossless, universally editable file.',
