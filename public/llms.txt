@@ -19,7 +19,7 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter (iPhone photos to universal JPG).
 - https://allfilesconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter (extract 192 kbps audio from video).
 
-## All converters (72)
+## All converters (73)
 
 ### PDF Converters
 
@@ -32,6 +32,7 @@ All Files Converter (https://allfilesconverter.vercel.app/) is a free file-conve
 - https://allfilesconverter.vercel.app/convert/compress-pdf/ — Compress PDF
 - https://allfilesconverter.vercel.app/convert/pdf-to-text/ — PDF to Text Converter
 - https://allfilesconverter.vercel.app/convert/pdf-to-word/ — PDF to Word Converter
+- https://allfilesconverter.vercel.app/convert/edit-pdf/ — Edit PDF Online
 - https://allfilesconverter.vercel.app/convert/merge-images-pdf/ — Merge Images to PDF
 
 ### Image Converters

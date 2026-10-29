@@ -106,7 +106,7 @@ export interface ConverterEntry {
   /** Declarative option controls rendered by the widget (quality slider etc.). */
   options?: OptionDef[];
   /** Which widget renders this entry: default single-file, pdf (custom PDF UI), merge (multi-file). */
-  widget?: 'default' | 'pdf' | 'merge';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit';
   /** Shown while a heavy engine (ffmpeg.wasm) initializes. */
   loadingNote?: string;
   /** "When to use this conversion" section (every page). */
@@ -205,7 +205,7 @@ interface PairSpec {
   faqA: string;
   convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
   options?: OptionDef[];
-  widget?: 'default' | 'pdf' | 'merge';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit';
   loadingNote?: string;
   /** 1-2 lines: what the SOURCE format is (unique per page). */
   aboutFrom: string;
@@ -2150,6 +2150,46 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Is my document uploaded anywhere?',
         a: 'Never. Extraction runs entirely in your browser — that is exactly why we offer the honest text version instead of a server round-trip.',
+      },
+    ],
+  },
+  {
+    id: 'edit-pdf', from: 'PDF', to: 'Edited PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Edit PDF Online',
+    widget: 'edit',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Click any text in your PDF and type to edit it — right on the page, in your browser. Fix typos in contracts, update a resume, correct figures in a report, then download the updated PDF. No uploads, no sign-up, no watermark.',
+    faqQ: 'How can I edit text in a PDF for free?',
+    faqA: 'Drop your PDF above. Every text block becomes clickable — click it, type your changes, and download the updated PDF with your edits baked in. It all happens in your browser: your file is never uploaded anywhere.',
+    aboutFrom: 'PDFs are designed to look identical everywhere — which is exactly why their text is normally so hard to change without expensive desktop software.',
+    aboutTo: 'An edited PDF keeps the original layout and look, but with your corrections baked into the file — ready to send, print or archive.',
+    useCases: [
+      'Fixing typos in a contract before signing it',
+      'Updating your resume or CV in seconds',
+      'Correcting names, dates or figures in a report',
+    ],
+    tip: 'For long rewrites, switch to Text view — edit the whole page as plain text, then apply it back in one go.',
+    flagship: true,
+    extraFaqs: [
+      {
+        q: 'Is my PDF uploaded to a server when I edit it?',
+        a: 'Never. The editor runs 100% in your browser — the file is read, edited and rebuilt on your device. That is the whole point: private editing with nothing leaving your computer.',
+      },
+      {
+        q: 'Will the layout stay the same after editing?',
+        a: 'For text-based PDFs, yes — each edited block is covered and your new text is drawn back at the exact same position in a matching style. One honest detail: the cover is a white box, so on pages with background colors or images behind the text you may notice it. Original fonts are approximated with standard PDF fonts.',
+      },
+      {
+        q: 'What about scanned PDFs?',
+        a: 'Scanned PDFs are pictures of text, not text — there is nothing clickable to edit. They need OCR first, which the browser version does not do yet.',
+      },
+      {
+        q: 'Can I edit images in the PDF?',
+        a: 'Not yet — the editor works on text. Images pass through untouched into your downloaded file.',
+      },
+      {
+        q: 'What is the “clean PDF” download?',
+        a: 'A rebuilt version of your document with flowing text and simple typography — handy when you made big edits and want a tidy, reflowed document instead of the original layout.',
       },
     ],
   },

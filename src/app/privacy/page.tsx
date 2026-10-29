@@ -22,7 +22,8 @@ export default function Privacy() {
           file into a converter, it is read by your browser, converted by your
           browser, and the result is downloaded by your browser. No file is ever
           uploaded to our servers — because there is no server-side processing
-          at all.
+          at all. This includes the PDF editor: your document is opened, edited
+          and rebuilt entirely on your device.
         </p>
         <h2>2. No accounts, no personal data</h2>
         <p>

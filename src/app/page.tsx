@@ -16,6 +16,7 @@ const CAT_EMOJI: Record<string, string> = {
 };
 
 const POPULAR_IDS = [
+  'edit-pdf',
   'pdf-to-jpg',
   'jpg-to-pdf',
   'merge-pdf',
@@ -73,7 +74,9 @@ export default function Home() {
             <Link key={c.id} href={`/convert/${c.id}`} className="card">
               <div className="card-t">{c.title}</div>
               <div className="card-d">
-                {c.fromExts.map((e) => '.' + e).join(', ')} → .{c.toExt}
+                {c.id === 'edit-pdf'
+                  ? '.pdf → edited .pdf'
+                  : `${c.fromExts.map((e) => '.' + e).join(', ')} → .${c.toExt}`}
               </div>
             </Link>
           ))}

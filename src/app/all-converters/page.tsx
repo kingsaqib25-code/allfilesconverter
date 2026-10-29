@@ -33,7 +33,9 @@ export default function AllConverters() {
               <Link key={c.id} href={`/convert/${c.id}`} className="card">
                 <div className="card-t">{c.title}</div>
                 <div className="card-d">
-                  {c.fromExts.map((e) => '.' + e).join(', ')} → .{c.toExt}
+                  {c.id === 'edit-pdf'
+                    ? '.pdf → edited .pdf'
+                    : `${c.fromExts.map((e) => '.' + e).join(', ')} → .${c.toExt}`}
                 </div>
               </Link>
             ))}

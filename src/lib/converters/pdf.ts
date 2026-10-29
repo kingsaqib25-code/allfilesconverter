@@ -523,3 +523,332 @@ export async function mergeImagesToPdf(
     filename: 'merged-images.pdf',
   };
 }
+
+// ---------------------------------------------------------------------------
+// On-device PDF text editor ("Edit PDF") — flagship tool
+// ---------------------------------------------------------------------------
+// Flow: extractEditablePages() -> user edits blocks in the UI ->
+// renderEditedPdf() (surgical redraw of edited blocks) / renderCleanPdf()
+// (rebuilt flowing layout) / renderEditedDocx(). Everything stays in the
+// browser; pdf-lib's standard fonts approximate original fonts.
+
+export interface EditorBlock {
+  id: string;
+  /** Original extracted text. */
+  text: string;
+  /** PDF units. x = left of bbox, y = baseline y (origin bottom-left). */
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fontSize: number;
+  bold: boolean;
+}
+
+export interface EditorPageData {
+  pageNum: number;
+  /** Page size in PDF units. */
+  width: number;
+  height: number;
+  blocks: EditorBlock[];
+}
+
+/** Resolved page passed to the render functions: text is final (edited). */
+export interface FinalBlock extends EditorBlock {
+  edited: boolean;
+}
+
+export interface FinalPage {
+  pageNum: number; // 1-based index into the source document
+  blocks: FinalBlock[];
+  /** When set (Text view), the whole page text is replaced by this. */
+  textOverride: string | null;
+}
+
+const EDITOR_MAX_PAGES = 50;
+
+/** Group pdf.js text items into clickable lines/blocks by y-proximity. */
+function groupTextItems(items: unknown[], pageNum: number): EditorBlock[] {
+  interface Row { y: number; items: ItemBox[] }
+  interface ItemBox {
+    str: string; x: number; y: number; w: number; h: number;
+    fontSize: number; fontName: string;
+  }
+  const boxes: ItemBox[] = [];
+  for (const raw of items as Array<{
+    str?: string; transform?: number[]; width?: number; height?: number; fontName?: string;
+  }>) {
+    const str = raw.str ?? '';
+    if (!str.trim()) continue;
+    const t = raw.transform ?? [0, 0, 0, 0, 0, 0];
+    const fontSize = Math.hypot(t[0] || 0, t[1] || 0) || 10;
+    boxes.push({
+      str,
+      x: t[4] || 0,
+      y: t[5] || 0,
+      w: raw.width || 0,
+      h: raw.height || fontSize * 1.2,
+      fontSize,
+      fontName: (raw.fontName || '').toLowerCase(),
+    });
+  }
+  boxes.sort((a, b) => b.y - a.y || a.x - b.x);
+  const rows: Row[] = [];
+  for (const b of boxes) {
+    const row = rows.find((r) => Math.abs(r.y - b.y) <= Math.max(2.5, b.fontSize * 0.35));
+    if (row) row.items.push(b);
+    else rows.push({ y: b.y, items: [b] });
+  }
+  const blocks: EditorBlock[] = [];
+  let n = 0;
+  for (const row of rows) {
+    const line = row.items.sort((a, b) => a.x - b.x);
+    // Split a visual line into blocks where gaps look like column breaks.
+    let cur: ItemBox[] = [];
+    const flush = () => {
+      if (!cur.length) return;
+      let text = '';
+      cur.forEach((s, i) => {
+        if (i > 0) {
+          const prev = cur[i - 1];
+          const gap = s.x - (prev.x + prev.w);
+          if (gap > s.fontSize * 0.25 && !/\s$/.test(text) && !/^\s/.test(s.str)) text += ' ';
+        }
+        text += s.str;
+      });
+      const x0 = Math.min(...cur.map((c) => c.x));
+      const x1 = Math.max(...cur.map((c) => c.x + c.w));
+      const fs = Math.max(...cur.map((c) => c.fontSize));
+      const bold = cur.some((c) => /bold|black|heavy|demi/.test(c.fontName));
+      const h = Math.max(...cur.map((c) => c.h));
+      blocks.push({
+        id: `p${pageNum}-b${n++}`,
+        text,
+        x: x0,
+        y: row.y,
+        width: Math.max(1, x1 - x0),
+        height: h,
+        fontSize: fs,
+        bold,
+      });
+      cur = [];
+    };
+    line.forEach((s, i) => {
+      if (i > 0) {
+        const prev = line[i - 1];
+        const gap = s.x - (prev.x + prev.w);
+        if (gap > s.fontSize * 0.9) flush();
+      }
+      cur.push(s);
+    });
+    flush();
+  }
+  return blocks;
+}
+
+/**
+ * Extract per-page clickable text blocks from a PDF. Throws friendly errors
+ * for protected files, too many pages, and scanned (textless) PDFs.
+ */
+export async function extractEditablePages(file: File): Promise<EditorPageData[]> {
+  const lib = await ensurePdfjs();
+  const data = await file.arrayBuffer();
+  let pdf: { numPages: number; getPage: (n: number) => Promise<unknown> };
+  try {
+    pdf = await lib.getDocument({ data }).promise;
+  } catch (e) {
+    throw friendlyPdfError(e);
+  }
+  if (pdf.numPages > EDITOR_MAX_PAGES) {
+    throw new Error(
+      `That PDF has ${pdf.numPages} pages — the editor handles up to ${EDITOR_MAX_PAGES} pages ` +
+        'in the browser. Please split it first (see Split PDF).'
+    );
+  }
+  const pages: EditorPageData[] = [];
+  try {
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = (await pdf.getPage(p)) as {
+        getViewport: (o: { scale: number }) => { width: number; height: number };
+        getTextContent: () => Promise<{ items: unknown[] }>;
+        cleanup: () => void;
+      };
+      const vp = page.getViewport({ scale: 1 });
+      const tc = await page.getTextContent();
+      pages.push({
+        pageNum: p,
+        width: vp.width,
+        height: vp.height,
+        blocks: groupTextItems(tc.items, p),
+      });
+      page.cleanup();
+    }
+  } catch (e) {
+    throw friendlyPdfError(e);
+  }
+  const hasText = pages.some((pg) => pg.blocks.some((b) => b.text.trim().length > 0));
+  if (!hasText) {
+    throw new Error(
+      'No editable text found in this PDF — it looks like a scanned document ' +
+        '(pictures of text). Scanned PDFs need OCR, which the browser version does not do yet.'
+    );
+  }
+  return pages;
+}
+
+/** Standard PDF fonts only speak Latin — sanitize anything else. */
+function safeWinAnsi(s: string): string {
+  return s.replace(/[^\x00-\xFF]/g, '?');
+}
+
+function wrapLines(
+  text: string,
+  font: { widthOfTextAtSize: (t: string, s: number) => number },
+  size: number,
+  maxWidth: number
+): string[] {
+  const lines: string[] = [];
+  for (const para of text.split('\n')) {
+    const words = para.split(/\s+/).filter(Boolean);
+    if (!words.length) {
+      lines.push('');
+      continue;
+    }
+    let line = '';
+    for (const w of words) {
+      const test = line ? `${line} ${w}` : w;
+      if (font.widthOfTextAtSize(safeWinAnsi(test), size) > maxWidth && line) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = test;
+      }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+/**
+ * Surgical redraw: copy every page as-is; for edited blocks paint a white
+ * rectangle over the original and draw the new text at the same position.
+ * Pages edited via Text view get their text area whited out and reflowed.
+ */
+export async function renderEditedPdf(
+  srcBytes: ArrayBuffer,
+  pages: FinalPage[],
+  outName: string
+): Promise<ConvertResult> {
+  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+  const src = await PDFDocument.load(srcBytes, { ignoreEncryption: true });
+  const out = await PDFDocument.create();
+  const helv = await out.embedFont(StandardFonts.Helvetica);
+  const helvB = await out.embedFont(StandardFonts.HelveticaBold);
+  const white = rgb(1, 1, 1);
+  const black = rgb(0, 0, 0);
+  for (const fp of pages) {
+    const [copied] = await out.copyPages(src, [fp.pageNum - 1]);
+    out.addPage(copied);
+    if (fp.textOverride != null) {
+      const sized = fp.blocks.filter((b) => b.width > 0);
+      if (sized.length) {
+        const ux0 = Math.min(...sized.map((b) => b.x));
+        const ux1 = Math.max(...sized.map((b) => b.x + b.width));
+        const utop = Math.max(...sized.map((b) => b.y + b.height));
+        const ubot = Math.min(...sized.map((b) => b.y));
+        copied.drawRectangle({
+          x: ux0 - 2, y: ubot - 4, width: ux1 - ux0 + 4, height: utop - ubot + 8, color: white,
+        });
+        const size = 11;
+        const lines = wrapLines(fp.textOverride, helv, size, ux1 - ux0);
+        let cy = utop - size;
+        for (const ln of lines) {
+          if (cy < ubot) break;
+          copied.drawText(safeWinAnsi(ln), { x: ux0, y: cy, size, font: helv, color: black });
+          cy -= size * 1.4;
+        }
+      }
+      continue;
+    }
+    for (const b of fp.blocks) {
+      if (!b.edited) continue;
+      const font = b.bold ? helvB : helv;
+      const lines = b.text.split('\n');
+      const lh = b.fontSize * 1.25;
+      const rectH = Math.max(b.height + 4, lines.length * lh + 2);
+      copied.drawRectangle({
+        x: b.x - 1, y: b.y - 3, width: b.width + 2, height: rectH, color: white,
+      });
+      lines.forEach((ln, i) => {
+        copied.drawText(safeWinAnsi(ln), {
+          x: b.x, y: b.y - i * lh, size: b.fontSize, font, color: black,
+        });
+      });
+    }
+  }
+  const bytes = await out.save();
+  return { blob: new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }), filename: outName };
+}
+
+/** Rebuild the document as a clean flowing-layout PDF from the final text. */
+export async function renderCleanPdf(pages: FinalPage[], outName: string): Promise<ConvertResult> {
+  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+  const out = await PDFDocument.create();
+  const helv = await out.embedFont(StandardFonts.Helvetica);
+  const helvB = await out.embedFont(StandardFonts.HelveticaBold);
+  const black = rgb(0, 0, 0);
+  const PW = 595;
+  const PH = 842;
+  const M = 56;
+  let page = out.addPage([PW, PH]);
+  let y = PH - M;
+  const freshPage = () => {
+    page = out.addPage([PW, PH]);
+    y = PH - M;
+  };
+  const drawPara = (t: string) => {
+    const text = t.trim();
+    if (!text) return;
+    const isHeading = text.length < 90 && !/[.!?;:]$/.test(text);
+    const size = isHeading ? 14 : 11;
+    const font = isHeading ? helvB : helv;
+    for (const ln of wrapLines(text, font, size, PW - 2 * M)) {
+      if (y < M + size) freshPage();
+      if (ln) page.drawText(safeWinAnsi(ln), { x: M, y: y - size, size, font, color: black });
+      y -= size * 1.45;
+    }
+    y -= isHeading ? 8 : 5;
+    if (y < M) freshPage();
+  };
+  pages.forEach((fp, pi) => {
+    if (pi > 0) y -= 12;
+    const paras = fp.textOverride != null ? fp.textOverride.split('\n') : fp.blocks.map((b) => b.text);
+    paras.forEach(drawPara);
+  });
+  const bytes = await out.save();
+  return { blob: new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }), filename: outName };
+}
+
+/** Export the final text as an editable Word document (same honest pattern as pdfToWord). */
+export async function renderEditedDocx(pages: FinalPage[], outName: string): Promise<ConvertResult> {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
+  const children: InstanceType<typeof Paragraph>[] = [];
+  pages.forEach((fp, pi) => {
+    if (pi > 0) children.push(new Paragraph({ children: [new TextRun({ text: '', break: 1 })] }));
+    const paras = fp.textOverride != null ? fp.textOverride.split('\n') : fp.blocks.map((b) => b.text);
+    paras.forEach((p) => {
+      const t = p.trim();
+      if (!t) return;
+      const isHeading = t.length < 80 && !/[.!?]$/.test(t);
+      children.push(
+        new Paragraph({
+          heading: isHeading ? HeadingLevel.HEADING_1 : undefined,
+          children: [new TextRun(t)],
+        })
+      );
+    });
+  });
+  const doc = new Document({ sections: [{ children }] });
+  const blob = await Packer.toBlob(doc);
+  return { blob, filename: outName };
+}

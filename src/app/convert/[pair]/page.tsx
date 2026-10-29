@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import ConverterWidget from '@/components/ConverterWidget';
 import PdfWidget from '@/components/PdfWidget';
 import MergeWidget from '@/components/MergeWidget';
+import PdfEditor from '@/components/PdfEditor';
 import AiSummarize from '@/components/AiSummarize';
 import { buildConverterSummaryText } from '@/lib/ai';
 import {
@@ -52,21 +53,37 @@ export default async function ConvertPage({
   const related = relatedConverters(entry);
   const cat = categoryMeta(entry.category);
   const pageUrl = `${SITE_URL}/convert/${entry.id}/`;
+  const isEdit = entry.id === 'edit-pdf';
 
-  const howToSteps = [
-    {
-      name: 'Drop your file',
-      text: `Drag your ${entry.from} file (${entry.fromExts.map((e) => '.' + e).join(', ')}) into the box above, or click to browse your device.`,
-    },
-    {
-      name: 'Convert on your device',
-      text: `Hit "Convert to ${entry.to}". The conversion runs entirely in your browser — nothing is uploaded.`,
-    },
-    {
-      name: 'Download the result',
-      text: `Your new .${entry.toExt} file downloads instantly, ready to use anywhere.`,
-    },
-  ];
+  const howToSteps = isEdit
+    ? [
+        {
+          name: 'Drop your PDF',
+          text: 'Drag your PDF into the box above, or click to browse your device. The editor loads it entirely in your browser.',
+        },
+        {
+          name: 'Click any text and edit',
+          text: 'Every text block becomes clickable — click it and type your changes right on the page, or switch to Text view for full-page edits.',
+        },
+        {
+          name: 'Download your updated PDF',
+          text: 'Hit "Download PDF" to get your file back with the edits baked in — or grab a clean rebuild or a Word file instead.',
+        },
+      ]
+    : [
+        {
+          name: 'Drop your file',
+          text: `Drag your ${entry.from} file (${entry.fromExts.map((e) => '.' + e).join(', ')}) into the box above, or click to browse your device.`,
+        },
+        {
+          name: 'Convert on your device',
+          text: `Hit "Convert to ${entry.to}". The conversion runs entirely in your browser — nothing is uploaded.`,
+        },
+        {
+          name: 'Download the result',
+          text: `Your new .${entry.toExt} file downloads instantly, ready to use anywhere.`,
+        },
+      ];
 
   return (
     <div className="wrap">
@@ -77,7 +94,9 @@ export default async function ConvertPage({
 
       <div className="page-head compact">
         <span className="pill">
-          {entry.fromExts.map((e) => '.' + e).join(', ')} → .{entry.toExt}
+          {isEdit
+            ? '.pdf → edited .pdf'
+            : `${entry.fromExts.map((e) => '.' + e).join(', ')} → .${entry.toExt}`}
         </span>
         <h1>Free {entry.title}</h1>
         <p className="lead">{entry.description}</p>
@@ -87,29 +106,45 @@ export default async function ConvertPage({
         <PdfWidget entryId={entry.id} />
       ) : entry.widget === 'merge' ? (
         <MergeWidget entryId={entry.id} />
+      ) : entry.widget === 'edit' ? (
+        <PdfEditor />
       ) : (
         <ConverterWidget entryId={entry.id} />
       )}
 
       <AiSummarize
-        summaryText={buildConverterSummaryText({
-          title: entry.title,
-          description: entry.description,
-          from: entry.from,
-          to: entry.to,
-          aboutFrom: entry.aboutFrom,
-          aboutTo: entry.aboutTo,
-          loadingNote: entry.loadingNote,
-        })}
+        summaryText={
+          isEdit
+            ? `${entry.title}. ${entry.description} TL;DR: Drop a PDF, click any text to edit it right on the page, and download the updated PDF in seconds. Free forever, no sign-up — and your file never leaves your device because editing runs in your browser. About PDFs: ${entry.aboutFrom} About editing: ${entry.aboutTo}`
+            : buildConverterSummaryText({
+                title: entry.title,
+                description: entry.description,
+                from: entry.from,
+                to: entry.to,
+                aboutFrom: entry.aboutFrom,
+                aboutTo: entry.aboutTo,
+                loadingNote: entry.loadingNote,
+              })
+        }
       />
 
       <p className="tldr">
-        <strong>TL;DR:</strong> Drop a {entry.from} file, get a {entry.to} file back in
-        seconds. Free forever, no sign-up — and your file never leaves your device because
-        the conversion runs in your browser.
-        {entry.loadingNote
-          ? ' First use downloads a ~30 MB converter engine (one time); after that it’s instant.'
-          : null}
+        {isEdit ? (
+          <>
+            <strong>TL;DR:</strong> Drop a PDF, click any text, and type your changes right on
+            the page. Download the updated PDF in seconds. Free forever, no sign-up — and your
+            file never leaves your device because the editing runs in your browser.
+          </>
+        ) : (
+          <>
+            <strong>TL;DR:</strong> Drop a {entry.from} file, get a {entry.to} file back in
+            seconds. Free forever, no sign-up — and your file never leaves your device because
+            the conversion runs in your browser.
+            {entry.loadingNote
+              ? ' First use downloads a ~30 MB converter engine (one time); after that it’s instant.'
+              : null}
+          </>
+        )}
       </p>
 
       {entry.id === 'video-to-gif' ? (
@@ -124,34 +159,33 @@ export default async function ConvertPage({
         </div>
       ) : null}
 
+      {entry.id === 'pdf-to-word' || entry.id === 'pdf-to-text' ? (
+        <div className="cta-band slim">
+          <h2>Want to edit the text first?</h2>
+          <p>
+            Click any text in your PDF and type your changes right on the page — then download
+            the updated file. All in your browser, nothing uploaded.
+          </p>
+          <Link href="/convert/edit-pdf" className="btn">
+            Open the PDF editor →
+          </Link>
+        </div>
+      ) : null}
+
       <section className="prose">
-        <h2>How to convert {entry.from} to {entry.to}</h2>
+        <h2>{isEdit ? 'How to edit a PDF online' : `How to convert ${entry.from} to ${entry.to}`}</h2>
         <div className="steps">
-          <div className="step">
-            <div className="s-t">1. Drop your file</div>
-            <div className="s-d">
-              Drag your {entry.from} file ({entry.fromExts.map((e) => '.' + e).join(', ')}) into
-              the box above, or click to browse your device.
+          {howToSteps.map((s, i) => (
+            <div className="step" key={s.name}>
+              <div className="s-t">
+                {i + 1}. {s.name}
+              </div>
+              <div className="s-d">{s.text}</div>
             </div>
-          </div>
-          <div className="step">
-            <div className="s-t">2. Convert on your device</div>
-            <div className="s-d">
-              Hit “Convert to {entry.to}”. The conversion runs entirely in your browser —
-              nothing is uploaded.
-            </div>
-          </div>
-          <div className="step">
-            <div className="s-t">3. Download the result</div>
-            <div className="s-d">
-              Your new .{entry.toExt} file downloads instantly, ready to use anywhere.
-            </div>
-          </div>
+          ))}
         </div>
 
-        <h2>
-          About {entry.from} and {entry.to}
-        </h2>
+        <h2>{isEdit ? 'About PDFs and editing them' : `About ${entry.from} and ${entry.to}`}</h2>
         <p>
           <strong>{entry.from}:</strong> {entry.aboutFrom}
         </p>
@@ -159,7 +193,7 @@ export default async function ConvertPage({
           <strong>{entry.to}:</strong> {entry.aboutTo}
         </p>
 
-        <h2>When to use this conversion</h2>
+        <h2>{isEdit ? 'When to use the PDF editor' : 'When to use this conversion'}</h2>
         <ul>
           {entry.useCases.map((u) => (
             <li key={u}>{u}</li>
@@ -170,9 +204,7 @@ export default async function ConvertPage({
           <strong>Practical tip:</strong> {entry.tip}
         </div>
 
-        <h2>
-          {entry.from} to {entry.to} — FAQs
-        </h2>
+        <h2>{isEdit ? 'Edit PDF online — FAQs' : `${entry.from} to ${entry.to} — FAQs`}</h2>
         {entry.faqs.map((f) => (
           <details key={f.q} className="faq">
             <summary>{f.q}</summary>
@@ -228,7 +260,7 @@ export default async function ConvertPage({
           type="application/ld+json"
           dangerouslySetInnerHTML={ldScript(
             howToJsonLd(
-              `How to convert ${entry.from} to ${entry.to}`,
+              isEdit ? 'How to edit a PDF online' : `How to convert ${entry.from} to ${entry.to}`,
               entry.description,
               howToSteps,
               pageUrl
