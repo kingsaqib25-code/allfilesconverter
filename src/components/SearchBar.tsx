@@ -71,6 +71,35 @@ function searchConverters(q: string): Hit[] {
     .map((s) => s.hit);
 }
 
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Highlights the matched query tokens inside a result title. */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const tokens = norm(query).split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return <>{text}</>;
+  const tokenSet = new Set(tokens);
+  const re = new RegExp(
+    `(${tokens.map(escapeRegExp).sort((a, b) => b.length - a.length).join('|')})`,
+    'gi',
+  );
+  const parts = text.split(re);
+  return (
+    <>
+      {parts.map((part, i) =>
+        tokenSet.has(part.toLowerCase()) ? (
+          <mark key={i} className="hsearch-mark">
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
+  );
+}
+
 async function postPayload(payload: Record<string, string>): Promise<boolean> {
   if (!SUGGEST_ENDPOINT) return false;
   try {
@@ -87,6 +116,14 @@ async function postPayload(payload: Record<string, string>): Promise<boolean> {
 
 export default function SearchBar() {
   const [q, setQ] = useState('');
+  // Debounced query (~150ms): the dropdown opens on the first keystroke and
+  // results land a beat later — instant feel without re-filtering mid-burst.
+  const [dq, setDq] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDq(q), 150);
+    return () => clearTimeout(t);
+  }, [q]);
+
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [suggestText, setSuggestText] = useState('');
@@ -97,15 +134,16 @@ export default function SearchBar() {
   const sentNoResult = useRef<Set<string>>(new Set());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const hits = useMemo(() => searchConverters(q), [q]);
-  const showResults = open && q.trim().length >= 2;
+  const hits = useMemo(() => searchConverters(dq), [dq]);
+  // First keystroke opens the dropdown; results render once debounced.
+  const showResults = open && q.trim().length >= 1 && dq.trim().length >= 1;
 
   // Silent no-result beacon (debounced, once per query) so the owner sees
   // what people search for and can add missing converters.
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const query = q.trim();
-    if (!SUGGEST_ENDPOINT || query.length < 2) return;
+    if (!SUGGEST_ENDPOINT || query.length < 1) return;
     debounceRef.current = setTimeout(() => {
       const h = searchConverters(query);
       if (h.length === 0 && !sentNoResult.current.has(query.toLowerCase())) {
@@ -126,7 +164,7 @@ export default function SearchBar() {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  useEffect(() => setActive(0), [q]);
+  useEffect(() => setActive(0), [dq]);
 
   const submitSuggestion = useCallback(async () => {
     const text = suggestText.trim();
@@ -193,7 +231,9 @@ export default function SearchBar() {
                 onClick={() => setOpen(false)}
                 onMouseEnter={() => setActive(i)}
               >
-                <span className="hsearch-title">{h.title}</span>
+                <span className="hsearch-title">
+                  <Highlight text={h.title} query={dq} />
+                </span>
                 <span className="hsearch-sub">{h.sub}</span>
                 {h.kind === 'category' && <span className="hsearch-badge">Category</span>}
               </Link>
@@ -201,7 +241,7 @@ export default function SearchBar() {
           ) : (
             <div className="hsearch-empty">
               <p>
-                No converter found for “<strong>{q.trim()}</strong>”.
+                No converter found for “<strong>{dq.trim()}</strong>”.
               </p>
               {SUGGEST_ENDPOINT ? (
                 suggestDone ? (

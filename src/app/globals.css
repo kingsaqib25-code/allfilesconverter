@@ -418,6 +418,7 @@ a.card:hover { text-decoration: none; border-color: var(--brand); box-shadow: va
 .hsearch-item:last-child { border-bottom: none; }
 .hsearch-item:hover, .hsearch-item.active { background: var(--brand-soft); text-decoration: none; }
 .hsearch-title { display: block; font-weight: 600; color: var(--ink); font-size: 0.93rem; }
+.hsearch-mark { background: #fef08a; color: inherit; border-radius: 3px; padding: 0 1px; }
 .hsearch-sub { display: block; font-size: 0.8rem; color: var(--ink-faint); }
 .hsearch-badge { display: inline-block; font-size: 0.7rem; background: var(--brand-soft); color: var(--brand-dark); border-radius: 999px; padding: 0.05rem 0.5rem; margin-top: 0.2rem; }
 .hsearch-empty { padding: 1rem; font-size: 0.92rem; }
