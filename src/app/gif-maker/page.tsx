@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import GifMaker from '@/components/GifMaker';
 import AiSummarize from '@/components/AiSummarize';
-import { buildSummaryPrompt } from '@/lib/ai';
 import { BRAND, getConverter } from '@/lib/converters/registry';
 import { SITE_URL } from '@/lib/site';
 import { ldScript, webApplicationJsonLd, faqPageJsonLd, breadcrumbJsonLd, howToJsonLd } from '@/lib/jsonld';
@@ -82,7 +81,7 @@ export default function GifMakerPage() {
       </div>
 
       <AiSummarize
-        prompt={buildSummaryPrompt(PAGE_URL, 'the Video to GIF Maker studio on All Files Converter')}
+        summaryText={`Free Video to GIF Maker on ${BRAND}. TL;DR: drop a video, pick your 15-second (or shorter) moment, tune width, FPS and quality, and download a clean GIF in seconds with two-pass color rendering. Free, private, no watermark — everything happens in your browser, so your video never leaves your device.`}
       />
 
       <GifMaker />

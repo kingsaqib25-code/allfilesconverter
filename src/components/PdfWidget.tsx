@@ -66,7 +66,7 @@ export default function PdfWidget({ entryId }: Props) {
       }
       setFiles((prev) => (multi ? [...prev, ...picked] : picked.slice(0, 1)));
     },
-    [entry, multi]
+    [entry, multi, clearOutputs]
   );
 
   const move = (i: number, dir: -1 | 1) => {
@@ -87,7 +87,7 @@ export default function PdfWidget({ entryId }: Props) {
     clearOutputs();
     setRange('');
     if (inputRef.current) inputRef.current.value = '';
-  }, []);
+  }, [clearOutputs]);
 
   const run = useCallback(async () => {
     if (files.length === 0 || working) return;
@@ -183,154 +183,165 @@ export default function PdfWidget({ entryId }: Props) {
   const showCompress = entry.id === 'compress-pdf';
   const showQuality = entry.id === 'jpg-to-pdf' || entry.id === 'png-to-pdf';
   const showReorder = entry.id === 'merge-pdf';
+  const hasOptions = showRange || showCompress || showQuality;
+  const showSidebar = hasOptions && outputs.length === 0;
 
   return (
-    <div className="widget" aria-label={`${entry.title} tool`}>
-      <div
-        className={`dropzone${dragging ? ' dragging' : ''}`}
-        role="button"
-        tabIndex={0}
-        aria-label={`Drop your ${entry.from} file(s) here or click to browse`}
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-      >
-        <div className="dz-icon" aria-hidden="true">📁</div>
-        <div className="dz-title">Drop your {entry.from} file{multi ? 's' : ''} here</div>
-        <div className="dz-sub">
-          or click to browse — accepts {entry.fromExts.map((e) => '.' + e).join(', ')}
-          {multi ? ' (you can add several)' : ''}
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple={multi}
-          accept={entry.fromExts.map((e) => '.' + e).join(',')}
-          onChange={(e) => pickFiles(e.target.files)}
-        />
-      </div>
-
-      {files.length > 0 && (
-        <div className="file-list" aria-label="Selected files">
-          {files.map((f, i) => (
-            <div className="file-row" key={`${f.name}-${i}`}>
-              <span aria-hidden="true">{entry.from === 'PDF' ? '📕' : '🖼️'}</span>
-              <span className="fname">{f.name}</span>
-              <span className="fsize">{formatSize(f.size)}</span>
-              {showReorder && (
-                <>
-                  <button className="mini-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up">↑</button>
-                  <button className="mini-btn" onClick={() => move(i, 1)} disabled={i === files.length - 1} aria-label="Move down">↓</button>
-                  <button className="mini-btn" onClick={() => removeAt(i)} aria-label="Remove">✕</button>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {showRange && files.length > 0 && (
-        <label className="opt-row">
-          <span className="opt-label">Pages to extract <span className="opt-hint">(e.g. 1-3, 5)</span></span>
-          <input
-            type="text"
-            value={range}
-            onChange={(e) => setRange(e.target.value)}
-            placeholder="1-3, 5"
-            aria-label="Page range"
-            style={{ maxWidth: '12rem' }}
-          />
-        </label>
-      )}
-
-      {showCompress && (
-        <label className="opt-row">
-          <span className="opt-label">Compression</span>
-          <select
-            value={compressLevel}
-            onChange={(e) => setCompressLevel(e.target.value as 'high' | 'medium' | 'low')}
-            aria-label="Compression level"
+    <div
+      className={`widget${hasOptions ? ' widget-wide' : ''}`}
+      aria-label={`${entry.title} tool`}
+    >
+      <div className={`tool-grid${showSidebar ? ' has-side' : ''}`}>
+        <div className="tool-main">
+          <div
+            className={`dropzone${dragging ? ' dragging' : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-label={`Drop your ${entry.from} file(s) here or click to browse`}
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
           >
-            <option value="high">High quality (larger file)</option>
-            <option value="medium">Balanced</option>
-            <option value="low">Smallest file</option>
-          </select>
-        </label>
-      )}
+            <div className="dz-icon" aria-hidden="true">📁</div>
+            <div className="dz-title">Drop your {entry.from} file{multi ? 's' : ''} here</div>
+            <div className="dz-sub">
+              or click to browse — accepts {entry.fromExts.map((e) => '.' + e).join(', ')}
+              {multi ? ' (you can add several)' : ''}
+            </div>
+            <input
+              ref={inputRef}
+              type="file"
+              multiple={multi}
+              accept={entry.fromExts.map((e) => '.' + e).join(',')}
+              onChange={(e) => pickFiles(e.target.files)}
+            />
+          </div>
 
-      {showQuality && (
-        <label className="opt-row">
-          <span className="opt-label">
-            Quality: <strong>{quality}</strong> <span className="opt-hint">(Lower = smaller PDF)</span>
-          </span>
-          <input
-            type="range"
-            min={1}
-            max={100}
-            value={quality}
-            onChange={(e) => setQuality(Number(e.target.value))}
-            aria-label="Quality"
-          />
-        </label>
-      )}
+          {files.length > 0 && (
+            <div className="file-list" aria-label="Selected files">
+              {files.map((f, i) => (
+                <div className="file-row" key={`${f.name}-${i}`}>
+                  <span aria-hidden="true">{entry.from === 'PDF' ? '📕' : '🖼️'}</span>
+                  <span className="fname">{f.name}</span>
+                  <span className="fsize">{formatSize(f.size)}</span>
+                  {showReorder && (
+                    <>
+                      <button className="mini-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up">↑</button>
+                      <button className="mini-btn" onClick={() => move(i, 1)} disabled={i === files.length - 1} aria-label="Move down">↓</button>
+                      <button className="mini-btn" onClick={() => removeAt(i)} aria-label="Remove">✕</button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
-      {working ? (
-        <div role="status" aria-label={loadNote ?? 'Converting…'}>
-          {loadNote ? <div className="load-note">{loadNote}</div> : null}
-          <div className="progress"><div /></div>
-        </div>
-      ) : null}
+          {working ? (
+            <div role="status" aria-label={loadNote ?? 'Converting…'}>
+              {loadNote ? <div className="load-note">{loadNote}</div> : null}
+              <div className="progress"><div /></div>
+            </div>
+          ) : null}
 
-      {outputs.length > 0 && (
-        <div className="alert ok">
-          Done! {outputs.length === 1 ? 'Your file is ready.' : `${outputs.length} files ready.`}
-        </div>
-      )}
+          {outputs.length > 0 && (
+            <div className="alert ok">
+              Done! {outputs.length === 1 ? 'Your file is ready.' : `${outputs.length} files ready.`}
+            </div>
+          )}
 
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        {outputs.length === 0 ? (
-          <button className="btn" onClick={run} disabled={working || files.length === 0}>
-            {working ? 'Working…' : `${entry.title} →`}
-          </button>
-        ) : (
-          <>
-            {outputs.slice(0, 12).map((o, i) => (
-              <a key={i} className="btn secondary" href={o.url} download={o.filename}>
-                ⬇ {o.label ?? o.filename}
-              </a>
-            ))}
-            {outputs.length > 1 && (
-              <button className="btn" onClick={downloadZip}>
-                ⬇ Download all as ZIP
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {outputs.length === 0 ? (
+              <button className="btn" onClick={run} disabled={working || files.length === 0}>
+                {working ? 'Working…' : `${entry.title} →`}
               </button>
+            ) : (
+              <>
+                {outputs.slice(0, 12).map((o, i) => (
+                  <a key={i} className="btn secondary" href={o.url} download={o.filename}>
+                    ⬇ {o.label ?? o.filename}
+                  </a>
+                ))}
+                {outputs.length > 1 && (
+                  <button className="btn" onClick={downloadZip}>
+                    ⬇ Download all as ZIP
+                  </button>
+                )}
+              </>
             )}
-          </>
-        )}
-        <button className="btn secondary" onClick={reset}>
-          {outputs.length > 0 ? 'Start over' : 'Clear'}
-        </button>
-      </div>
-      {outputs.length > 12 && (
-        <p className="opt-hint">Showing first 12 pages — use “Download all as ZIP” for the rest.</p>
-      )}
+            <button className="btn secondary" onClick={reset}>
+              {outputs.length > 0 ? 'Start over' : 'Clear'}
+            </button>
+          </div>
+          {outputs.length > 12 && (
+            <p className="opt-hint">Showing first 12 pages — use “Download all as ZIP” for the rest.</p>
+          )}
 
-      {error && (
-        <div className="alert err" role="alert">
-          {error}
+          {error && (
+            <div className="alert err" role="alert">
+              {error}
+            </div>
+          )}
+          <div className="privacy-note">
+            <span aria-hidden="true">🔒</span>
+            <span>
+              Private by design: this file is converted inside your browser and never uploaded anywhere.
+            </span>
+          </div>
         </div>
-      )}
-      <div className="privacy-note">
-        <span aria-hidden="true">🔒</span>
-        <span>
-          Private by design: this file is converted inside your browser and never uploaded anywhere.
-        </span>
+        {showSidebar && (
+          <aside className="tool-side" aria-label="Options">
+            <h2 className="tool-side-title">Options</h2>
+            {showRange && (
+              <label className="opt-row">
+                <span className="opt-label">Pages to extract <span className="opt-hint">(e.g. 1-3, 5)</span></span>
+                <input
+                  type="text"
+                  value={range}
+                  onChange={(e) => setRange(e.target.value)}
+                  placeholder="1-3, 5"
+                  aria-label="Page range"
+                  style={{ maxWidth: '12rem' }}
+                />
+              </label>
+            )}
+            {showCompress && (
+              <label className="opt-row">
+                <span className="opt-label">Compression</span>
+                <select
+                  value={compressLevel}
+                  onChange={(e) => setCompressLevel(e.target.value as 'high' | 'medium' | 'low')}
+                  aria-label="Compression level"
+                >
+                  <option value="high">High quality (larger file)</option>
+                  <option value="medium">Balanced</option>
+                  <option value="low">Smallest file</option>
+                </select>
+              </label>
+            )}
+            {showQuality && (
+              <label className="opt-row">
+                <span className="opt-label">
+                  Quality: <strong>{quality}</strong> <span className="opt-hint">(Lower = smaller PDF)</span>
+                </span>
+                <input
+                  type="range"
+                  min={1}
+                  max={100}
+                  value={quality}
+                  onChange={(e) => setQuality(Number(e.target.value))}
+                  aria-label="Quality"
+                />
+              </label>
+            )}
+          </aside>
+        )}
       </div>
     </div>
   );

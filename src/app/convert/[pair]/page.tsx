@@ -5,7 +5,7 @@ import ConverterWidget from '@/components/ConverterWidget';
 import PdfWidget from '@/components/PdfWidget';
 import MergeWidget from '@/components/MergeWidget';
 import AiSummarize from '@/components/AiSummarize';
-import { buildSummaryPrompt } from '@/lib/ai';
+import { buildConverterSummaryText } from '@/lib/ai';
 import {
   BRAND,
   CONVERTERS,
@@ -75,25 +75,13 @@ export default async function ConvertPage({
         {entry.title}
       </nav>
 
-      <div className="page-head">
+      <div className="page-head compact">
         <span className="pill">
           {entry.fromExts.map((e) => '.' + e).join(', ')} → .{entry.toExt}
         </span>
         <h1>Free {entry.title}</h1>
         <p className="lead">{entry.description}</p>
-        <p className="tldr">
-          <strong>TL;DR:</strong> Drop a {entry.from} file, get a {entry.to} file back in
-          seconds. Free forever, no sign-up — and your file never leaves your device because
-          the conversion runs in your browser.
-          {entry.loadingNote
-            ? ' First use downloads a ~30 MB converter engine (one time); after that it’s instant.'
-            : null}
-        </p>
       </div>
-
-      <AiSummarize
-        prompt={buildSummaryPrompt(pageUrl, `the ${entry.title} on ${BRAND}`)}
-      />
 
       {entry.widget === 'pdf' ? (
         <PdfWidget entryId={entry.id} />
@@ -102,6 +90,27 @@ export default async function ConvertPage({
       ) : (
         <ConverterWidget entryId={entry.id} />
       )}
+
+      <AiSummarize
+        summaryText={buildConverterSummaryText({
+          title: entry.title,
+          description: entry.description,
+          from: entry.from,
+          to: entry.to,
+          aboutFrom: entry.aboutFrom,
+          aboutTo: entry.aboutTo,
+          loadingNote: entry.loadingNote,
+        })}
+      />
+
+      <p className="tldr">
+        <strong>TL;DR:</strong> Drop a {entry.from} file, get a {entry.to} file back in
+        seconds. Free forever, no sign-up — and your file never leaves your device because
+        the conversion runs in your browser.
+        {entry.loadingNote
+          ? ' First use downloads a ~30 MB converter engine (one time); after that it’s instant.'
+          : null}
+      </p>
 
       {entry.id === 'video-to-gif' ? (
         <div className="cta-band slim">

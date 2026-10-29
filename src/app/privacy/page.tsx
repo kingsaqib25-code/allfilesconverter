@@ -35,12 +35,26 @@ export default function Privacy() {
           and no third-party scripts that observe your conversions. The only
           network requests are the ones that load the site's own pages.
         </p>
-        <h2>4. Contact form</h2>
+        <h2>4. AI page summaries</h2>
+        <p>
+          Every page has a “Summarize with AI” button that opens a summary panel
+          right on the page. When you click it, <strong>only that page&apos;s
+          public summary text</strong> (its title, description and TL;DR — the
+          same words anyone can read on the page) is sent to a third-party AI
+          API so it can write the summary in plain words.
+        </p>
+        <p>
+          <strong>What is never sent:</strong> your files. Conversions run
+          on-device in your browser, and file contents are never included in the
+          summary request, never uploaded and never shared with the AI provider
+          or anyone else.
+        </p>
+        <h2>5. Contact form</h2>
         <p>
           If you email us via the <a href="/contact">contact page</a>, we receive
           only what you choose to write. We do not share it with anyone.
         </p>
-        <h2>5. Changes</h2>
+        <h2>6. Changes</h2>
         <p>
           If this policy ever changes, the change will be described here in plain
           language. The on-device promise is the foundation of this site — it is

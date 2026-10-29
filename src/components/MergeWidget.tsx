@@ -126,10 +126,8 @@ export default function MergeWidget({ entryId }: Props) {
       setDoneName(filename);
       setDoneSize(formatSize(blob.size));
     } catch (e) {
-      // Friendly message for ffmpeg load state reset is handled in finally.
-      let msg =
+      const msg =
         e instanceof Error ? e.message : 'Something went wrong. Please try again.';
-      // If the video engine failed to even start, surface its guidance as-is.
       setError(msg);
     } finally {
       setLoadNote(null);
@@ -143,149 +141,155 @@ export default function MergeWidget({ entryId }: Props) {
     pickFiles(e.dataTransfer.files);
   };
 
+  const showSidebar = !doneUrl;
+
   return (
-    <div className="widget" aria-label={`${entry.title} tool`}>
-      <div
-        className={`dropzone${dragging ? ' dragging' : ''}`}
-        role="button"
-        tabIndex={0}
-        aria-label={`Drop your ${entry.from.toLowerCase()} files here or click to browse`}
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-      >
-        <div className="dz-icon" aria-hidden="true">📚</div>
-        <div className="dz-title">Drop your files here (2 or more)</div>
-        <div className="dz-sub">
-          or click to browse — accepts {entry.fromExts.map((e) => '.' + e).join(', ')}
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          accept={entry.fromExts.map((e) => '.' + e).join(',')}
-          onChange={(e) => pickFiles(e.target.files)}
-        />
-      </div>
-
-      {files.length > 0 && (
-        <div className="file-list" aria-label="Files to merge, in order">
-          {files.map((f, i) => (
-            <div className="file-row" key={`${f.name}-${i}`}>
-              <span className="forder" aria-hidden="true">{i + 1}</span>
-              <span className="fname">{f.name}</span>
-              <span className="fsize">{formatSize(f.size)}</span>
-              <button className="mini-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up">↑</button>
-              <button className="mini-btn" onClick={() => move(i, 1)} disabled={i === files.length - 1} aria-label="Move down">↓</button>
-              <button className="mini-btn" onClick={() => removeAt(i)} aria-label="Remove">✕</button>
+    <div className="widget widget-wide" aria-label={`${entry.title} tool`}>
+      <div className={`tool-grid${showSidebar ? ' has-side' : ''}`}>
+        <div className="tool-main">
+          <div
+            className={`dropzone${dragging ? ' dragging' : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-label={`Drop your ${entry.from.toLowerCase()} files here or click to browse`}
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+          >
+            <div className="dz-icon" aria-hidden="true">📚</div>
+            <div className="dz-title">Drop your files here (2 or more)</div>
+            <div className="dz-sub">
+              or click to browse — accepts {entry.fromExts.map((e) => '.' + e).join(', ')}
             </div>
-          ))}
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept={entry.fromExts.map((e) => '.' + e).join(',')}
+              onChange={(e) => pickFiles(e.target.files)}
+            />
+          </div>
+
+          {files.length > 0 && (
+            <div className="file-list" aria-label="Files to merge, in order">
+              {files.map((f, i) => (
+                <div className="file-row" key={`${f.name}-${i}`}>
+                  <span className="forder" aria-hidden="true">{i + 1}</span>
+                  <span className="fname">{f.name}</span>
+                  <span className="fsize">{formatSize(f.size)}</span>
+                  <button className="mini-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up">↑</button>
+                  <button className="mini-btn" onClick={() => move(i, 1)} disabled={i === files.length - 1} aria-label="Move down">↓</button>
+                  <button className="mini-btn" onClick={() => removeAt(i)} aria-label="Remove">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {working ? (
+            <div role="status" aria-label={loadNote ?? 'Merging…'}>
+              {loadNote ? <div className="load-note">{loadNote}</div> : null}
+              <div className="progress"><div /></div>
+            </div>
+          ) : null}
+
+          {doneUrl && (
+            <div className="alert ok">Done! Your merged file is ready ({doneSize}).</div>
+          )}
+
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {!doneUrl ? (
+              <button className="btn" onClick={run} disabled={working || files.length < 2}>
+                {working ? 'Merging…' : `Merge ${files.length > 0 ? `${files.length} files` : ''} →`}
+              </button>
+            ) : (
+              <a className="btn" href={doneUrl} download={doneName}>
+                ⬇ Download {doneName}
+              </a>
+            )}
+            <button className="btn secondary" onClick={reset}>
+              {doneUrl ? 'Merge more' : 'Clear'}
+            </button>
+          </div>
+
+          {error && (
+            <div className="alert err" role="alert">
+              {error}
+            </div>
+          )}
+          <div className="privacy-note">
+            <span aria-hidden="true">🔒</span>
+            <span>
+              Private by design: your files are merged inside your browser and never uploaded anywhere.
+            </span>
+          </div>
         </div>
-      )}
-
-      {isImageMerge && !isPdfOut && (
-        <label className="opt-row">
-          <span className="opt-label">Layout</span>
-          <select value={layout} onChange={(e) => setLayout(e.target.value as MergeImageLayout)} aria-label="Layout">
-            {LAYOUTS.map((l) => (
-              <option key={l.value} value={l.value}>{l.label}</option>
-            ))}
-          </select>
-        </label>
-      )}
-
-      {isPdfOut && (
-        <label className="opt-row">
-          <span className="opt-label">Images per page</span>
-          <select value={perPage} onChange={(e) => setPerPage(e.target.value as '1' | '2' | '4')} aria-label="Images per page">
-            <option value="1">1 per page</option>
-            <option value="2">2 per page</option>
-            <option value="4">4 per page</option>
-          </select>
-        </label>
-      )}
-
-      {(isImageMerge || isPdfOut) && entry.toExt !== 'png' && (
-        <label className="opt-row">
-          <span className="opt-label">
-            Quality: <strong>{quality}</strong> <span className="opt-hint">(Lower = smaller file)</span>
-          </span>
-          <input
-            type="range"
-            min={1}
-            max={100}
-            value={quality}
-            onChange={(e) => setQuality(Number(e.target.value))}
-            aria-label="Quality"
-          />
-        </label>
-      )}
-
-      {isVideo && (
-        <label className="opt-row">
-          <span className="opt-label">Quality</span>
-          <select value={crf} onChange={(e) => setCrf(e.target.value)} aria-label="Quality">
-            <option value="18">High quality (larger file)</option>
-            <option value="23">Balanced</option>
-            <option value="28">Small file</option>
-          </select>
-        </label>
-      )}
-
-      {!isVideo && !isImageMerge && (
-        <label className="opt-row">
-          <span className="opt-label">Bitrate</span>
-          <select value={bitrate} onChange={(e) => setBitrate(e.target.value)} aria-label="Bitrate">
-            <option value="128k">128 kbps — smaller file</option>
-            <option value="192k">192 kbps — balanced</option>
-            <option value="320k">320 kbps — best quality</option>
-          </select>
-        </label>
-      )}
-
-      {working ? (
-        <div role="status" aria-label={loadNote ?? 'Merging…'}>
-          {loadNote ? <div className="load-note">{loadNote}</div> : null}
-          <div className="progress"><div /></div>
-        </div>
-      ) : null}
-
-      {doneUrl && (
-        <div className="alert ok">Done! Your merged file is ready ({doneSize}).</div>
-      )}
-
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        {!doneUrl ? (
-          <button className="btn" onClick={run} disabled={working || files.length < 2}>
-            {working ? 'Merging…' : `Merge ${files.length > 0 ? `${files.length} files` : ''} →`}
-          </button>
-        ) : (
-          <a className="btn" href={doneUrl} download={doneName}>
-            ⬇ Download {doneName}
-          </a>
+        {showSidebar && (
+          <aside className="tool-side" aria-label="Options">
+            <h2 className="tool-side-title">Options</h2>
+            {isImageMerge && !isPdfOut && (
+              <label className="opt-row">
+                <span className="opt-label">Layout</span>
+                <select value={layout} onChange={(e) => setLayout(e.target.value as MergeImageLayout)} aria-label="Layout">
+                  {LAYOUTS.map((l) => (
+                    <option key={l.value} value={l.value}>{l.label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {isPdfOut && (
+              <label className="opt-row">
+                <span className="opt-label">Images per page</span>
+                <select value={perPage} onChange={(e) => setPerPage(e.target.value as '1' | '2' | '4')} aria-label="Images per page">
+                  <option value="1">1 per page</option>
+                  <option value="2">2 per page</option>
+                  <option value="4">4 per page</option>
+                </select>
+              </label>
+            )}
+            {(isImageMerge || isPdfOut) && entry.toExt !== 'png' && (
+              <label className="opt-row">
+                <span className="opt-label">
+                  Quality: <strong>{quality}</strong> <span className="opt-hint">(Lower = smaller file)</span>
+                </span>
+                <input
+                  type="range"
+                  min={1}
+                  max={100}
+                  value={quality}
+                  onChange={(e) => setQuality(Number(e.target.value))}
+                  aria-label="Quality"
+                />
+              </label>
+            )}
+            {isVideo && (
+              <label className="opt-row">
+                <span className="opt-label">Quality</span>
+                <select value={crf} onChange={(e) => setCrf(e.target.value)} aria-label="Quality">
+                  <option value="18">High quality (larger file)</option>
+                  <option value="23">Balanced</option>
+                  <option value="28">Small file</option>
+                </select>
+              </label>
+            )}
+            {!isVideo && !isImageMerge && (
+              <label className="opt-row">
+                <span className="opt-label">Bitrate</span>
+                <select value={bitrate} onChange={(e) => setBitrate(e.target.value)} aria-label="Bitrate">
+                  <option value="128k">128 kbps — smaller file</option>
+                  <option value="192k">192 kbps — balanced</option>
+                  <option value="320k">320 kbps — best quality</option>
+                </select>
+              </label>
+            )}
+          </aside>
         )}
-        <button className="btn secondary" onClick={reset}>
-          {doneUrl ? 'Merge more' : 'Clear'}
-        </button>
-      </div>
-
-      {error && (
-        <div className="alert err" role="alert">
-          {error}
-        </div>
-      )}
-      <div className="privacy-note">
-        <span aria-hidden="true">🔒</span>
-        <span>
-          Private by design: your files are merged inside your browser and never uploaded anywhere.
-        </span>
       </div>
     </div>
   );

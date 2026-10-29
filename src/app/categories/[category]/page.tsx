@@ -2,8 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import AiSummarize from '@/components/AiSummarize';
-import { buildSummaryPrompt } from '@/lib/ai';
-import { CATEGORIES, convertersByCategory, categoryMeta } from '@/lib/converters/registry';
+import { BRAND, CATEGORIES, convertersByCategory, categoryMeta } from '@/lib/converters/registry';
 import { SITE_URL } from '@/lib/site';
 
 export function generateStaticParams() {
@@ -45,10 +44,7 @@ export default async function CategoryPage({
         <p className="lead">{meta.description}</p>
       </div>
       <AiSummarize
-        prompt={buildSummaryPrompt(
-          `${SITE_URL}/categories/${meta.id}/`,
-          `the ${meta.name} category page on All Files Converter`
-        )}
+        summaryText={`${meta.name} converters on ${BRAND}. ${meta.description} TL;DR: every tool on this page is free forever with no sign-up, and your files never leave your device because all conversions run on-device in your browser.`}
       />
       <div className="grid c3">
         {converters.map((c) => (

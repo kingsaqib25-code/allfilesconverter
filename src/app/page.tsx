@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import HeroDropZone from '@/components/HeroDropZone';
 import AiSummarize from '@/components/AiSummarize';
-import { buildSummaryPrompt } from '@/lib/ai';
 import { BRAND, TAGLINE, CATEGORIES, CONVERTERS, convertersByCategory } from '@/lib/converters/registry';
 import { SITE_URL } from '@/lib/site';
 import { ldScript, websiteOrgJsonLd } from '@/lib/jsonld';
@@ -47,7 +46,7 @@ export default function Home() {
 
       <div className="wrap">
         <AiSummarize
-          prompt={buildSummaryPrompt(`${SITE_URL}/`, `the ${BRAND} homepage — a free on-device file converter site`)}
+          summaryText={`${BRAND} — ${TAGLINE} Convert PDF, images, video, audio, text, data and subtitles between ${CONVERTERS.length}+ formats, right here in your browser. TL;DR: pick any converter, drop your file, and download the result in seconds. Free forever, no sign-up, no watermarks — and your files never leave your device because every conversion runs on-device in your browser.`}
         />
         <div className="badge-row" aria-label="Why All Files Converter">
           <span className="badge">🔒 No upload — files stay on your device</span>

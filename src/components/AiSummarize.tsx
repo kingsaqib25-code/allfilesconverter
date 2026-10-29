@@ -1,83 +1,167 @@
 'use client';
 
 /**
- * "Summarize this page with AI" — site-wide GEO widget.
+ * "Summarize with AI" — one button, on-page slide-over panel.
  *
- * Copies a page-specific prompt to the clipboard AND opens the chosen AI.
- * Where a prefill URL pattern is known and safe (ChatGPT, Grok, Perplexity
- * `?q=`), the prompt is prefilled; for Gemini, Copilot, Claude and Meta AI
- * the homepage opens and the copied prompt is the fallback — so it works
- * regardless. Uses the visitor's own account/quota: zero API spend for us.
+ * On click the panel opens right on the page and an AI summary of the page's
+ * public summary text is generated via the free Pollinations text API (no key,
+ * no signup). If the API fails or times out (20s), the panel falls back to the
+ * page's own static TL;DR text with an "offline summary" note. Never redirects
+ * to external AI sites. User files are never sent anywhere.
  */
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface AiTarget {
-  name: string;
-  url: string;
+interface Props {
+  /** The page's public summary text (TL;DR + about). Never user files. */
+  summaryText: string;
 }
 
-const TARGETS: AiTarget[] = [
-  { name: 'ChatGPT', url: 'https://chatgpt.com/?q=' },
-  { name: 'Gemini', url: 'https://gemini.google.com/' },
-  { name: 'Copilot', url: 'https://copilot.microsoft.com/' },
-  { name: 'Grok', url: 'https://grok.com/?q=' },
-  { name: 'Claude', url: 'https://claude.ai/new' },
-  { name: 'Perplexity', url: 'https://www.perplexity.ai/search?q=' },
-  { name: 'Meta AI', url: 'https://www.meta.ai/' },
-];
-
-/** Targets whose URL pattern safely prefills the prompt. */
-const PREFILL = new Set(['ChatGPT', 'Grok', 'Perplexity']);
-
-async function copyText(text: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return;
-  } catch {
-    /* fall through to legacy method */
-  }
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.select();
-  try {
-    document.execCommand('copy');
-  } catch {
-    /* clipboard unavailable — the AI still opens */
-  }
-  document.body.removeChild(ta);
+function renderAiText(text: string) {
+  // Lightweight plain-text rendering: paragraphs + "-"/"•" bullets. No HTML injection.
+  const blocks = text.split(/\n{2,}|\r\n\r\n/).map((b) => b.trim()).filter(Boolean);
+  return blocks.map((b, i) => {
+    const lines = b.split('\n').map((l) => l.trim()).filter(Boolean);
+    const isList = lines.length > 1 && lines.every((l) => /^[-*•\d+[.)\]]\s/.test(l));
+    if (isList) {
+      return (
+        <ul key={i} className="ai-panel-list">
+          {lines.map((l, j) => (
+            <li key={j}>{l.replace(/^[-*•]\s*/, '').replace(/^\d+[.)]\s*/, '')}</li>
+          ))}
+        </ul>
+      );
+    }
+    return (
+      <p key={i} className="ai-panel-p">
+        {lines.join(' ')}
+      </p>
+    );
+  });
 }
 
-export default function AiSummarize({ prompt }: { prompt: string }) {
-  const [copied, setCopied] = useState(false);
+export default function AiSummarize({ summaryText }: Props) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const open = async (t: AiTarget) => {
-    await copyText(prompt);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 3000);
-    const url = PREFILL.has(t.name) ? t.url + encodeURIComponent(prompt) : t.url;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
+  const summarize = useCallback(async () => {
+    setOpen(true);
+    if (result || loading) return;
+    setLoading(true);
+    setOffline(false);
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const res = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You summarize a file-converter tool page in plain, simple words. 2-3 short paragraphs plus 3-5 key bullets. No jargon.',
+            },
+            { role: 'user', content: summaryText },
+          ],
+        }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error(`AI request failed: ${res.status}`);
+      const text = (await res.text()).trim();
+      if (!text) throw new Error('Empty AI response');
+      setResult(text);
+    } catch {
+      // Offline fallback: show the page's own static summary in the panel.
+      setOffline(true);
+      setResult(null);
+    } finally {
+      clearTimeout(timer);
+      setLoading(false);
+    }
+  }, [summaryText, result, loading]);
+
+  const close = useCallback(() => {
+    abortRef.current?.abort();
+    setOpen(false);
+  }, []);
+
+  // Lock body scroll while the panel is open; close on Escape.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open, close]);
 
   return (
     <div className="ai-sum" aria-label="Summarize this page with AI">
-      <div className="ai-sum-head">
-        <span aria-hidden="true">✨</span>
-        <strong>Summarize this page with AI:</strong>
-        {copied && <span className="ai-sum-copied">Prompt copied — paste it in the chat.</span>}
-      </div>
-      <div className="ai-sum-btns">
-        {TARGETS.map((t) => (
-          <button key={t.name} type="button" className="ai-btn" onClick={() => open(t)}>
-            {t.name}
-          </button>
-        ))}
-      </div>
+      <button type="button" className="btn secondary ai-sum-open" onClick={summarize}>
+        <span aria-hidden="true">✨</span> Summarize with AI
+      </button>
       <p className="ai-sum-note">
-        100% free. Your files never leave your device — the AI only reads this page&apos;s public summary, never your files. Uses your own AI account; nothing is sent by us.
+        Only this page&apos;s public summary is sent to the AI — your files never leave your
+        device.
       </p>
+
+      {open && (
+        <>
+          <div
+            className="ai-panel-overlay"
+            onClick={close}
+            aria-hidden="true"
+          />
+          <aside
+            className="ai-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="AI summary of this page"
+          >
+            <div className="ai-panel-head">
+              <strong>
+                <span aria-hidden="true">✨</span> Page summary
+              </strong>
+              <button type="button" className="mini-btn" onClick={close} aria-label="Close panel">
+                ✕
+              </button>
+            </div>
+            {loading && (
+              <div role="status" aria-label="Generating summary">
+                <div className="progress">
+                  <div />
+                </div>
+                <p className="ai-panel-sub">Asking the AI for a plain-words summary…</p>
+              </div>
+            )}
+            {!loading && result && <div className="ai-panel-body">{renderAiText(result)}</div>}
+            {!loading && !result && (
+              <div className="ai-panel-body">
+                {offline && (
+                  <p className="ai-panel-sub">
+                    <em>Offline summary</em> — the AI service didn&apos;t respond, so here is
+                    this page&apos;s own summary:
+                  </p>
+                )}
+                <p className="ai-panel-p">{summaryText}</p>
+              </div>
+            )}
+            <p className="ai-panel-foot">
+              Generated from this page&apos;s public text only. Your files are never uploaded or
+              shared.
+            </p>
+          </aside>
+        </>
+      )}
     </div>
   );
 }
