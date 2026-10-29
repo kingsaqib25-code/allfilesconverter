@@ -198,60 +198,161 @@ export async function unlockPdf(file: File, password: string): Promise<ToolFileR
 /* --------------------------- extract images ---------------------------- */
 
 export async function extractImagesFromPdf(file: File): Promise<ToolFileResult[]> {
-  const lib = await loadPdfJs();
-  const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-  const OPS = lib.OPS;
+  // Direct XObject extraction via pdf-lib (deterministic — no pdf.js worker
+  // object-loading timing issues). Handles JPEG (DCTDecode) directly and
+  // decodes FlateDecode RGB/Gray images to PNG via canvas.
+  // (QC: pdf.js page.objs.get callback never fired — silent hang.)
+  const { PDFDocument, PDFName, PDFRawStream } = await loadPdfLib();
+  const { inflate } = await import('pako');
+  const pdf = await PDFDocument.load(await file.arrayBuffer());
   const outs: ToolFileResult[] = [];
-  for (let p = 1; p <= doc.numPages; p++) {
-    const page = await doc.getPage(p);
-    const opList = await page.getOperatorList();
-    let imgIdx = 0;
-    for (let i = 0; i < opList.fnArray.length; i++) {
-      const fn = opList.fnArray[i];
-      if (fn !== OPS.paintImageXObject && fn !== OPS.paintJpegXObject) continue;
-      const name = opList.argsArray[i]?.[0];
-      if (!name) continue;
-      imgIdx++;
-      const img: any = await new Promise((resolve) => {
-        try {
-          page.objs.get(name, resolve);
-        } catch {
-          resolve(null);
-        }
-      });
-      if (!img || !img.width || !img.height || !img.data) continue;
-      const w = img.width;
-      const h = img.height;
-      let rgba: Uint8ClampedArray<ArrayBuffer>;
-      if (img.data.length === w * h * 4) {
-        rgba = new Uint8ClampedArray(img.data);
-      } else if (img.data.length === w * h * 3) {
-        rgba = new Uint8ClampedArray(w * h * 4);
-        for (let k = 0; k < w * h; k++) {
-          rgba[k * 4] = img.data[k * 3];
-          rgba[k * 4 + 1] = img.data[k * 3 + 1];
-          rgba[k * 4 + 2] = img.data[k * 3 + 2];
-          rgba[k * 4 + 3] = 255;
-        }
-      } else {
-        continue; // exotic colorspace — skip rather than corrupt
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) continue;
-      ctx.putImageData(new ImageData(rgba, w, h), 0, 0);
-      const blob: Blob | null = await new Promise((resolve) =>
-        canvas.toBlob(resolve, 'image/png')
-      );
-      if (!blob) continue;
-      outs.push({ blob, filename: `${baseName(file.name)}-p${p}-img${imgIdx}.png` });
+  let imgIdx = 0;
+
+  const ascii85Decode = (data: Uint8Array): Uint8Array => {
+    // Strip whitespace; Adobe markers optional. Handles 'z' = 4 zero bytes.
+    let s = '';
+    for (let i = 0; i < data.length; i++) {
+      const c = data[i];
+      if (c === 32 || c === 10 || c === 13 || c === 9 || c === 12) continue;
+      s += String.fromCharCode(c);
     }
-    try {
-      page.cleanup();
-    } catch {
-      /* ignore */
+    if (s.startsWith('<~')) s = s.slice(2);
+    if (s.endsWith('~>')) s = s.slice(0, -2);
+    const out: number[] = [];
+    for (let i = 0; i < s.length; ) {
+      if (s[i] === 'z') {
+        out.push(0, 0, 0, 0);
+        i++;
+        continue;
+      }
+      const chunk = s.slice(i, i + 5);
+      const n = chunk.length;
+      let val = 0;
+      for (let j = 0; j < 5; j++) {
+        val = val * 85 + (j < n ? s.charCodeAt(i + j) - 33 : 84);
+      }
+      const bytes = n === 5 ? 4 : n - 1;
+      for (let j = 0; j < bytes; j++) out.push((val >>> (8 * (3 - j))) & 0xff);
+      i += 5;
+    }
+    return new Uint8Array(out);
+  };
+
+  const decodeStream = (raw: Uint8Array, filters: string[]): Uint8Array => {
+    let data = raw;
+    for (const f of filters) {
+      if (f === 'ASCII85Decode' || f === 'A85') data = ascii85Decode(data);
+      else if (f === 'FlateDecode' || f === 'Fl') data = inflate(data);
+      else if (f === 'DCTDecode' || f === 'DCT') return data; // handled by caller
+      else throw new Error('unsupported filter ' + f);
+    }
+    return data;
+  };
+
+  for (let p = 0; p < pdf.getPageCount(); p++) {
+    const page = pdf.getPage(p);
+    const res = page.node.Resources();
+    if (!res) continue;
+    const xo = res.lookup(PDFName.of('XObject'));
+    if (!xo || !(xo as any).entries) continue;
+    for (const [, ref] of (xo as any).entries()) {
+      const obj = pdf.context.lookup(ref);
+      if (!(obj instanceof PDFRawStream)) continue;
+      const dict: any = obj.dict;
+      const subtype = dict.lookup(PDFName.of('Subtype'));
+      if (!subtype || subtype.toString() !== '/Image') continue;
+      const w = Number(dict.lookup(PDFName.of('Width'))?.toString() ?? 0);
+      const h = Number(dict.lookup(PDFName.of('Height'))?.toString() ?? 0);
+      if (!w || !h || w > 8000 || h > 8000) continue;
+      let filters: string[] = [];
+      const fObj = dict.lookup(PDFName.of('Filter'));
+      if (fObj) {
+        const fStr = fObj.toString();
+        filters = fStr.startsWith('[')
+          ? fStr.slice(1, -1).trim().split(/\s+/).map((x: string) => x.replace(/^\//, ''))
+          : [fStr.replace(/^\//, '')];
+      }
+      const raw = obj.getContents();
+      imgIdx++;
+      try {
+        if (filters.includes('DCTDecode') || filters.includes('DCT')) {
+          // Raw JPEG bytes — save directly.
+          const blob = new Blob([raw as unknown as BlobPart], { type: 'image/jpeg' });
+          outs.push({ blob, filename: `${baseName(file.name)}-p${p + 1}-img${imgIdx}.jpg` });
+          continue;
+        }
+        // FlateDecode (possibly after ASCII85): decode to pixels.
+        const decoded = decodeStream(raw, filters.filter((f) => f !== 'DCTDecode' && f !== 'DCT'));
+        const csObj = dict.lookup(PDFName.of('ColorSpace'));
+        const cs = csObj ? csObj.toString() : '/DeviceRGB';
+        const bpc = Number(dict.lookup(PDFName.of('BitsPerComponent'))?.toString() ?? 8);
+        if (bpc !== 8) continue; // exotic depth — skip rather than corrupt
+        let comps = 3;
+        if (cs === '/DeviceGray' || cs === '/G') comps = 1;
+        else if (cs === '/DeviceRGB' || cs === '/RGB') comps = 3;
+        else if (cs === '/DeviceCMYK' || cs === '/CMYK') comps = 4;
+        else continue;
+        // PNG predictors (DecodeParms Predictor 10-15) or raw rows.
+        let predictor = 1;
+        const dp = dict.lookup(PDFName.of('DecodeParms'));
+        if (dp) {
+          const pm = /\/Predictor\s+(\d+)/.exec(dp.toString());
+          if (pm) predictor = Number(pm[1]);
+        }
+        const rowLen = w * comps;
+        const rgba = new Uint8ClampedArray(w * h * 4);
+        let src = 0;
+        const prev = new Uint8Array(rowLen);
+        for (let y = 0; y < h; y++) {
+          let filt = 0;
+          if (predictor >= 10) {
+            filt = decoded[src++];
+          }
+          const row = decoded.subarray(src, src + rowLen);
+          src += rowLen;
+          const recon = new Uint8Array(rowLen);
+          for (let x = 0; x < rowLen; x++) {
+            const a = x >= comps ? recon[x - comps] : 0;
+            const b = prev[x];
+            const c = x >= comps ? prev[x - comps] : 0;
+            let v: number = row[x];
+            if (filt === 1) v = (v + a) & 0xff;
+            else if (filt === 2) v = (v + b) & 0xff;
+            else if (filt === 3) v = (v + ((a + b) >> 1)) & 0xff;
+            else if (filt === 4) {
+              const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c);
+              const pr = pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+              v = (v + pr) & 0xff;
+            }
+            recon[x] = v;
+          }
+          prev.set(recon);
+          for (let x = 0; x < w; x++) {
+            const o = (y * w + x) * 4;
+            if (comps === 1) {
+              rgba[o] = rgba[o + 1] = rgba[o + 2] = recon[x];
+            } else if (comps === 3) {
+              rgba[o] = recon[x * 3]; rgba[o + 1] = recon[x * 3 + 1]; rgba[o + 2] = recon[x * 3 + 2];
+            } else {
+              // CMYK → RGB (naive invert)
+              rgba[o] = 255 - Math.min(255, recon[x * 4] + recon[x * 4 + 3]);
+              rgba[o + 1] = 255 - Math.min(255, recon[x * 4 + 1] + recon[x * 4 + 3]);
+              rgba[o + 2] = 255 - Math.min(255, recon[x * 4 + 2] + recon[x * 4 + 3]);
+            }
+            rgba[o + 3] = 255;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+        ctx.putImageData(new ImageData(rgba, w, h), 0, 0);
+        const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        if (!blob) continue;
+        outs.push({ blob, filename: `${baseName(file.name)}-p${p + 1}-img${imgIdx}.png` });
+      } catch {
+        /* skip undecodable image rather than failing the whole job */
+      }
     }
   }
   if (outs.length === 0) {
