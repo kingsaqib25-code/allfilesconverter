@@ -80,6 +80,9 @@ lines.push(
 lines.push(
   `- ${SITE_URL}/convert/mp4-to-mp3/ \u2014 MP4 to MP3 Converter (extract 192 kbps audio from video).`
 );
+lines.push(
+  `- ${SITE_URL}/tools/bulk-rename/ \u2014 Bulk File Renamer: rename up to 500 files at once with live preview.`
+);
 lines.push('');
 lines.push(`## All converters (${converters.length})`);
 lines.push('');

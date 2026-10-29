@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import AiSummarize from '@/components/AiSummarize';
 import { ToolCard } from '@/components/ToolCard';
-import { BRAND, CATEGORIES, convertersByCategory, categoryMeta } from '@/lib/converters/registry';
+import { BRAND, CATEGORIES, convertersByCategory, categoryMeta, STANDALONE_TOOLS } from '@/lib/converters/registry';
 import { SITE_URL } from '@/lib/site';
 
 export function generateStaticParams() {
@@ -54,6 +54,12 @@ export default async function CategoryPage({
           <ToolCard
             key={c.id}
             entry={{ id: c.id, title: c.title, description: c.description, category: c.category }}
+          />
+        ))}
+        {STANDALONE_TOOLS.filter((t) => t.category === meta.id).map((t) => (
+          <ToolCard
+            key={t.id}
+            entry={{ id: t.id, title: t.title, description: t.description, category: t.category, href: t.href }}
           />
         ))}
       </div>

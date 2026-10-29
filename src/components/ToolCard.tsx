@@ -12,6 +12,7 @@ const CAT_STYLE: Record<Category, { fg: string; bg: string }> = {
   text: { fg: '#d97706', bg: '#fef3c7' },
   data: { fg: '#0891b2', bg: '#cffafe' },
   subtitle: { fg: '#db2777', bg: '#fce7f3' },
+  tools: { fg: '#0f766e', bg: '#ccfbf1' },
 };
 
 function IconPaths({ category }: { category: Category }) {
@@ -72,6 +73,14 @@ function IconPaths({ category }: { category: Category }) {
           <path d="M7.5 9.5h9M7.5 12.5h5.5" />
         </g>
       );
+    case 'tools':
+      return (
+        <g {...common}>
+          <path d="M20.6 13.4L11.6 4.4A2 2 0 0 0 10.2 3.8H4v6.4a2 2 0 0 0 .6 1.4l9 9a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8z" />
+          <circle cx="8.2" cy="8" r="1.4" />
+          <path d="M14.5 13.5l2.5 2.5M17 11l2.5 2.5" />
+        </g>
+      );
   }
 }
 
@@ -98,9 +107,13 @@ export function cardDesc(c: Pick<ConverterEntry, 'description'>, max = 96): stri
   return cut.slice(0, cut.lastIndexOf(' ')) + '…';
 }
 
-export function ToolCard({ entry }: { entry: Pick<ConverterEntry, 'id' | 'title' | 'description' | 'category'> }) {
+export function ToolCard({
+  entry,
+}: {
+  entry: Pick<ConverterEntry, 'id' | 'title' | 'description' | 'category'> & { href?: string };
+}) {
   return (
-    <Link href={`/convert/${entry.id}`} className="tool-card">
+    <Link href={entry.href ?? `/convert/${entry.id}`} className="tool-card">
       <ToolIcon category={entry.category} />
       <span className="tool-card-body">
         <span className="tool-card-t">{entry.title}</span>

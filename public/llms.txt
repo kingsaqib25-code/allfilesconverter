@@ -18,6 +18,7 @@ Quick Files Converter (https://allfilesconverter.vercel.app/) is a free file-con
 - https://allfilesconverter.vercel.app/gif-maker/ — Video to GIF Maker: trim, set width/FPS/quality, two-pass palette rendering, no watermark.
 - https://allfilesconverter.vercel.app/convert/heic-to-jpg/ — HEIC to JPG Converter (iPhone photos to universal JPG).
 - https://allfilesconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter (extract 192 kbps audio from video).
+- https://allfilesconverter.vercel.app/tools/bulk-rename/ — Bulk File Renamer: rename up to 500 files at once with live preview.
 
 ## All converters (90)
 
@@ -131,6 +132,9 @@ Quick Files Converter (https://allfilesconverter.vercel.app/) is a free file-con
 - https://allfilesconverter.vercel.app/convert/ogg-to-wav/ — OGG to WAV Converter
 - https://allfilesconverter.vercel.app/convert/wma-to-mp3/ — WMA to MP3 Converter
 - https://allfilesconverter.vercel.app/convert/merge-audios/ — Merge Audio
+
+### File Tools
+
 
 ## Contact
 

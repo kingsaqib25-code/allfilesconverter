@@ -29,7 +29,7 @@ import {
 } from './text';
 import { convertSubtitle, type SubExt } from './subtitle';
 
-export type Category = 'image' | 'text' | 'data' | 'subtitle' | 'video' | 'audio' | 'pdf';
+export type Category = 'image' | 'text' | 'data' | 'subtitle' | 'video' | 'audio' | 'pdf' | 'tools';
 
 /** Per-conversion options forwarded from the widget (quality sliders etc.). */
 export type ConvertOptions = Record<string, string | number>;
@@ -182,6 +182,13 @@ export const CATEGORIES: CategoryMeta[] = [
     tagline: 'Convert WAV, FLAC, OGG, M4A and AAC to MP3 — and back.',
     description:
       'Free online audio converters. Turn WAV, FLAC, OGG, M4A, AAC or WMA into universal MP3s at 192 kbps, or convert MP3 back to WAV — all on your device, nothing uploaded.',
+  },
+  {
+    id: 'tools',
+    name: 'File Tools',
+    tagline: 'Rename files in bulk, organize downloads, prep assets — free utilities.',
+    description:
+      'Free online file tools that run entirely in your browser. Rename up to 500 files at once with find & replace, prefixes, sequential numbering and live preview — your files never leave your device.',
   },
 ];
 
@@ -2979,3 +2986,23 @@ export function relatedConverters(entry: ConverterEntry, count = 6): ConverterEn
 export function categoryMeta(id: Category): CategoryMeta {
   return CATEGORIES.find((c) => c.id === id)!;
 }
+
+/** Standalone tool pages (not /convert/[pair]/) — rendered as cards in their category. */
+export interface StandaloneTool {
+  id: string;
+  title: string;
+  description: string;
+  category: Category;
+  href: string;
+}
+
+export const STANDALONE_TOOLS: StandaloneTool[] = [
+  {
+    id: 'bulk-rename',
+    title: 'Bulk File Renamer',
+    description:
+      'Rename up to 500 files at once: find & replace, prefix/suffix, sequential numbering, case fixes — live preview, ZIP download, 100% in your browser.',
+    category: 'tools',
+    href: '/tools/bulk-rename/',
+  },
+];
