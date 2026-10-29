@@ -1173,7 +1173,10 @@ export async function extractEditablePages(file: File): Promise<EditorPageData[]
   const data = await file.arrayBuffer();
   let pdf: { numPages: number; getPage: (n: number) => Promise<unknown> };
   try {
-    pdf = await lib.getDocument({ data }).promise;
+    // pdf.js detaches the buffer it is given — hand it a copy, keep the
+    // original for pdf-lib use below (mapLoadedFontsToBaseFonts).
+    // (QC: detached ArrayBuffer threw "attempting to access detached ArrayBuffer".)
+    pdf = await lib.getDocument({ data: data.slice(0) }).promise;
   } catch (e) {
     throw friendlyPdfError(e);
   }
