@@ -182,17 +182,46 @@ export async function convertMedia(
 // Two-pass GIF (palettegen -> paletteuse) — the quality way to make GIFs
 // ---------------------------------------------------------------------------
 
+export interface GifCrop {
+  /** Crop rectangle in SOURCE pixels (applied before scaling). */
+  w: number;
+  h: number;
+  x: number;
+  y: number;
+}
+
 export interface GifOptions {
   /** Start time in seconds. */
   start: number;
-  /** Clip length in seconds (capped at 15 by callers). */
+  /** Clip length in seconds (capped at 15 by callers; 10 for ping-pong). */
   duration: number;
   /** Output width in px; height scales to keep aspect ratio. */
   width: number;
   /** Frames per second. */
   fps: number;
   quality: 'standard' | 'high';
+  /** Playback speed multiplier, e.g. 0.5 | 1 | 1.5 | 2 (default 1). */
+  speed?: number;
+  /** 'normal' | 'reverse' | 'pingpong' (default 'normal'). */
+  playMode?: 'normal' | 'reverse' | 'pingpong';
+  /**
+   * GIF loop count (Netscape extension): 0 = infinite (default).
+   * N > 0 = N repeats after the first play, so 1 = 2 total plays.
+   */
+  loop?: number;
+  /** Crop region in source pixels; null/undefined = no crop. */
+  crop?: GifCrop | null;
   onProgress?: (ratio: number) => void;
+}
+
+function sanitizeCrop(c: GifCrop | null | undefined): string | null {
+  if (!c) return null;
+  const w = Math.round(c.w);
+  const h = Math.round(c.h);
+  const x = Math.round(c.x);
+  const y = Math.round(c.y);
+  if (!(w > 0 && h > 0) || x < 0 || y < 0) return null;
+  return `crop=${w}:${h}:${x}:${y}`;
 }
 
 export async function videoToGif(file: File, opts: GifOptions): Promise<ConvertResult> {
@@ -203,24 +232,46 @@ export async function videoToGif(file: File, opts: GifOptions): Promise<ConvertR
   const palette = 'palette.png';
   const output = 'output.gif';
 
+  const mode = opts.playMode ?? 'normal';
+  const speed = opts.speed && opts.speed > 0 ? opts.speed : 1;
+  const maxT = mode === 'pingpong' ? 10 : 15;
   const ss = Math.max(0, opts.start).toFixed(2);
-  const t = Math.max(0.5, Math.min(15, opts.duration)).toFixed(2);
-  const vfBase = `fps=${opts.fps},scale=${opts.width}:-1:flags=lanczos`;
-  const paletteGen =
+  const t = Math.max(0.5, Math.min(maxT, opts.duration)).toFixed(2);
+
+  // Base filter chain (no stream labels) applied before palette work.
+  const chain: string[] = [`fps=${opts.fps}`];
+  const cropF = sanitizeCrop(opts.crop);
+  if (cropF) chain.push(cropF);
+  chain.push(`scale=${opts.width}:-1:flags=lanczos`);
+  if (speed !== 1) chain.push(`setpts=${(1 / speed).toFixed(4)}*PTS`);
+  const base = chain.join(',');
+  const rev = mode === 'reverse' ? ',reverse' : '';
+
+  const palGenOpts =
+    opts.quality === 'high' ? 'palettegen=max_colors=256:reserve_transparent=0' : 'palettegen';
+  const palUseOpts =
     opts.quality === 'high'
-      ? `${vfBase},palettegen=max_colors=256:reserve_transparent=0`
-      : `${vfBase},palettegen`;
-  const paletteUse =
-    opts.quality === 'high'
-      ? `${vfBase}[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`
-      : `${vfBase}[x];[x][1:v]paletteuse`;
+      ? 'paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle'
+      : 'paletteuse';
+
+  // Ping-pong needs a split/reverse/concat graph; everything else is linear.
+  const genVf =
+    mode === 'pingpong'
+      ? `${base},split[a][b];[a]reverse[r];[b][r]concat=n=2:v=1,${palGenOpts}`
+      : `${base}${rev},${palGenOpts}`;
+  const useVf =
+    mode === 'pingpong'
+      ? `${base},split[a][b];[a]reverse[r];[b][r]concat=n=2:v=1[x];[x][1:v]${palUseOpts}`
+      : `${base}${rev}[x];[x][1:v]${palUseOpts}`;
+
+  const loop = Math.max(0, Math.round(opts.loop ?? 0));
 
   setProgressHandler(opts.onProgress ? (r) => opts.onProgress!(r * 0.35) : null);
   try {
     await ff.writeFile(input, await fetchFile(file));
 
     // Pass 1: build the optimal palette for this exact clip.
-    let code = await ff.exec(['-ss', ss, '-t', t, '-i', input, '-vf', paletteGen, palette]);
+    let code = await ff.exec(['-ss', ss, '-t', t, '-i', input, '-lavfi', genVf, palette]);
     if (code !== 0) throw new Error(`ffmpeg failed with code ${code} (palette pass)`);
 
     // Pass 2: render the GIF using that palette.
@@ -235,7 +286,9 @@ export async function videoToGif(file: File, opts: GifOptions): Promise<ConvertR
       '-i',
       palette,
       '-lavfi',
-      paletteUse,
+      useVf,
+      '-loop',
+      String(loop),
       output,
     ]);
     if (code !== 0) throw new Error(`ffmpeg failed with code ${code} (render pass)`);
@@ -247,6 +300,83 @@ export async function videoToGif(file: File, opts: GifOptions): Promise<ConvertR
       );
     }
     return { blob: new Blob([data as unknown as BlobPart], { type: 'image/gif' }), filename: `${baseName(file)}.gif` };
+  } catch (e) {
+    if (isKnownError(e)) throw e;
+    throw friendlyError(e);
+  } finally {
+    setProgressHandler(null);
+    for (const f of [input, palette, output]) {
+      try {
+        await ff.deleteFile(f);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// GIF optimizer — re-compress an existing GIF (fewer colors, smaller size)
+// ---------------------------------------------------------------------------
+
+export interface GifOptimizeOptions {
+  /** Output width in px; 0 = keep original. */
+  width: number;
+  /** Output fps; 0 = keep original. */
+  fps: number;
+  /** Palette size: 256 | 128 | 64. */
+  colors: 256 | 128 | 64;
+  onProgress?: (ratio: number) => void;
+}
+
+export async function optimizeGif(
+  file: File,
+  opts: GifOptimizeOptions
+): Promise<ConvertResult> {
+  guardSize(file);
+  const ff = await getFfmpeg();
+  const input = 'input.gif';
+  const palette = 'palette.png';
+  const output = 'output.gif';
+
+  const pre: string[] = [];
+  if (opts.fps > 0) pre.push(`fps=${opts.fps}`);
+  if (opts.width > 0) pre.push(`scale=${opts.width}:-1:flags=lanczos`);
+  const v = pre.length ? pre.join(',') : 'null';
+  const genVf = `${v},palettegen=max_colors=${opts.colors}`;
+  const useVf = `${v}[x];[x][1:v]paletteuse`;
+
+  setProgressHandler(opts.onProgress ? (r) => opts.onProgress!(r * 0.4) : null);
+  try {
+    await ff.writeFile(input, await fetchFile(file));
+
+    // Pass 1: palette for the (possibly resized) frames.
+    let code = await ff.exec(['-i', input, '-lavfi', genVf, palette]);
+    if (code !== 0) throw new Error(`ffmpeg failed with code ${code} (palette pass)`);
+
+    // Pass 2: render the optimized GIF (keeps infinite looping).
+    setProgressHandler(opts.onProgress ? (r) => opts.onProgress!(0.4 + r * 0.6) : null);
+    code = await ff.exec([
+      '-i',
+      input,
+      '-i',
+      palette,
+      '-lavfi',
+      useVf,
+      '-loop',
+      '0',
+      output,
+    ]);
+    if (code !== 0) throw new Error(`ffmpeg failed with code ${code} (render pass)`);
+
+    const data = (await ff.readFile(output)) as Uint8Array;
+    if (!data || data.length === 0) {
+      throw new Error('Optimization produced no output — the file may be damaged.');
+    }
+    return {
+      blob: new Blob([data as unknown as BlobPart], { type: 'image/gif' }),
+      filename: `${baseName(file)}-optimized.gif`,
+    };
   } catch (e) {
     if (isKnownError(e)) throw e;
     throw friendlyError(e);

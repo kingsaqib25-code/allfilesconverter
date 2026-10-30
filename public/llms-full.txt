@@ -2484,20 +2484,20 @@ A: Most will. A few use truly obscure codecs from the 90s — if one fails, that
 URL: https://allinoneconverter.vercel.app/convert/mp4-to-webm/
 
 What it does:
-Convert MP4 to WebM (VP9 + Opus) — the open, royalty-free video format for HTML5 players and open-web publishing.
+Convert MP4 to WebM (VP8 + Opus) — the open, royalty-free video format for HTML5 players and open-web publishing.
 
 About the source format (MP4):
 MP4/H.264 is universal but patent-encumbered; for open web projects, royalty-free matters.
 
 About the target format (WebM):
-WebM (VP9 + Opus) is the open, royalty-free web video format — ideal for HTML5 video on your own site.
+WebM (VP8 + Opus) is the open, royalty-free web video format — ideal for HTML5 video on your own site.
 
 Use cases:
 - Preparing videos for a website’s HTML5 player
 - Creating royalty-free video assets for open-source projects
 - Publishing video where open codecs are required
 
-Tip: VP9 encoding is slower than H.264 — give it time on longer videos. The result is worth it for web use.
+Tip: WebM encoding runs entirely in your browser — give it time on longer videos. The result is worth it for web use.
 
 FAQs:
 Q: Why convert MP4 to WebM?
