@@ -900,7 +900,7 @@ const PAIRS: PairSpec[] = [
     id: 'txt-to-md', from: 'TXT', to: 'Markdown', fromExts: ['txt'], toExt: 'md', category: 'text',
     blurb: 'Convert plain text to Markdown format in one click. A quick starting point before you add headings and formatting in any Markdown editor.',
     faqQ: 'Does it add formatting automatically?',
-    faqA: 'It converts your text into a valid Markdown file as-is. You can then add # headings, **bold** and lists in seconds with any Markdown editor.',
+    faqA: 'Yes — underlined titles (=== / ---) become # headings, ALL-CAPS lines become ## headings, and lists are preserved. You can then add **bold** and more in seconds with any Markdown editor.',
     aboutFrom: 'Plain text is where most writing starts — quick notes, drafts, pasted content with no formatting at all.',
     aboutTo: 'Markdown adds lightweight structure (# headings, lists, emphasis) that renders beautifully in editors, GitHub and documentation tools.',
     useCases: [
@@ -908,11 +908,11 @@ const PAIRS: PairSpec[] = [
       'Starting a README from plain-text drafts',
       'Moving text into Obsidian or similar note apps',
     ],
-    tip: 'The conversion gives you a valid Markdown file as-is — then add # headings and **bold** in seconds with any Markdown editor.',
+    tip: 'Underlined and ALL-CAPS titles become real Markdown headings automatically — then add **bold** in seconds with any Markdown editor.',
     extraFaqs: [
       {
         q: 'Does it auto-detect headings?',
-        a: 'No — it converts your text faithfully as-is. Adding # marks for headings takes seconds and keeps you in control.',
+        a: 'Yes — setext-style underlined titles and standalone ALL-CAPS lines are converted to # / ## headings automatically.',
       },
       {
         q: 'Why convert TXT to Markdown at all?',

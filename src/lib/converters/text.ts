@@ -32,9 +32,46 @@ export async function mdToHtml(file: File) {
 
 export async function txtToMd(file: File) {
   const src = await readText(file);
-  // Light touch: keep the text as-is; Markdown renders plain text fine.
-  // Turn lines starting with "- " or "* " into proper lists is already valid Markdown.
-  return textResult(file, 'md', src.endsWith('\n') ? src : src + '\n', 'text/markdown');
+  const lines = src.split(/\r?\n/);
+  const out: string[] = [];
+  const isBlank = (s: string) => !s.trim();
+  const toTitle = (s: string) =>
+    s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const t = line.trim();
+    const next = (lines[i + 1] ?? '').trim();
+    const prevBlank = i === 0 || isBlank(lines[i - 1]);
+    const nextBlank = i === lines.length - 1 || isBlank(next);
+
+    // Setext headings: "Title" + "===" -> "# Title"; "Title" + "---" -> "## Title"
+    if (t && /^=+\s*$/.test(next)) {
+      out.push('# ' + t);
+      i++;
+      continue;
+    }
+    if (t && t.length <= 80 && /^-{3,}\s*$/.test(next)) {
+      out.push('## ' + t);
+      i++;
+      continue;
+    }
+    // ALL-CAPS standalone line -> "## Title Case" heading
+    if (
+      t.length >= 3 && t.length <= 60 &&
+      prevBlank && nextBlank &&
+      /^[A-Z0-9][A-Z0-9\s\-_,:;!?'"()&]*$/.test(t) &&
+      /[A-Z]/.test(t) &&
+      !/^\d/.test(t)
+    ) {
+      out.push('## ' + toTitle(t));
+      continue;
+    }
+    out.push(line);
+  }
+  // Normalize: collapse 3+ blank lines, single trailing newline.
+  const md = out.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  return textResult(file, 'md', md, 'text/markdown');
 }
 
 /* ---------------- HTML ---------------- */
