@@ -259,9 +259,11 @@ export default function PdfEditor() {
   }, [phase, pages.length]);
 
   // ---- text view draft follows selection ----
+  // NOTE: draft is built from the EFFECTIVE text (editedText ?? text) so
+  // page-view edits are visible here and never get clobbered by Apply.
   useEffect(() => {
     if (!page) return;
-    setTextDraft(page.blocks.map((b) => b.text).join('\n\n'));
+    setTextDraft(page.blocks.map((b) => b.editedText ?? b.text).join('\n\n'));
     setEditingId(null);
   }, [sel, page?.pageNum, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -369,10 +371,13 @@ export default function PdfEditor() {
     if (v !== 'text') return all;
     const p = all[selIdx];
     if (!p) return all;
-    const original = p.blocks.map((b) => b.text).join('\n\n');
+    // Effective text (page-view edits included) — diffing against the
+    // ORIGINAL text here would silently wipe page-view edits on Apply.
+    const cur = (b: BlockState) => b.editedText ?? b.text;
+    const original = p.blocks.map(cur).join('\n\n');
     if (draft === original) return all;
     const edits = diffFn(
-      p.blocks.map((b) => ({ id: b.id, text: b.text })),
+      p.blocks.map((b) => ({ id: b.id, text: cur(b) })),
       draft
     );
     const touched: string[] = [];
@@ -797,8 +802,8 @@ export default function PdfEditor() {
                   {page.blocks.map((b) => {
                     const isEditing = editingId === b.id;
                     const isEdited = b.editedText != null && b.editedText !== b.text;
-                    // Overlay box: tight around the visible glyphs so clicks land on
-                    // the exact line — tall boxes overlap neighbours and steal clicks.
+                    // Tight box: hover/click targeting so clicks land on the exact
+                    // line — tall boxes overlap neighbours and steal clicks.
                     const boxH = b.height * 1.1;
                     const boxBottom = b.y - b.height * 0.2;
                     const style = {
@@ -807,21 +812,32 @@ export default function PdfEditor() {
                       width: `${(b.width / page.width) * 100}%`,
                       height: `${(boxH / page.height) * 100}%`,
                     } as React.CSSProperties;
+                    // Editing box: generous fontSize-based cover so the white
+                    // background fully hides the original glyphs underneath
+                    // (the tight box left descenders peeking out — the
+                    // "double text" look). Slightly overlaps neighbours while
+                    // editing, which is fine — it collapses back on blur.
+                    const editTop = b.y + b.fontSize * 0.95;
+                    const editBottom = b.y - b.fontSize * 0.4;
+                    const editStyle = {
+                      left: `${(b.x / page.width) * 100}%`,
+                      top: `${((page.height - editTop) / page.height) * 100}%`,
+                      width: `${(b.width / page.width) * 100}%`,
+                      height: `${((editTop - editBottom) / page.height) * 100}%`,
+                      // Match the PDF's own text size/family so the edit box
+                      // doesn't look like a foreign layer pasted on top.
+                      // cqw = % of the page wrap width → auto-scales with zoom.
+                      fontSize: `${(b.fontSize / page.width) * 100}cqw`,
+                      fontFamily: fontStackForBlock(b),
+                      fontWeight: b.bold ? 700 : 400,
+                      lineHeight: 1.25,
+                    } as React.CSSProperties;
                     if (isEditing) {
                       return (
                         <div
                           key={b.id}
                           className="edit-block editing"
-                          style={{
-                            ...style,
-                            // Match the PDF's own text size/family so the edit box
-                            // doesn't look like a foreign layer pasted on top.
-                            // cqw = % of the page wrap width → auto-scales with zoom.
-                            fontSize: `${(b.fontSize / page.width) * 100}cqw`,
-                            fontFamily: fontStackForBlock(b),
-                            fontWeight: b.bold ? 700 : 400,
-                            lineHeight: 1.25,
-                          }}
+                          style={editStyle}
                           contentEditable
                           suppressContentEditableWarning
                           spellCheck={false}
