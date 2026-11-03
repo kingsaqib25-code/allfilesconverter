@@ -81,6 +81,65 @@ export const AUDIO_BITRATE_OPTION: OptionDef = {
   ],
 };
 
+/** One-click compression presets (Smart Converter "Compress" targets). */
+export const IMAGE_COMPRESS_OPTION: OptionDef = {
+  id: 'quality',
+  label: 'Output quality',
+  type: 'slider',
+  min: 10,
+  max: 95,
+  default: 60,
+  hint: 'Lower = smaller file',
+};
+
+export const VIDEO_COMPRESS_OPTION: OptionDef = {
+  id: 'crf',
+  label: 'Compression',
+  type: 'select',
+  default: '28',
+  choices: [
+    { value: '23', label: 'Light — slightly smaller file' },
+    { value: '28', label: 'Medium — much smaller (recommended)' },
+    { value: '33', label: 'Strong — smallest file' },
+  ],
+};
+
+export const AUDIO_COMPRESS_OPTION: OptionDef = {
+  id: 'bitrate',
+  label: 'Bitrate',
+  type: 'select',
+  default: '128k',
+  choices: [
+    { value: '192k', label: '192 kbps — light compression' },
+    { value: '128k', label: '128 kbps — balanced (recommended)' },
+    { value: '96k', label: '96 kbps — smallest file' },
+  ],
+};
+
+/** Frame-extraction controls (video-to-frames). */
+export const FRAMES_FPS_OPTION: OptionDef = {
+  id: 'fps',
+  label: 'Frames per second',
+  type: 'select',
+  default: '1',
+  choices: [
+    { value: '1', label: '1 fps — storyboard' },
+    { value: '2', label: '2 fps' },
+    { value: '5', label: '5 fps — smooth preview' },
+  ],
+};
+
+export const FRAMES_FORMAT_OPTION: OptionDef = {
+  id: 'format',
+  label: 'Frame format',
+  type: 'select',
+  default: 'jpg',
+  choices: [
+    { value: 'jpg', label: 'JPG — smaller files' },
+    { value: 'png', label: 'PNG — best quality' },
+  ],
+};
+
 export interface Faq {
   q: string;
   a: string;
@@ -275,6 +334,17 @@ const vgif = () => async (file: File) => {
     width: 480,
     fps: 10,
     quality: 'standard',
+  });
+};
+
+const vframes = () => async (file: File, opts?: ConvertOptions) => {
+  const mod = await import('./video');
+  // Ezgif "Video to JPG" parity: numbered stills delivered as one ZIP.
+  // FPS auto-throttles for long videos (max 200 frames — browser memory).
+  return mod.videoToFrames(file, {
+    fps: Math.max(1, Math.round(Number(opts?.fps ?? 1))),
+    format: opts?.format === 'png' ? 'png' : 'jpg',
+    maxFrames: 200,
   });
 };
 
@@ -487,6 +557,33 @@ const PAIRS: PairSpec[] = [
     convert: img('avif'),
   },
   {
+    id: 'jpg-compress', from: 'JPG', to: 'Compressed JPG', fromExts: ['jpg', 'jpeg'], toExt: 'jpg', category: 'image',
+    title: 'Compress JPG',
+    options: [IMAGE_COMPRESS_OPTION],
+    blurb: 'Shrink a JPG photo to a much smaller file in one click. Pick how strong the compression is — perfect before emailing, uploading, or publishing to the web.',
+    faqQ: 'How much smaller will my JPG get?',
+    faqA: 'At the default setting, typically 50–70% smaller with quality that still looks great on screens. Push the slider lower for tiny files, higher when every pixel counts.',
+    aboutFrom: 'JPG photos from phones and cameras are often far bigger than they need to be — multi-megabyte files that are slow to upload and eat mobile data.',
+    aboutTo: 'A compressed JPG keeps the same photo at a fraction of the size. Same picture, same format — just the wasted bytes squeezed out.',
+    useCases: [
+      'Shrinking photos before emailing them',
+      'Making images small enough for upload forms with size limits',
+      'Speeding up a web page by compressing its JPGs',
+    ],
+    tip: 'Start at the default 60 — if you can’t see a difference at full size, try 45 for an even smaller file.',
+    extraFaqs: [
+      {
+        q: 'Will compressing ruin my photo?',
+        a: 'Not at the default setting — the change is virtually invisible on screens. Only extreme settings show artifacts, and you control the slider.',
+      },
+      {
+        q: 'Can I compress the same photo twice?',
+        a: 'You can, but each pass loses a little more quality. Compress once from the original for the best result.',
+      },
+    ],
+    convert: img('jpg'),
+  },
+  {
     id: 'webp-to-png', from: 'WebP', to: 'PNG', fromExts: ['webp'], toExt: 'png', category: 'image',
     blurb: 'Convert WebP images back to PNG for maximum compatibility — older software, editors and platforms that do not understand WebP yet.',
     faqQ: 'Why would I convert WebP back to PNG?',
@@ -571,6 +668,33 @@ const PAIRS: PairSpec[] = [
       },
     ],
     convert: img('avif'),
+  },
+  {
+    id: 'webp-compress', from: 'WebP', to: 'Compressed WebP', fromExts: ['webp'], toExt: 'webp', category: 'image',
+    title: 'Compress WebP',
+    options: [IMAGE_COMPRESS_OPTION],
+    blurb: 'Make a WebP image even smaller in one click. WebP is already efficient — this squeezes out the remaining wasted bytes with a quality slider you control.',
+    faqQ: 'Is it worth compressing an already-small WebP?',
+    faqA: 'Often yes — screenshots and graphics saved as WebP can still shrink 30–50% at quality settings that look identical on screen.',
+    aboutFrom: 'WebP is the efficient modern format, but encoders play it safe — most WebP files on the web are bigger than they need to be.',
+    aboutTo: 'A compressed WebP keeps the same format and transparency support, just leaner. Ideal when page speed is the priority.',
+    useCases: [
+      'Squeezing extra kilobytes out of website WebP images',
+      'Shrinking WebP screenshots before sharing',
+      'Hitting strict file-size limits on uploads',
+    ],
+    tip: 'WebP keeps transparency at any quality — unlike JPG, compressing never turns transparent areas white.',
+    extraFaqs: [
+      {
+        q: 'Does compressing remove the transparency?',
+        a: 'No — WebP transparency survives compression at any quality level. That’s one of its big advantages over JPG.',
+      },
+      {
+        q: 'WebP or AVIF for the smallest file?',
+        a: 'AVIF compresses better but needs a modern browser to create. Compressed WebP is the safe, universal choice.',
+      },
+    ],
+    convert: img('webp'),
   },
   {
     id: 'gif-to-png', from: 'GIF', to: 'PNG', fromExts: ['gif'], toExt: 'png', category: 'image',
@@ -1575,6 +1699,67 @@ const PAIRS: PairSpec[] = [
     loadingNote: FFMPEG_NOTE,
   },
   {
+    id: 'video-to-frames', from: 'Video', to: 'Frames', fromExts: ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v', '3gp', 'flv'], toExt: 'zip', category: 'video',
+    title: 'Video to Frames (Extract JPG/PNG Stills)',
+    options: [FRAMES_FPS_OPTION, FRAMES_FORMAT_OPTION],
+    blurb: 'Extract still frames from any video as JPG or PNG images — delivered as one handy ZIP. Pick how many frames per second; great for storyboards, thumbnails and datasets.',
+    faqQ: 'How many frames will I get?',
+    faqA: 'At 1 frame per second, a 60-second clip gives 60 stills. For long videos the rate drops automatically so the total never exceeds 200 frames — browsers run out of memory beyond that.',
+    aboutFrom: 'Videos are just thousands of still images played fast. Sometimes you need those stills — a thumbnail, a storyboard, or frames for analysis.',
+    aboutTo: 'You get every extracted frame as a high-quality JPG or PNG, numbered in order and packed into a single ZIP download.',
+    useCases: [
+      'Grabbing a perfect thumbnail from a video',
+      'Building a storyboard of a clip, one frame per second',
+      'Extracting frames for a machine-learning image dataset',
+      'Saving a key moment as a still image',
+    ],
+    tip: '1 fps is ideal for storyboards and thumbnails. Use 5 fps only for short clips — a minute of video at 5 fps is already 300 stills.',
+    extraFaqs: [
+      {
+        q: 'JPG or PNG frames?',
+        a: 'JPG for smaller ZIPs (fine for thumbnails and previews); PNG when you need pixel-perfect stills for editing or analysis.',
+      },
+      {
+        q: 'Why is there a 200-frame limit?',
+        a: 'Browsers keep everything in memory — beyond a few hundred full-size stills they slow down or crash. For very long videos, extract in sections.',
+      },
+      {
+        q: 'What quality are the JPG frames?',
+        a: 'High quality (q:v 2) — visually identical to pausing the video and screenshotting, without the hassle.',
+      },
+    ],
+    convert: vframes(),
+    loadingNote: FFMPEG_NOTE,
+  },
+  {
+    id: 'mp4-compress', from: 'Video', to: 'Compressed MP4', fromExts: ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v', '3gp', 'flv'], toExt: 'mp4', category: 'video',
+    title: 'Compress Video',
+    options: [VIDEO_COMPRESS_OPTION],
+    blurb: 'Shrink any video to a much smaller MP4 in one click. Three compression strengths — from light to maximum — so a heavy clip becomes emailable and upload-friendly.',
+    faqQ: 'How much smaller will my video get?',
+    faqA: 'At the recommended Medium setting, typically 50–70% smaller. A 100 MB phone clip often becomes 30–40 MB with quality that still looks great on phones and the web.',
+    aboutFrom: 'Phone videos are huge — a minute of 4K can be 400 MB. Too big to email, slow to upload, and painful on mobile data.',
+    aboutTo: 'A compressed MP4 plays everywhere the original did, just leaner. Same video, same format — the wasted megabytes squeezed out.',
+    useCases: [
+      'Making a video small enough to send on WhatsApp or email',
+      'Shrinking clips before uploading to a site with size limits',
+      'Saving phone storage by compressing camera roll videos',
+    ],
+    tip: 'Medium is the sweet spot for sharing. Use Strong only when size matters more than fine detail — like a quick preview.',
+    extraFaqs: [
+      {
+        q: 'Will compressing ruin the video quality?',
+        a: 'At Medium, barely — the difference is hard to spot on phones and laptops. Only Strong shows visible softening on big screens.',
+      },
+      {
+        q: 'Does it also convert MOV or MKV?',
+        a: 'Yes — any supported input becomes a compressed MP4, so you get smaller size plus universal compatibility in one step.',
+      },
+    ],
+    convert: vid(TO_MP4, 'mp4', 'video/mp4'),
+    loadingNote: FFMPEG_NOTE,
+  },
+  {
     id: 'm4v-to-mp4', from: 'M4V', to: 'MP4', fromExts: ['m4v'], toExt: 'mp4', category: 'video',
     options: [VIDEO_CRF_OPTION],
     blurb: 'Convert Apple M4V videos to standard MP4 for playback on Android, Windows and everything else.',
@@ -1816,6 +2001,34 @@ const PAIRS: PairSpec[] = [
       },
     ],
     convert: vid(TO_WAV, 'wav', 'audio/wav'),
+    loadingNote: FFMPEG_NOTE,
+  },
+  {
+    id: 'mp3-compress', from: 'Audio', to: 'Compressed MP3', fromExts: ['mp3', 'wav', 'flac', 'ogg', 'oga', 'm4a', 'aac', 'wma'], toExt: 'mp3', category: 'audio',
+    title: 'Compress Audio',
+    options: [AUDIO_COMPRESS_OPTION],
+    blurb: 'Shrink any audio file to a compact MP3 in one click. Three bitrate presets — voice notes, music and podcasts all become a fraction of their size.',
+    faqQ: 'How much smaller will my audio get?',
+    faqA: 'A WAV typically shrinks 85–90% as a 128 kbps MP3. Even an existing MP3 gets 30–40% smaller dropping from 320 to 128 kbps.',
+    aboutFrom: 'WAV and FLAC files are huge — a 3-minute WAV is 30 MB. Too heavy to message, slow to upload, wasteful to store.',
+    aboutTo: 'A compressed MP3 plays on every device ever made at a tenth of the size. For voice and casual listening, the difference is inaudible.',
+    useCases: [
+      'Shrinking voice recordings before sending on WhatsApp',
+      'Making podcast episodes download-friendly',
+      'Converting a WAV library to MP3s that fit on any device',
+    ],
+    tip: '128 kbps is the sweet spot — voice sounds identical, music stays enjoyable. Use 96 kbps only for speech when size is critical.',
+    extraFaqs: [
+      {
+        q: 'Will my music sound worse?',
+        a: 'At 128 kbps most listeners can’t tell on earbuds or phone speakers. Audiophiles with good headphones may prefer 192 kbps.',
+      },
+      {
+        q: 'Can I compress an MP3 that’s already small?',
+        a: 'Yes, but re-compressing an MP3 loses a little more each time. For best quality, compress from the original WAV or FLAC when you have it.',
+      },
+    ],
+    convert: vid(TO_MP3, 'mp3', 'audio/mpeg'),
     loadingNote: FFMPEG_NOTE,
   },
   {

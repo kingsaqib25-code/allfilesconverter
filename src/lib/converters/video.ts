@@ -396,6 +396,108 @@ export async function optimizeGif(
 // Concat: join several media files into one (merge-video / merge-audio)
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Frame extraction: video -> numbered JPG/PNG stills, delivered as a ZIP
+// (Ezgif "Video to JPG" parity). FPS auto-throttles so the frame count
+// never exceeds maxFrames — browsers run out of memory beyond a few hundred.
+// ---------------------------------------------------------------------------
+
+export interface FrameExtractOptions {
+  /** Frames per second to extract (auto-reduced for long videos). */
+  fps: number;
+  /** Frame image format. */
+  format: 'jpg' | 'png';
+  /** Safety cap on total frames. */
+  maxFrames: number;
+  onProgress?: (ratio: number) => void;
+}
+
+function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      const done = (d: number) => {
+        try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+        resolve(d);
+      };
+      v.onloadedmetadata = () => done(isFinite(v.duration) ? v.duration : 0);
+      v.onerror = () => done(0);
+      v.src = url;
+      // safety: never hang the conversion on metadata
+      setTimeout(() => done(0), 8000);
+    } catch {
+      resolve(0);
+    }
+  });
+}
+
+export async function videoToFrames(
+  file: File,
+  opts: FrameExtractOptions
+): Promise<ConvertResult & { frameCount: number }> {
+  guardSize(file);
+  const ff = await getFfmpeg();
+  const inExt = (file.name.split('.').pop() || 'mp4').toLowerCase().slice(0, 8);
+  const input = `input.${inExt}`;
+  const format = opts.format === 'png' ? 'png' : 'jpg';
+
+  // Auto-throttle: never more than maxFrames stills.
+  const duration = await getVideoDuration(file);
+  let fps = Math.max(1, Math.round(opts.fps));
+  if (duration > 0 && duration * fps > opts.maxFrames) {
+    fps = Math.max(1, Math.floor(opts.maxFrames / duration));
+  }
+
+  setProgressHandler(opts.onProgress ?? null);
+  const created: string[] = [];
+  try {
+    await ff.writeFile(input, await fetchFile(file));
+    const args = ['-i', input, '-vf', `fps=${fps}`];
+    if (format === 'jpg') args.push('-q:v', '2'); // high-quality JPG stills
+    args.push(`frame-%04d.${format}`);
+    const code = await ff.exec(args);
+    if (code !== 0) throw new Error(`ffmpeg failed with code ${code}`);
+
+    const listing = await ff.listDir('/');
+    const frames = (listing as unknown as { name: string }[])
+      .map((e) => e.name)
+      .filter((n) => /^frame-\d+\.(jpg|png)$/.test(n))
+      .sort()
+      .slice(0, opts.maxFrames);
+    if (frames.length === 0) {
+      throw new Error('No frames could be extracted — the file may use an unsupported codec or be damaged.');
+    }
+    created.push(...frames);
+
+    const { default: JSZip } = await import('jszip');
+    const zip = new JSZip();
+    const stem = baseName(file);
+    for (const name of frames) {
+      const data = (await ff.readFile(name)) as Uint8Array;
+      zip.file(`${stem}-${name}`, data);
+    }
+    const blob = await zip.generateAsync({ type: 'blob' });
+    return {
+      blob,
+      filename: `${stem}-frames.zip`,
+      frameCount: frames.length,
+    };
+  } catch (e) {
+    if (isKnownError(e)) throw e;
+    throw friendlyError(e);
+  } finally {
+    setProgressHandler(null);
+    for (const f of [input, ...created]) {
+      try {
+        await ff.deleteFile(f);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
 /**
  * Join multiple media files. Tries the fast concat-demuxer path with stream
  * copy first (no re-encode when the files share a codec); falls back to a
