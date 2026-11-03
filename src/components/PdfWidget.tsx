@@ -252,6 +252,16 @@ export default function PdfWidget({ entryId }: Props) {
           outs.push({ blob: r.blob, filename: r.filename });
           break;
         }
+        case 'word-to-pdf': {
+          const r = await mod.wordToPdf(files[0]);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'excel-to-pdf': {
+          const r = await mod.excelToPdf(files[0]);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
         default:
           throw new Error('This PDF tool is not wired up yet.');
       }

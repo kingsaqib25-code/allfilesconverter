@@ -3187,6 +3187,72 @@ const PAIRS: PairSpec[] = [
       },
     ],
   },
+  {
+    id: 'word-to-pdf', from: 'Word', to: 'PDF', fromExts: ['doc', 'docx'], toExt: 'pdf', category: 'pdf',
+    title: 'Word to PDF Converter',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Turn Word documents (.doc, .docx) into PDF — headings, lists, tables, bold and italic preserved. Free, no sign-up, files never leave your device.',
+    faqQ: 'How do I convert Word to PDF for free?',
+    faqA: 'Drop your .doc or .docx file and download the PDF. Headings, bullet lists, numbered lists, tables, bold and italic text are all carried over — converted entirely in your browser.',
+    aboutFrom: 'Word files need Word (or a compatible app) to open and look right — and they can shift layout between devices.',
+    aboutTo: 'A PDF looks identical everywhere: phones, printers, email attachments. It is the universal "final" format for documents.',
+    useCases: [
+      'Sending a resume that must look the same on every screen',
+      'Submitting an assignment as a locked PDF',
+      'Sharing a report with someone who has no Office installed',
+    ],
+    tip: 'Very complex layouts (text boxes, fancy WordArt) are simplified — for pixel-perfect results, use Word\u2019s own export.',
+    extraFaqs: [
+      {
+        q: 'Are images in the Word file kept?',
+        a: 'Honest answer: this version converts text, headings, lists, and tables. Embedded images are not carried over yet — for image-heavy documents, use Word\u2019s built-in Save as PDF.',
+      },
+      {
+        q: 'Do I need Microsoft Word installed?',
+        a: 'No — conversion runs entirely in your browser. No Office, no upload, no account.',
+      },
+      {
+        q: 'Is my document uploaded anywhere?',
+        a: 'Never. The file is read and converted on your own device; nothing leaves your browser.',
+      },
+      {
+        q: 'What about .doc (old format) files?',
+        a: 'Both .doc and .docx are accepted. Very old or damaged .doc files may fail — re-save as .docx if that happens.',
+      },
+    ],
+  },
+  {
+    id: 'excel-to-pdf', from: 'Excel', to: 'PDF', fromExts: ['xls', 'xlsx', 'csv'], toExt: 'pdf', category: 'pdf',
+    title: 'Excel to PDF Converter',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Turn Excel spreadsheets (.xls, .xlsx) into clean PDF tables — header row highlighted, columns auto-sized. Free, no sign-up, files never leave your device.',
+    faqQ: 'How do I convert Excel to PDF for free?',
+    faqA: 'Drop your .xls or .xlsx file and download the PDF. The first sheet becomes a formatted table with a highlighted header row and auto-fitted columns — converted entirely in your browser.',
+    aboutFrom: 'Spreadsheets need Excel (or a compatible app) to view properly — and formulas can break on other devices.',
+    aboutTo: 'A PDF table looks identical everywhere and prints perfectly. Ideal for sharing reports that should not be edited.',
+    useCases: [
+      'Sharing a monthly report as a non-editable PDF',
+      'Printing a spreadsheet that fits the page',
+      'Sending data to someone without Excel',
+    ],
+    tip: 'Only the first sheet is converted — move the sheet you need to the front before uploading.',
+    extraFaqs: [
+      {
+        q: 'Are formulas calculated?',
+        a: 'Cached values are used — what you see in Excel is what lands in the PDF. Very complex workbooks may need a re-save in Excel first.',
+      },
+      {
+        q: 'What about multiple sheets?',
+        a: 'Only the first sheet converts. For more sheets, save each as its own file or use Merge PDF afterwards.',
+      },
+      {
+        q: 'Is my spreadsheet uploaded anywhere?',
+        a: 'Never. Everything runs on your device in the browser.',
+      },
+    ],
+  },
   /* ------------------ competitor-gap round: image tools ------------------ */
   {
     id: 'image-resize', from: 'Image', to: 'Image', fromExts: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'], toExt: 'png', category: 'image',

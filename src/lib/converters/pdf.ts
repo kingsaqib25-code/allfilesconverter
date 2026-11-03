@@ -1798,6 +1798,226 @@ export async function markdownToPdf(file: File): Promise<ConvertResult> {
   return { blob: pdfBlob(bytes), filename: pdfOutName(file) };
 }
 
+/** Excel (.xlsx/.xls/.csv) -> PDF table: first sheet, header row, grid. */
+export async function excelToPdf(file: File): Promise<ConvertResult> {
+  const XLSXmod = await import('xlsx');
+  const XLSX = (XLSXmod as any).default ?? XLSXmod;
+  let rows: string[][];
+  let sheetName = '';
+  try {
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    if (!wb.SheetNames.length) throw new Error('empty');
+    sheetName = wb.SheetNames[0];
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '', raw: false });
+    rows = (raw as any[][]).map((r) => r.map((c) => String(c ?? '')));
+  } catch (e) {
+    throw new Error('Could not read that spreadsheet — it may be corrupt or password-protected.');
+  }
+  const nonEmpty = rows.filter((r) => r.some((c) => c.trim()));
+  if (!nonEmpty.length) throw new Error('That spreadsheet looks empty — no data found.');
+  const MAXR = 500;
+  const data = nonEmpty.slice(0, MAXR).map((r) => r.map((c) => (c.length > 220 ? c.slice(0, 220) : c)));
+  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+  const doc = await PDFDocument.create();
+  const helv = await doc.embedFont(StandardFonts.Helvetica);
+  const helvB = await doc.embedFont(StandardFonts.HelveticaBold);
+  const black = rgb(0, 0, 0);
+  const headBg = rgb(0.94, 0.94, 0.94);
+  const cols = Math.max(...data.map((r) => r.length));
+  const table = data.map((r) => {
+    const n = [...r];
+    while (n.length < cols) n.push('');
+    return n;
+  });
+  const avail = TPW - 72;
+  let size = 10;
+  const measure = (sz: number): number[] => {
+    const w = new Array<number>(cols).fill(0);
+    table.forEach((r, ri) => {
+      r.forEach((c, i) => {
+        const f = ri === 0 ? helvB : helv;
+        w[i] = Math.max(w[i], f.widthOfTextAtSize(safeWinAnsi(c), sz));
+      });
+    });
+    return w;
+  };
+  let widths = measure(size);
+  const totalPad = (cols + 1) * 6;
+  let total = widths.reduce((a, b) => a + b, 0) + totalPad;
+  while (total > avail && size > 7) {
+    size -= 1;
+    widths = measure(size);
+    total = widths.reduce((a, b) => a + b, 0) + totalPad;
+  }
+  if (total > avail) {
+    const k = avail / total;
+    widths = widths.map((w) => w * k);
+    total = avail;
+  }
+  const rowH = size * 2.1;
+  const x0 = 36 + (avail - total) / 2;
+  let page = doc.addPage([TPW, TPH]);
+  let y = TPH - 56;
+  const title = sheetName ? `${baseName(file)} — ${sheetName}` : baseName(file);
+  page.drawText(safeWinAnsi(title.slice(0, 80)), { x: 36, y: y - 14, size: 14, font: helvB, color: black });
+  y -= 36;
+  table.forEach((r, ri) => {
+    const header = ri === 0;
+    if (y - rowH < 40) {
+      page = doc.addPage([TPW, TPH]);
+      y = TPH - 56;
+    }
+    if (header) page.drawRectangle({ x: x0, y: y - rowH, width: total, height: rowH, color: headBg });
+    const font = header ? helvB : helv;
+    let cx = x0 + 3;
+    r.forEach((c, i) => {
+      let txt = safeWinAnsi(c);
+      const cw = widths[i];
+      while (font.widthOfTextAtSize(txt, size) > cw && txt.length > 4) txt = txt.slice(0, -2);
+      page.drawText(txt, { x: cx, y: y - rowH + (rowH - size) / 2, size, font, color: black });
+      cx += cw + 6;
+    });
+    y -= rowH;
+  });
+  const bytes = await doc.save();
+  const base = baseName(file).replace(/\.xlsx?$|\.csv$/i, '');
+  return { blob: pdfBlob(bytes), filename: `${base}.pdf` };
+};
+
+/** Word (.docx) -> PDF: headings, lists, bold/italic via mammoth + pdf-lib. */
+export async function wordToPdf(file: File): Promise<ConvertResult> {
+  const mammothMod = await import('mammoth');
+  const mammoth = (mammothMod as any).default ?? mammothMod;
+  const ab = await file.arrayBuffer();
+  let html: string;
+  try {
+    // mammoth 1.x takes { buffer } (Uint8Array), not { arrayBuffer }
+    const res = await mammoth.convertToHtml({ buffer: new Uint8Array(ab) });
+    html = res.value;
+  } catch (e) {
+    throw new Error('Could not read that Word file — it may be corrupt or password-protected.');
+  }
+  if (!html.replace(/<[^>]+>/g, '').trim()) {
+    throw new Error('That Word file looks empty — no text found to convert.');
+  }
+  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+  const doc = await PDFDocument.create();
+  const helv = await doc.embedFont(StandardFonts.Helvetica);
+  const helvB = await doc.embedFont(StandardFonts.HelveticaBold);
+  const helvO = await doc.embedFont(StandardFonts.HelveticaOblique);
+  const black = rgb(0, 0, 0);
+  const maxW = TPW - 2 * TM;
+  let page = doc.addPage([TPW, TPH]);
+  let y = TPH - TM;
+  const ensure = (need: number) => {
+    if (y - need < TM) {
+      page = doc.addPage([TPW, TPH]);
+      y = TPH - TM;
+    }
+  };
+  type Run = { text: string; font: typeof helv };
+  // Parse one HTML element's inline content into bold/italic runs
+  const parseRuns = (el: Element): Run[] => {
+    const runs: Run[] = [];
+    const walk = (node: Node, bold: boolean, italic: boolean) => {
+      node.childNodes.forEach((ch) => {
+        if (ch.nodeType === 3) {
+          const t = (ch.textContent || '').replace(/\s+/g, ' ');
+          if (t) runs.push({ text: t, font: bold ? helvB : italic ? helvO : helv });
+        } else if (ch.nodeType === 1) {
+          const tag = (ch as Element).tagName.toLowerCase();
+          walk(ch, bold || tag === 'strong' || tag === 'b', italic || tag === 'em' || tag === 'i');
+        }
+      });
+    };
+    walk(el, false, false);
+    return runs.filter((r) => r.text.trim());
+  };
+  const drawRuns = (runs: Run[], x0: number, size: number) => {
+    const spaceW = helv.widthOfTextAtSize(' ', size);
+    let cx = x0;
+    const words: { text: string; font: typeof helv }[] = [];
+    for (const r of runs) {
+      for (const w of r.text.split(/(\s+)/)) {
+        if (!w) continue;
+        if (/^\s+$/.test(w)) { words.push({ text: ' ', font: r.font }); continue; }
+        words.push({ text: w, font: r.font });
+      }
+    }
+    let line: typeof words = [];
+    let lw = 0;
+    const flush = () => {
+      if (!line.length) return;
+      ensure(size * 1.55);
+      let dx = x0;
+      for (const w of line) {
+        if (w.text === ' ') { dx += spaceW; continue; }
+        const safe = safeWinAnsi(w.text);
+        page.drawText(safe, { x: dx, y: y - size, size, font: w.font, color: black });
+        dx += w.font.widthOfTextAtSize(safe, size) + spaceW;
+      }
+      y -= size * 1.55;
+      line = [];
+      lw = 0;
+    };
+    for (const w of words) {
+      const ww = w.text === ' ' ? spaceW : w.font.widthOfTextAtSize(safeWinAnsi(w.text), size);
+      if (lw + ww > maxW - (x0 - TM) && line.length) flush();
+      if (w.text === ' ' && !line.length) continue;
+      line.push(w);
+      lw += ww + (w.text === ' ' ? 0 : spaceW);
+    }
+    flush();
+  };
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  const body = parsed.body;
+  let drew = false;
+  body.childNodes.forEach((node) => {
+    if (node.nodeType !== 1) return;
+    const el = node as Element;
+    const tag = el.tagName.toLowerCase();
+    if (/^h[1-6]$/.test(tag)) {
+      const level = parseInt(tag[1], 10);
+      const size = level === 1 ? 20 : level === 2 ? 16 : 13;
+      ensure(size * 2.2);
+      y -= 4;
+      drawRuns(parseRuns(el).map((r) => ({ ...r, font: helvB })), TM, size);
+      y -= 6;
+      drew = true;
+    } else if (tag === 'p') {
+      const runs = parseRuns(el);
+      if (!runs.length) { y -= 7; return; }
+      ensure(14 * 2);
+      drawRuns(runs, TM, 11);
+      drew = true;
+    } else if (tag === 'ul' || tag === 'ol') {
+      let i = 0;
+      el.querySelectorAll(':scope > li').forEach((li) => {
+        i++;
+        const bullet = tag === 'ol' ? `${i}. ` : '• ';
+        ensure(14 * 2);
+        drawRuns([{ text: bullet, font: helv }, ...parseRuns(li)], TM, 11);
+      });
+      drew = true;
+    } else if (tag === 'table') {
+      // Tables: flatten rows into lines (honest simplification)
+      el.querySelectorAll('tr').forEach((tr) => {
+        const cells: string[] = [];
+        tr.querySelectorAll('th, td').forEach((c) => cells.push((c.textContent || '').trim()));
+        if (cells.some(Boolean)) {
+          ensure(14 * 2);
+          drawRuns([{ text: cells.join(' | '), font: helv }], TM, 10);
+        }
+      });
+      drew = true;
+    }
+  });
+  if (!drew) throw new Error('No readable content found in that Word file.');
+  const bytes = await doc.save();
+  const base = baseName(file).replace(/\.docx?$/i, '');
+  return { blob: pdfBlob(bytes), filename: `${base}.pdf` };
+};
+
 /** CSV -> PDF table: header row, grid lines, auto-sized columns. */
 export async function csvToPdf(file: File): Promise<ConvertResult> {
   const { parseCsv } = await import('./text');
