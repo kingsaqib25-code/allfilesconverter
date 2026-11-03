@@ -3,11 +3,13 @@
 /**
  * "Summarize with AI" — one button, on-page slide-over panel.
  *
- * On click the panel opens right on the page and an AI summary of the page's
- * public summary text is generated via the free Pollinations text API (no key,
- * no signup). If the API fails or times out (20s), the panel falls back to the
- * page's own static TL;DR text with an "offline summary" note. Never redirects
- * to external AI sites. User files are never sent anywhere.
+ * The panel shows the page's built-in summary INSTANTLY on open (it's
+ * pre-generated at build time — no waiting). In the background, the free
+ * Pollinations text API (no key, no signup) tries to polish it into
+ * plainer words; when that arrives it swaps in with an "AI-polished" note.
+ * If the API is slow or fails, the built-in summary simply stays — the user
+ * never stares at a spinner. Never redirects to external AI sites. User
+ * files are never sent anywhere.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -43,48 +45,48 @@ function renderAiText(text: string) {
 
 export default function AiSummarize({ summaryText, compact }: Props) {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  const [offline, setOffline] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
+  const [aiText, setAiText] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const summarize = useCallback(async () => {
+  const openPanel = useCallback(() => {
     setOpen(true);
-    if (result || loading) return;
-    setLoading(true);
-    setOffline(false);
+    if (aiText || enhancing) return;
+    // Background AI polish — the built-in summary is already visible,
+    // this never blocks it.
+    setEnhancing(true);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     const timer = setTimeout(() => ctrl.abort(), 20000);
-    try {
-      const res = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You summarize a file-converter tool page in plain, simple words. 2-3 short paragraphs plus 3-5 key bullets. No jargon.',
-            },
-            { role: 'user', content: summaryText },
-          ],
-        }),
-        signal: ctrl.signal,
-      });
-      if (!res.ok) throw new Error(`AI request failed: ${res.status}`);
-      const text = (await res.text()).trim();
-      if (!text) throw new Error('Empty AI response');
-      setResult(text);
-    } catch {
-      // Offline fallback: show the page's own static summary in the panel.
-      setOffline(true);
-      setResult(null);
-    } finally {
-      clearTimeout(timer);
-      setLoading(false);
-    }
-  }, [summaryText, result, loading]);
+    (async () => {
+      try {
+        const res = await fetch('https://text.pollinations.ai/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You summarize a file-converter tool page in plain, simple words. 2-3 short paragraphs plus 3-5 key bullets. No jargon.',
+              },
+              { role: 'user', content: summaryText },
+            ],
+          }),
+          signal: ctrl.signal,
+        });
+        if (!res.ok) throw new Error(`AI request failed: ${res.status}`);
+        const text = (await res.text()).trim();
+        if (!text) throw new Error('Empty AI response');
+        setAiText(text);
+      } catch {
+        // Silent: the built-in summary stays put. No spinner, no error.
+      } finally {
+        clearTimeout(timer);
+        setEnhancing(false);
+      }
+    })();
+  }, [summaryText, aiText, enhancing]);
 
   const close = useCallback(() => {
     abortRef.current?.abort();
@@ -108,7 +110,7 @@ export default function AiSummarize({ summaryText, compact }: Props) {
 
   return (
     <div className={compact ? 'ai-sum ai-sum-compact' : 'ai-sum'} aria-label="Summarize this page with AI">
-      <button type="button" className={compact ? 'ai-sum-compact-btn' : 'btn secondary ai-sum-open'} onClick={summarize} aria-label={compact ? 'Summarize this page with AI' : undefined}>
+      <button type="button" className={compact ? 'ai-sum-compact-btn' : 'btn secondary ai-sum-open'} onClick={openPanel} aria-label={compact ? 'Summarize this page with AI' : undefined}>
         <span aria-hidden="true">✨</span> {compact ? 'Summary' : 'Summarize with AI'}
       </button>
       {!compact && (
@@ -139,25 +141,16 @@ export default function AiSummarize({ summaryText, compact }: Props) {
                 ✕
               </button>
             </div>
-            {loading && (
-              <div role="status" aria-label="Generating summary">
-                <div className="progress">
-                  <div />
-                </div>
-                <p className="ai-panel-sub">Asking the AI for a plain-words summary…</p>
-              </div>
-            )}
-            {!loading && result && <div className="ai-panel-body">{renderAiText(result)}</div>}
-            {!loading && !result && (
-              <div className="ai-panel-body">
-                {offline && (
-                  <p className="ai-panel-sub">
-                    <em>Offline summary</em> — the AI service didn&apos;t respond, so here is
-                    this page&apos;s own summary:
-                  </p>
-                )}
-                <p className="ai-panel-p">{summaryText}</p>
-              </div>
+            {aiText ? (
+              <p className="ai-panel-sub">
+                <span aria-hidden="true">✨</span> AI-polished version
+              </p>
+            ) : null}
+            <div className="ai-panel-body">{renderAiText(aiText ?? summaryText)}</div>
+            {enhancing && !aiText && (
+              <p className="ai-panel-sub" role="status">
+                <span aria-hidden="true">✨</span> Polishing with AI…
+              </p>
             )}
             <p className="ai-panel-foot">
               Generated from this page&apos;s public text only. Your files are never uploaded or
