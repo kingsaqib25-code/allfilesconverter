@@ -4,7 +4,7 @@
 
 ## Site summary
 
-Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 98 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (20 tools), Image Converters (29 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
+Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 108 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (30 tools), Image Converters (29 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
 
 ## PDF Converters
 
@@ -711,6 +711,336 @@ A: 10% handles typical scan margins. 20%+ is for documents that are mostly borde
 
 Q: Does it work on every page at once?
 A: Yes — one slider, all pages. Perfect for consistently-margined scans.
+
+### PDF to Markdown Converter
+
+URL: https://allinoneconverter.vercel.app/convert/pdf-to-markdown/
+
+What it does:
+Turn any PDF into clean Markdown — headings, lists, and paragraphs preserved. Perfect for notes, docs, and feeding documents to AI chatbots.
+
+About the source format (PDF):
+PDFs lock text inside a fixed layout — copying it into notes, wikis, or AI tools means losing all structure.
+
+About the target format (Markdown):
+Markdown keeps the structure (headings, lists, paragraphs) in a plain-text format that notes apps, GitHub, and AI chatbots all understand.
+
+Use cases:
+- Turning a PDF report into notes for Obsidian or Notion
+- Feeding a PDF manual to ChatGPT or Claude as Markdown
+- Publishing PDF content on GitHub or a docs site
+
+Tip: Scanned PDFs (photos of text) have no real text to convert — those need OCR first.
+
+FAQs:
+Q: How do I convert a PDF to Markdown?
+A: Drop the PDF and download a .md file. Text becomes paragraphs, big titles become headings, and bullet lists stay as lists — all in your browser, nothing uploaded.
+
+Q: Are tables preserved?
+A: Honest answer: table structure is flattened into text lines. For clean spreadsheet data, use PDF to Excel instead.
+
+Q: What about images in the PDF?
+A: Images are skipped — only text is converted. Use Extract Images from PDF if you need the pictures too.
+
+Q: Does formatting like bold and italics survive?
+A: Bold and italic styling is not carried over — Markdown output focuses on structure: headings, lists, and paragraphs.
+
+### Repair PDF
+
+URL: https://allinoneconverter.vercel.app/convert/repair-pdf/
+
+What it does:
+Fix a damaged or corrupted PDF — rebuilds the file from whatever pages still read correctly, so you can open it again.
+
+About the source format (PDF):
+A PDF can get corrupted by a bad download, a crashed save, or a faulty email attachment — then nothing opens it.
+
+About the target format (PDF):
+A repaired PDF contains every page that was still readable, rebuilt into a clean file that opens normally again.
+
+Use cases:
+- Opening a PDF that shows "file is damaged" errors
+- Recovering a half-downloaded PDF attachment
+- Fixing a PDF that one app refuses to open
+
+Tip: If repair fails, the file is likely beyond recovery — try re-downloading or asking the sender to re-export it.
+
+FAQs:
+Q: How do I repair a corrupted PDF?
+A: Drop the damaged PDF. The tool reads every page it still can and rebuilds a fresh, valid PDF from them. Download the repaired file.
+
+Q: Will I get all my pages back?
+A: Every page that still parses correctly is recovered. Pages whose data is truly destroyed cannot be rebuilt — no tool can invent missing bytes.
+
+Q: Does repair change my content?
+A: Readable pages are copied exactly. The only change is the file structure around them, rebuilt cleanly.
+
+Q: Can it remove a password?
+A: No — repair only fixes structural damage. Password-protected PDFs stay locked; use Unlock PDF if you know the password.
+
+### Organize PDF Pages
+
+URL: https://allinoneconverter.vercel.app/convert/organize-pdf/
+
+What it does:
+Reorder PDF pages however you like — type the new order like "3, 1, 2" and download the rearranged document.
+
+About the source format (PDF):
+Merged scans and assembled reports often land with pages in the wrong order — the cover at the end, chapter 2 before chapter 1.
+
+About the target format (PDF):
+An organized PDF has every page exactly where it belongs, in one clean download.
+
+Use cases:
+- Fixing the page order of a badly assembled scan
+- Moving the cover page to the front of a merged PDF
+- Reordering chapters of an ebook export
+
+Tip: List every page you want to keep — pages you skip are dropped from the output.
+
+FAQs:
+Q: How do I reorder pages in a PDF?
+A: Drop the PDF, type the new page order (e.g. "3, 1, 2" puts page 3 first), and download. Pages not listed are left out — so this also trims pages.
+
+Q: Can I also delete pages this way?
+A: Yes — simply leave out the page numbers you do not want. Only listed pages end up in the download.
+
+Q: What happens with duplicate or invalid numbers?
+A: Duplicates are ignored (each page appears once) and out-of-range numbers are skipped.
+
+Q: Does reordering reduce quality?
+A: No — pages are copied untouched, just placed in your new order.
+
+### Word to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/word-to-pdf/
+
+What it does:
+Turn Word documents (.doc, .docx) into PDF — headings, lists, tables, bold and italic preserved. Free, no sign-up, files never leave your device.
+
+About the source format (Word):
+Word files need Word (or a compatible app) to open and look right — and they can shift layout between devices.
+
+About the target format (PDF):
+A PDF looks identical everywhere: phones, printers, email attachments. It is the universal "final" format for documents.
+
+Use cases:
+- Sending a resume that must look the same on every screen
+- Submitting an assignment as a locked PDF
+- Sharing a report with someone who has no Office installed
+
+Tip: Very complex layouts (text boxes, fancy WordArt) are simplified — for pixel-perfect results, use Word’s own export.
+
+FAQs:
+Q: How do I convert Word to PDF for free?
+A: Drop your .doc or .docx file and download the PDF. Headings, bullet lists, numbered lists, tables, bold and italic text are all carried over — converted entirely in your browser.
+
+Q: Are images in the Word file kept?
+A: Honest answer: this version converts text, headings, lists, and tables. Embedded images are not carried over yet — for image-heavy documents, use Word’s built-in Save as PDF.
+
+Q: Do I need Microsoft Word installed?
+A: No — conversion runs entirely in your browser. No Office, no upload, no account.
+
+Q: Is my document uploaded anywhere?
+A: Never. The file is read and converted on your own device; nothing leaves your browser.
+
+Q: What about .doc (old format) files?
+A: Both .doc and .docx are accepted. Very old or damaged .doc files may fail — re-save as .docx if that happens.
+
+### Excel to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/excel-to-pdf/
+
+What it does:
+Turn Excel spreadsheets (.xls, .xlsx) into clean PDF tables — header row highlighted, columns auto-sized. Free, no sign-up, files never leave your device.
+
+About the source format (Excel):
+Spreadsheets need Excel (or a compatible app) to view properly — and formulas can break on other devices.
+
+About the target format (PDF):
+A PDF table looks identical everywhere and prints perfectly. Ideal for sharing reports that should not be edited.
+
+Use cases:
+- Sharing a monthly report as a non-editable PDF
+- Printing a spreadsheet that fits the page
+- Sending data to someone without Excel
+
+Tip: Only the first sheet is converted — move the sheet you need to the front before uploading.
+
+FAQs:
+Q: How do I convert Excel to PDF for free?
+A: Drop your .xls or .xlsx file and download the PDF. The first sheet becomes a formatted table with a highlighted header row and auto-fitted columns — converted entirely in your browser.
+
+Q: Are formulas calculated?
+A: Cached values are used — what you see in Excel is what lands in the PDF. Very complex workbooks may need a re-save in Excel first.
+
+Q: What about multiple sheets?
+A: Only the first sheet converts. For more sheets, save each as its own file or use Merge PDF afterwards.
+
+Q: Is my spreadsheet uploaded anywhere?
+A: Never. Everything runs on your device in the browser.
+
+### PDF to PowerPoint Converter
+
+URL: https://allinoneconverter.vercel.app/convert/pdf-to-powerpoint/
+
+What it does:
+Turn PDF pages into editable PowerPoint slides — each page becomes a slide with its text. Free, no sign-up, files never leave your device.
+
+About the source format (PDF):
+PDFs are frozen — you cannot edit or present their content as slides without retyping everything.
+
+About the target format (PowerPoint):
+A PowerPoint file gives you editable slides: rearrange, restyle, and present the content however you like.
+
+Use cases:
+- Turning a PDF report into a presentation
+- Extracting PDF content into editable slides
+- Reusing PDF text in a pitch deck
+
+Tip: Scanned PDFs (pictures of text) have no text to convert — those need OCR first.
+
+FAQs:
+Q: How do I convert PDF to PowerPoint for free?
+A: Drop the PDF and download a .pptx file. Every page becomes one slide with its text laid out and editable — converted entirely in your browser.
+
+Q: Are images and charts kept?
+A: Honest answer: this version converts text content. Images and complex graphics are not carried over to slides yet.
+
+Q: Can I edit the slides afterwards?
+A: Yes — every text box is fully editable in PowerPoint, Google Slides, or Keynote.
+
+Q: Is my PDF uploaded anywhere?
+A: Never. Everything runs on your device in the browser.
+
+### Sign PDF
+
+URL: https://allinoneconverter.vercel.app/convert/sign-pdf/
+
+What it does:
+Sign a PDF online — draw your signature with mouse or finger, pick the page and position, download the signed document.
+
+About the source format (PDF):
+Printing, signing by hand, and scanning is slow — and most "free" sign tools upload your document to their servers.
+
+About the target format (PDF):
+A signed PDF is ready to send in seconds, and your document never leaves your device.
+
+Use cases:
+- Signing a contract or offer letter
+- Approving an invoice with your signature
+- Signing a form without printing anything
+
+Tip: Draw slowly with a steady hand — a bigger pad stroke looks more like a real pen signature.
+
+FAQs:
+Q: How do I sign a PDF online for free?
+A: Drop the PDF, draw your signature on the pad, choose the page and corner, and download. The signature is embedded into the document — all in your browser.
+
+Q: Is this a legally valid signature?
+A: Honest answer: this places your drawn signature visibly on the document, which is fine for everyday agreements. For high-stakes contracts, check what your country or counterparty requires (some need certified digital signatures).
+
+Q: Can I reuse my signature?
+A: Redraw it each time for now — the pad clears after every download for your privacy.
+
+Q: Is my document uploaded anywhere?
+A: Never. Signing runs entirely in your browser.
+
+### HTML to PDF Converter
+
+URL: https://allinoneconverter.vercel.app/convert/html-to-pdf/
+
+What it does:
+Turn HTML code or web pages into PDF — paste your HTML, preview it, and save as PDF with your browser’s own printer.
+
+About the source format (HTML):
+HTML is made for screens — sharing it means sending code that looks different in every email client.
+
+About the target format (PDF):
+A PDF freezes the page exactly as designed: printable, emailable, identical everywhere.
+
+Use cases:
+- Saving a designed web page as a PDF
+- Turning an HTML email template into a document
+- Converting HTML reports to printable PDFs
+
+Tip: Use the preview to check layout before printing — what you see is what the PDF gets.
+
+FAQs:
+Q: How do I convert HTML to PDF?
+A: Paste your HTML code (or drop a .html file), check the live preview, then hit Print / Save as PDF. Your browser renders the PDF — nothing is uploaded.
+
+Q: Can I convert a website URL directly?
+A: Paste the page’s HTML source (right-click → View Source, copy). Direct URL fetching is blocked by browser security rules.
+
+Q: Is my HTML uploaded anywhere?
+A: Never. Rendering and printing happen entirely in your browser.
+
+### Compare PDF Files
+
+URL: https://allinoneconverter.vercel.app/convert/compare-pdf/
+
+What it does:
+Compare two PDFs side by side — flip through pages together and spot differences visually. Free, private, in your browser.
+
+About the source format (PDF):
+Two versions of a contract or report look identical until you find the one changed paragraph — on page 14.
+
+About the target format (PDF):
+Side-by-side comparison makes changes visible instantly, without printing anything.
+
+Use cases:
+- Checking what changed between two contract drafts
+- Comparing report versions before a meeting
+- Verifying a translated document matches the original layout
+
+Tip: If the documents have different page counts, comparison stops at the shorter one.
+
+FAQs:
+Q: How do I compare two PDF files?
+A: Drop both PDFs and flip pages with the page control. Both documents render side by side at the same page number so differences jump out.
+
+Q: Does it highlight differences automatically?
+A: Honest answer: this is visual side-by-side comparison — you spot the changes with your eyes. Automatic diff highlighting is not included.
+
+Q: Are my documents uploaded?
+A: Never. Both PDFs render locally in your browser.
+
+### Translate PDF
+
+URL: https://allinoneconverter.vercel.app/convert/translate-pdf/
+
+What it does:
+Translate a whole PDF with on-device AI — 10 language pairs (English, Spanish, French, German, Arabic, Hindi). No text ever leaves your browser.
+
+About the source format (PDF):
+PDFs in a foreign language are unreadable walls of text — and online translators upload your document to their servers.
+
+About the target format (PDF):
+A translated PDF you can actually read, produced privately on your own device.
+
+Use cases:
+- Reading a foreign-language contract or manual
+- Translating a research paper to English
+- Sharing a document with someone in their language
+
+Tip: First use downloads the AI language model once (~30–100MB) — after that it works fully offline.
+
+FAQs:
+Q: How do I translate a PDF for free?
+A: Drop the PDF, pick a language pair, and download the translated document. AI translation runs 100% on your device — nothing is uploaded anywhere.
+
+Q: Which languages are supported?
+A: English, Spanish, French, German, Arabic, and Hindi — in both directions (10 pairs). Urdu is not available yet.
+
+Q: How good is the translation?
+A: Honest answer: good enough for understanding — roughly 80% quality. It is machine translation, not a human translator. Fine for free and private use.
+
+Q: Is my document uploaded anywhere?
+A: Never. The AI model downloads to your browser once, then everything runs on your device.
+
+Q: Does it keep the layout?
+A: Text is reflowed into clean pages — the original fancy layout is simplified, but nothing is lost in reading order.
 
 ## Image Converters
 

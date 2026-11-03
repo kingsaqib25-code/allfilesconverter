@@ -4,7 +4,7 @@
 
 ## What this site is
 
-Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 98 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (20 tools), Image Converters (29 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
+Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 108 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (30 tools), Image Converters (29 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
 
 ## Privacy / no-upload policy
 
@@ -29,7 +29,7 @@ Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-con
 - https://allinoneconverter.vercel.app/gif-maker/ — Video to GIF Maker: Turn any video into an animated GIF: trim the exact moment, set width, FPS and quality, two-pass palette rendering for crisp colors.
 - https://allinoneconverter.vercel.app/tools/bulk-rename/ — Bulk File Renamer: Rename up to 500 files at once: find & replace, prefix/suffix, sequential numbering, case fixes — live preview, ZIP download, 100% in your browser.
 
-## PDF Converters (20)
+## PDF Converters (30)
 
 Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GIF, BMP and HEIC images, TXT, Markdown and CSV files into PDF documents — or convert PDF to JPG/PNG images, merge, split, compress, rotate, watermark, add page numbers, redact, crop, delete pages, unlock and edit PDFs, and extract text and images — your documents are never uploaded anywhere.
 
@@ -53,6 +53,16 @@ Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GI
 - https://allinoneconverter.vercel.app/convert/redact-pdf/ — Redact PDF: Black out names, ID numbers, or any sensitive words across a whole PDF at once.
 - https://allinoneconverter.vercel.app/convert/delete-pages-pdf/ — Delete Pages from PDF: Remove unwanted pages from a PDF — blank pages, covers, or mistakes.
 - https://allinoneconverter.vercel.app/convert/crop-pdf/ — Crop PDF: Trim ugly margins and whitespace off every PDF page.
+- https://allinoneconverter.vercel.app/convert/pdf-to-markdown/ — PDF to Markdown Converter: Turn any PDF into clean Markdown — headings, lists, and paragraphs preserved.
+- https://allinoneconverter.vercel.app/convert/repair-pdf/ — Repair PDF: Fix a damaged or corrupted PDF — rebuilds the file from whatever pages still read correctly, so you can open it again.
+- https://allinoneconverter.vercel.app/convert/organize-pdf/ — Organize PDF Pages: Reorder PDF pages however you like — type the new order like "3, 1, 2" and download the rearranged document.
+- https://allinoneconverter.vercel.app/convert/word-to-pdf/ — Word to PDF Converter: Turn Word documents (.doc, .docx) into PDF — headings, lists, tables, bold and italic preserved.
+- https://allinoneconverter.vercel.app/convert/excel-to-pdf/ — Excel to PDF Converter: Turn Excel spreadsheets (.xls, .xlsx) into clean PDF tables — header row highlighted, columns auto-sized.
+- https://allinoneconverter.vercel.app/convert/pdf-to-powerpoint/ — PDF to PowerPoint Converter: Turn PDF pages into editable PowerPoint slides — each page becomes a slide with its text.
+- https://allinoneconverter.vercel.app/convert/sign-pdf/ — Sign PDF: Sign a PDF online — draw your signature with mouse or finger, pick the page and position, download the signed document.
+- https://allinoneconverter.vercel.app/convert/html-to-pdf/ — HTML to PDF Converter: Turn HTML code or web pages into PDF — paste your HTML, preview it, and save as PDF with your browser’s own printer.
+- https://allinoneconverter.vercel.app/convert/compare-pdf/ — Compare PDF Files: Compare two PDFs side by side — flip through pages together and spot differences visually.
+- https://allinoneconverter.vercel.app/convert/translate-pdf/ — Translate PDF: Translate a whole PDF with on-device AI — 10 language pairs (English, Spanish, French, German, Arabic, Hindi).
 
 ## Image Converters (29)
 
