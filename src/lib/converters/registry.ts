@@ -165,7 +165,7 @@ export interface ConverterEntry {
   /** Declarative option controls rendered by the widget (quality slider etc.). */
   options?: OptionDef[];
   /** Which widget renders this entry: default single-file, pdf (custom PDF UI), merge (multi-file). */
-  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   /** Shown while a heavy engine (ffmpeg.wasm) initializes. */
@@ -273,7 +273,7 @@ interface PairSpec {
   faqA: string;
   convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
   options?: OptionDef[];
-  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   loadingNote?: string;
@@ -2165,6 +2165,7 @@ const PAIRS: PairSpec[] = [
       'Turning phone photos of documents into a single PDF for email',
       'Combining scanned pages into one file for a job or visa application',
       'Converting JPG screenshots into a PDF report',
+      'Making a PAN card / Aadhaar / certificate photo into a PDF for uploads',
     ],
     tip: 'Drop multiple JPGs at once — they become pages in order. Quality 92 is perfect for documents; go lower if the PDF must stay tiny for upload forms.',
     flagship: true,
@@ -2180,6 +2181,10 @@ const PAIRS: PairSpec[] = [
       {
         q: 'How do I keep the PDF small for uploads?',
         a: 'Lower the quality slider to 70\u201380. For scanned documents the difference is invisible and the file shrinks dramatically.',
+      },
+      {
+        q: 'How do I make a PAN card photo into a PDF?',
+        a: 'Take a clear photo of the card, drop it here, and download the PDF — one photo, one page. Keep quality at 80+ so the text stays readable for verification.',
       },
       {
         q: 'JPG to PDF or PNG to PDF?',
@@ -2505,21 +2510,26 @@ const PAIRS: PairSpec[] = [
     title: 'Compress PDF',
     widget: 'pdf',
     loadingNote: PDF_ENGINE_NOTE,
-    blurb: 'Shrink an oversized PDF so it fits email and upload limits. Re-compresses page images at High, Balanced or Small — best for scanned and image-heavy PDFs.',
-    faqQ: 'How much smaller will my PDF get?',
-    faqA: 'It depends on the PDF: scanned and image-heavy PDFs often shrink 50\u201380%, while text-only PDFs (already small) shrink less. Try "Balanced" first — it is the sweet spot.',
+    blurb: 'Compress PDF to 200KB, 500KB, 1MB, or 2MB — pick an exact target size and get the best quality that fits. Perfect for email attachments and upload forms with strict limits. 100% on-device.',
+    faqQ: 'How do I compress a PDF to 200KB?',
+    faqA: 'Drop your PDF, tap the 200KB preset, and hit compress — the tool tries each quality level and keeps the sharpest version that lands at or under 200KB. If even the smallest setting overshoots, you get the smallest possible file with the honest size shown.',
     aboutFrom: 'PDFs balloon when they are full of scanned images — a 40-page scan can be 100 MB, far over email and form limits.',
     aboutTo: 'A compressed PDF keeps every page readable at a fraction of the bytes — the same document, emailable again.',
     useCases: [
-      'Shrinking a scanned application to fit a 10 MB upload limit',
-      'Making a photo-heavy PDF emailable',
-      'Reducing a large ebook for phone storage',
+      'Compressing a PDF below 200KB for an online form upload',
+      'Shrinking a PDF to 1MB for an email attachment',
+      'Reducing a scanned application to fit a 10 MB upload limit',
+      'Making a photo-heavy PDF emailable without losing readability',
     ],
-    tip: 'This works best on scanned/image PDFs. If your PDF is mostly text and already small, there is little left to squeeze — that is normal.',
+    tip: 'For strict limits, use the size presets (200KB/500KB/1MB/2MB) — they hunt the best quality that fits. For general shrinking, Balanced is the sweet spot.',
     extraFaqs: [
       {
         q: 'Will my text stay sharp?',
         a: 'At High and Balanced settings, yes for normal reading. "Smallest file" visibly softens fine print — use it only when size matters more than crispness.',
+      },
+      {
+        q: 'What is the smallest a PDF can go?',
+        a: 'It depends on page count and content. Scanned pages can shrink 80%+, but a 100-page document may never reach 200KB — the tool always shows the honest final size so you know exactly where you landed.',
       },
       {
         q: 'Honest note: how does this compression work?',
@@ -3403,6 +3413,42 @@ const PAIRS: PairSpec[] = [
     ],
   },
   /* ------------------ competitor-gap round: image tools ------------------ */
+  {
+    id: 'compress-image', from: 'Image', to: 'Compressed Image', fromExts: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'avif'], toExt: 'jpg', category: 'image',
+    title: 'Compress Image',
+    widget: 'compress-image',
+    loadingNote: IMAGE_ENGINE_NOTE,
+    blurb: 'Compress any image to an exact size — target 200KB, 500KB, or any size you need. One-click presets for Instagram, WhatsApp, email attachments, and upload forms. 100% on-device: your photos never leave your browser.',
+    faqQ: 'How do I compress an image to 200KB?',
+    faqA: 'Drop your image, type 200 in the target-size box, and hit compress — the tool hunts the exact quality that lands your file at or under 200KB. No sign-up, no upload, free forever.',
+    aboutFrom: 'Phone photos are huge — a single picture can be 5–10 MB, too big for WhatsApp, email attachments, and forms with strict upload limits.',
+    aboutTo: 'A compressed image keeps the same photo at a fraction of the size — same picture, emailable and uploadable again, with quality you control.',
+    useCases: [
+      'Compressing a photo to 200KB for an online form upload',
+      'Shrinking pictures for Instagram (1080px) without the ugly recompress',
+      'Making images small enough for WhatsApp and email attachments',
+      'Reducing image size for a website without losing visible quality',
+    ],
+    tip: 'For exact limits (forms, uploads), use the target-size box — it finds the right quality for you. For sharing, the Instagram and WhatsApp presets are one click.',
+    extraFaqs: [
+      {
+        q: 'Will Instagram recompress my photo anyway?',
+        a: 'Yes — Instagram always recompresses uploads. That is exactly why the Instagram preset (1080px, quality 80) exists: it gives Instagram a clean file so the double compression looks far better.',
+      },
+      {
+        q: 'Why does WhatsApp reduce my photo quality?',
+        a: 'WhatsApp shrinks every photo to save data. Sending an already-compact image (WhatsApp preset) means less damage and faster sending on slow connections.',
+      },
+      {
+        q: 'Can I compress a PNG without losing quality?',
+        a: 'PNG is lossless, so it cannot shrink much without changing format. Pick JPG or WebP output for dramatically smaller files — the visual difference on photos is tiny.',
+      },
+      {
+        q: 'Is there a file size limit?',
+        a: 'No — everything runs in your browser, so there is no server limit. Very large images just take a few seconds longer.',
+      },
+    ],
+  },
   {
     id: 'image-resize', from: 'Image', to: 'Image', fromExts: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'], toExt: 'png', category: 'image',
     title: 'Resize Images',

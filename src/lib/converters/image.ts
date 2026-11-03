@@ -194,3 +194,123 @@ export async function rotateImageFile(
     bitmap.close();
   }
 }
+
+export interface SmartCompressOpts {
+  /** 0..100, used when no targetKB is set */
+  quality: number;
+  /** max output width in px (aspect kept); 0/undefined = keep original */
+  maxWidth?: number;
+  /** exact target size in KB; binary-searches quality (lossy formats only) */
+  targetKB?: number;
+  /** output format; 'keep' = original extension */
+  format: 'keep' | 'jpg' | 'webp' | 'png';
+}
+
+export interface SmartCompressResult extends ConvertedImage {
+  origBytes: number;
+  outBytes: number;
+  width: number;
+  height: number;
+  qualityUsed: number;
+}
+
+/**
+ * Smart image compressor for the /convert/compress-image/ pillar page.
+ * Quality slider, optional max-width resize, optional exact target-KB
+ * (binary search on quality for JPEG/WebP). Everything on-device.
+ */
+export async function compressImageSmart(
+  file: File,
+  opts: SmartCompressOpts
+): Promise<SmartCompressResult> {
+  const origExt = imgExt(file.name);
+  const outExt =
+    opts.format === 'keep' ? (mimeForExt(origExt) ? origExt : 'jpg') : opts.format;
+  const mime = mimeForExt(outExt);
+  if (!mime) throw new Error(`Sorry, we can't write .${outExt} images yet.`);
+
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error(
+      'We could not read that image. It may be corrupt, or the format is not supported for reading in this browser.'
+    );
+  }
+
+  try {
+    let w = bitmap.width;
+    let h = bitmap.height;
+    const maxW = opts.maxWidth ?? 0;
+    if (maxW > 0 && w > maxW) {
+      h = Math.round((h * maxW) / w);
+      w = maxW;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas is not available in this browser.');
+    ctx.imageSmoothingQuality = 'high';
+    if (mime === 'image/jpeg') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.drawImage(bitmap, 0, 0, w, h);
+
+    const encode = (q: number): Promise<Blob | null> =>
+      new Promise((res) => canvas.toBlob(res, mime, q));
+
+    const lossy = mime === 'image/jpeg' || mime === 'image/webp';
+    let qualityUsed = Math.min(100, Math.max(1, opts.quality)) / 100;
+    let blob: Blob | null = null;
+
+    if (opts.targetKB && opts.targetKB > 0 && lossy) {
+      // Binary search quality so the output lands at/under the target size.
+      const target = opts.targetKB * 1024;
+      let lo = 0.05;
+      let hi = 0.95;
+      let best: Blob | null = null;
+      let bestQ = lo;
+      for (let i = 0; i < 8; i++) {
+        const mid = (lo + hi) / 2;
+        const b = await encode(mid);
+        if (!b) break;
+        if (b.size <= target) {
+          best = b;
+          bestQ = mid;
+          lo = mid; // try higher quality while staying under target
+        } else {
+          hi = mid;
+        }
+      }
+      blob = best ?? (await encode(lo));
+      qualityUsed = bestQ;
+      if (blob && blob.size > target) {
+        // Even the lowest quality overshoots (e.g. huge dimensions):
+        // keep the smallest we got; the UI reports the honest numbers.
+      }
+    } else {
+      blob = await encode(qualityUsed);
+    }
+
+    if (!blob) {
+      throw new Error(
+        `This browser refused to encode ${outExt.toUpperCase()}. Try PNG or JPG instead.`
+      );
+    }
+    const base = file.name.replace(/\.[^.]+$/, '') || 'image';
+    return {
+      blob,
+      filename: `${base}-compressed.${outExt}`,
+      origBytes: file.size,
+      outBytes: blob.size,
+      width: w,
+      height: h,
+      qualityUsed: Math.round(qualityUsed * 100),
+    };
+  } finally {
+    bitmap.close();
+  }
+}

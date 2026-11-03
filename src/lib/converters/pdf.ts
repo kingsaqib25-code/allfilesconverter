@@ -345,6 +345,40 @@ export async function compressPdf(
   file: File,
   level: CompressLevel = 'medium'
 ): Promise<ConvertResult> {
+  return compressPdfAtLevel(file, level);
+}
+
+/**
+ * Compress a PDF aiming for an exact target size: tries 'low' first, then
+ * steps quality UP while the result stays at/under the target, so the user
+ * gets the best quality that still fits. Returns the smallest result when
+ * even 'low' overshoots (honest — the UI reports actual bytes).
+ */
+export async function compressPdfToSize(
+  file: File,
+  targetBytes: number
+): Promise<ConvertResult & { levelUsed: CompressLevel; hitTarget: boolean }> {
+  const order: CompressLevel[] = ['low', 'medium', 'high'];
+  let bestFit: (ConvertResult & { levelUsed: CompressLevel }) | null = null;
+  let smallest: (ConvertResult & { levelUsed: CompressLevel }) | null = null;
+  for (const level of order) {
+    const r = await compressPdfAtLevel(file, level);
+    const tagged = { ...r, levelUsed: level };
+    if (!smallest || r.blob.size < smallest.blob.size) smallest = tagged;
+    if (r.blob.size <= targetBytes) {
+      bestFit = tagged; // fits — try one step better quality
+    } else {
+      break; // overshoots — stop here
+    }
+  }
+  const winner = bestFit ?? smallest!;
+  return { ...winner, hitTarget: winner.blob.size <= targetBytes };
+}
+
+async function compressPdfAtLevel(
+  file: File,
+  level: CompressLevel
+): Promise<ConvertResult> {
   const preset = COMPRESS_PRESETS[level] ?? COMPRESS_PRESETS.medium;
   const pdf = await openPdf(file);
   const { PDFDocument } = await import('pdf-lib');

@@ -806,3 +806,28 @@ a.card:hover { text-decoration: none; border-color: var(--brand); box-shadow: va
 }
 .annot-capture { position: absolute; inset: 0; z-index: 3; }
 .edit-block.selected { outline: 2px dashed #0f766e !important; outline-offset: 1px; background: rgba(15, 118, 110, 0.10) !important; }
+
+/* Compress-image widget (cluster pillar page) */
+.preset-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-btn {
+  border: 1px solid var(--border, #e2e8f0); background: #fff; border-radius: 999px;
+  padding: 6px 14px; font-size: 13px; cursor: pointer; color: inherit;
+}
+.pill-btn:hover { border-color: var(--brand); }
+.pill-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.opt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.opt { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.opt input[type="number"], .opt select {
+  border: 1px solid var(--border, #e2e8f0); border-radius: 8px; padding: 8px 10px; font-size: 14px;
+}
+.opt input[type="range"] { width: 100%; accent-color: var(--brand); }
+.muted { color: #64748b; font-size: 13px; }
+.hidden { display: none; }
+.error { color: #b91c1c; font-size: 14px; margin-top: 8px; }
+.good { color: #0f766e; font-weight: 700; }
+.warn { color: #b45309; font-weight: 700; }
+.result-card {
+  margin-top: 14px; border: 1px solid var(--border, #e2e8f0); border-radius: 12px;
+  padding: 14px; background: #f8fafc;
+}
+.result-card .btn-primary { display: inline-block; margin-top: 8px; text-decoration: none; }

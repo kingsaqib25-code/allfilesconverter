@@ -33,6 +33,7 @@ export default function PdfWidget({ entryId }: Props) {
   const [outputs, setOutputs] = useState<OutFile[]>([]);
   const [range, setRange] = useState('');
   const [compressLevel, setCompressLevel] = useState<'high' | 'medium' | 'low'>('medium');
+  const [compressTargetKB, setCompressTargetKB] = useState<number | null>(null);
   const [quality, setQuality] = useState(92);
   // Second-wave PDF tools (competitor-gap round).
   const [angle, setAngle] = useState<'90' | '180' | '270'>('90');
@@ -157,8 +158,17 @@ export default function PdfWidget({ entryId }: Props) {
         }
         case 'compress-pdf': {
           for (const f of files) {
-            const r = await mod.compressPdf(f, compressLevel);
-            outs.push({ blob: r.blob, filename: r.filename, label: r.filename });
+            if (compressTargetKB && compressTargetKB > 0) {
+              const r = await mod.compressPdfToSize(f, compressTargetKB * 1024);
+              outs.push({
+                blob: r.blob,
+                filename: r.filename,
+                label: `${r.filename} (${(r.blob.size / 1024).toFixed(0)} KB${r.hitTarget ? '' : ' — target missed, smallest possible'})`,
+              });
+            } else {
+              const r = await mod.compressPdf(f, compressLevel);
+              outs.push({ blob: r.blob, filename: r.filename, label: r.filename });
+            }
           }
           break;
         }
@@ -463,18 +473,54 @@ export default function PdfWidget({ entryId }: Props) {
               </label>
             )}
             {showCompress && (
-              <label className="opt-row">
-                <span className="opt-label">Compression</span>
-                <select
-                  value={compressLevel}
-                  onChange={(e) => setCompressLevel(e.target.value as 'high' | 'medium' | 'low')}
-                  aria-label="Compression level"
-                >
-                  <option value="high">High quality (larger file)</option>
-                  <option value="medium">Balanced</option>
-                  <option value="low">Smallest file</option>
-                </select>
-              </label>
+              <>
+                <div className="preset-row" style={{ marginBottom: 8 }}>
+                  {[
+                    { kb: 200, label: '200KB' },
+                    { kb: 500, label: '500KB' },
+                    { kb: 1024, label: '1MB' },
+                    { kb: 2048, label: '2MB' },
+                  ].map((p) => (
+                    <button
+                      key={p.kb}
+                      type="button"
+                      className={`pill-btn${compressTargetKB === p.kb ? ' active' : ''}`}
+                      onClick={() => setCompressTargetKB(compressTargetKB === p.kb ? null : p.kb)}
+                      title={`Aim for under ${p.label}`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={`pill-btn${compressTargetKB === null ? ' active' : ''}`}
+                    onClick={() => setCompressTargetKB(null)}
+                  >
+                    Custom
+                  </button>
+                </div>
+                {compressTargetKB !== null && (
+                  <p className="opt-hint" style={{ marginBottom: 8 }}>
+                    Target: under {compressTargetKB >= 1024 ? `${compressTargetKB / 1024}MB` : `${compressTargetKB}KB`} — best quality that fits wins.
+                  </p>
+                )}
+                <label className="opt-row">
+                  <span className="opt-label">Compression</span>
+                  <select
+                    value={compressLevel}
+                    onChange={(e) => {
+                      setCompressLevel(e.target.value as 'high' | 'medium' | 'low');
+                      setCompressTargetKB(null);
+                    }}
+                    aria-label="Compression level"
+                    disabled={compressTargetKB !== null}
+                  >
+                    <option value="high">High quality (larger file)</option>
+                    <option value="medium">Balanced</option>
+                    <option value="low">Smallest file</option>
+                  </select>
+                </label>
+              </>
             )}
             {showQuality && (
               <label className="opt-row">
