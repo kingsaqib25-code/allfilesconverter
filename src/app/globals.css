@@ -737,3 +737,17 @@ a.card:hover { text-decoration: none; border-color: var(--brand); box-shadow: va
 /* ---------- category hero: tagline + compact summary, tools above the fold ---------- */
 .cat-sub { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .cat-sub .tool-tagline { margin: 0; }
+
+/* ---------- sticky hero filter pills (desktop) ---------- */
+.hero-pills { background: var(--brand-soft); border-bottom: 1px solid var(--line); }
+.hero-pills .wrap { padding-top: 0.7rem; padding-bottom: 0.7rem; }
+.hero-pills .pills { margin: 0; justify-content: center; }
+#all-tools { scroll-margin-top: 96px; }
+@media (min-width: 1024px) {
+  .hero-pills {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 12px rgba(15, 118, 110, 0.10);
+  }
+}

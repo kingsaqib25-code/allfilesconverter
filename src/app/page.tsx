@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import HeroDropZone from '@/components/HeroDropZone';
+import HeroPills from '@/components/HeroPills';
 import AiSummarize from '@/components/AiSummarize';
 import ToolsGrid from '@/components/ToolsGrid';
 import { ToolCard } from '@/components/ToolCard';
@@ -29,6 +30,7 @@ export default function Home() {
 
   return (
     <>
+      <HeroPills />
       <section className="hero">
         <div className="wrap">
           <span className="kicker">100% free · No sign-up</span>
