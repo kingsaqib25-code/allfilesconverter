@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import SearchBar from './SearchBar';
 import FeedbackButton from './FeedbackButton';
 import HeaderSummaryButton from './HeaderSummaryButton';
@@ -26,7 +27,11 @@ const MEGA_ORDER: (typeof CATEGORIES)[number]['id'][] = [
   'tools',
 ];
 
-function MegaMenu() {
+/** Trailing-slash-insensitive path compare (hrefs omit it, pathname keeps it). */
+const normPath = (p: string) => p.replace(/\/+$/, '') || '/';
+
+function MegaMenu({ currentPath }: { currentPath: string }) {
+  const cur = normPath(currentPath);
   return (
     <div className="nav-drop-panel nav-drop-mega" role="menu" aria-label="All tools by category">
       {MEGA_ORDER.map((cid) => {
@@ -43,12 +48,21 @@ function MegaMenu() {
         return (
           <div className="mega-col" key={cid}>
             <div className="mega-col-title">{cat.name.replace(/ Converters$/, '')}</div>
-            {rows.map((r) => (
-              <Link key={r.id} href={r.href} className="mega-row" role="menuitem">
-                <ToolIcon id={r.id} size={26} title={r.title} />
-                <span className="mega-row-t">{r.title}</span>
-              </Link>
-            ))}
+            {rows.map((r) => {
+              const active = normPath(r.href) === cur;
+              return (
+                <Link
+                  key={r.id}
+                  href={r.href}
+                  className={`mega-row${active ? ' mega-row-current' : ''}`}
+                  role="menuitem"
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <ToolIcon id={r.id} size={26} title={r.title} />
+                  <span className="mega-row-t">{r.title}</span>
+                </Link>
+              );
+            })}
           </div>
         );
       })}
@@ -60,6 +74,7 @@ function ConvertersDropdown() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -80,20 +95,15 @@ function ConvertersDropdown() {
   }, []);
 
   const close = () => setOpen(false);
-  const desktopHover = () =>
-    typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
 
+  // Click-to-toggle: the panel stays open while the user browses it.
+  // It closes on outside click, Escape, the toggle button, or a link click.
+  // (Deliberately no hover open/close — the panel used to vanish mid-browse.)
   return (
     <div
       className="nav-drop"
       ref={ref}
       data-slot="converters-dropdown"
-      onMouseEnter={() => {
-        if (desktopHover()) setOpen(true);
-      }}
-      onMouseLeave={() => {
-        if (desktopHover()) setOpen(false);
-      }}
     >
       <button
         ref={btnRef}
@@ -125,7 +135,7 @@ function ConvertersDropdown() {
               </Link>
             ))}
           </div>
-          <MegaMenu />
+          <MegaMenu currentPath={pathname} />
         </>
       )}
     </div>

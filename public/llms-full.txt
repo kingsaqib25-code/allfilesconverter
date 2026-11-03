@@ -4,7 +4,7 @@
 
 ## Site summary
 
-Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 93 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (20 tools), Image Converters (27 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (12 tools), Audio Converters (9 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
+Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 98 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (20 tools), Image Converters (29 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
 
 ## PDF Converters
 
@@ -908,6 +908,36 @@ A: AVIF for the absolute smallest files when your audience uses current browsers
 Q: Do phones display AVIF?
 A: Recent iPhones (iOS 16+) and Android phones (Android 12+) display AVIF in their browsers. Older phones may not.
 
+### Compress JPG
+
+URL: https://allinoneconverter.vercel.app/convert/jpg-compress/
+
+What it does:
+Shrink a JPG photo to a much smaller file in one click. Pick how strong the compression is — perfect before emailing, uploading, or publishing to the web.
+
+About the source format (JPG):
+JPG photos from phones and cameras are often far bigger than they need to be — multi-megabyte files that are slow to upload and eat mobile data.
+
+About the target format (Compressed JPG):
+A compressed JPG keeps the same photo at a fraction of the size. Same picture, same format — just the wasted bytes squeezed out.
+
+Use cases:
+- Shrinking photos before emailing them
+- Making images small enough for upload forms with size limits
+- Speeding up a web page by compressing its JPGs
+
+Tip: Start at the default 60 — if you can’t see a difference at full size, try 45 for an even smaller file.
+
+FAQs:
+Q: How much smaller will my JPG get?
+A: At the default setting, typically 50–70% smaller with quality that still looks great on screens. Push the slider lower for tiny files, higher when every pixel counts.
+
+Q: Will compressing ruin my photo?
+A: Not at the default setting — the change is virtually invisible on screens. Only extreme settings show artifacts, and you control the slider.
+
+Q: Can I compress the same photo twice?
+A: You can, but each pass loses a little more quality. Compress once from the original for the best result.
+
 ### WebP to PNG Converter
 
 URL: https://allinoneconverter.vercel.app/convert/webp-to-png/
@@ -1003,6 +1033,36 @@ A: For large image libraries and performance-critical sites, yes — the savings
 
 Q: Which browsers can create AVIF files here?
 A: Chrome and Edge encode AVIF reliably. If your browser shows ‘not supported’, your WebP is already a great result.
+
+### Compress WebP
+
+URL: https://allinoneconverter.vercel.app/convert/webp-compress/
+
+What it does:
+Make a WebP image even smaller in one click. WebP is already efficient — this squeezes out the remaining wasted bytes with a quality slider you control.
+
+About the source format (WebP):
+WebP is the efficient modern format, but encoders play it safe — most WebP files on the web are bigger than they need to be.
+
+About the target format (Compressed WebP):
+A compressed WebP keeps the same format and transparency support, just leaner. Ideal when page speed is the priority.
+
+Use cases:
+- Squeezing extra kilobytes out of website WebP images
+- Shrinking WebP screenshots before sharing
+- Hitting strict file-size limits on uploads
+
+Tip: WebP keeps transparency at any quality — unlike JPG, compressing never turns transparent areas white.
+
+FAQs:
+Q: Is it worth compressing an already-small WebP?
+A: Often yes — screenshots and graphics saved as WebP can still shrink 30–50% at quality settings that look identical on screen.
+
+Q: Does compressing remove the transparency?
+A: No — WebP transparency survives compression at any quality level. That’s one of its big advantages over JPG.
+
+Q: WebP or AVIF for the smallest file?
+A: AVIF compresses better but needs a modern browser to create. Compressed WebP is the safe, universal choice.
 
 ### GIF to PNG Converter
 
@@ -1660,14 +1720,14 @@ Use cases:
 - Starting a README from plain-text drafts
 - Moving text into Obsidian or similar note apps
 
-Tip: The conversion gives you a valid Markdown file as-is — then add # headings and **bold** in seconds with any Markdown editor.
+Tip: Underlined and ALL-CAPS titles become real Markdown headings automatically — then add **bold** in seconds with any Markdown editor.
 
 FAQs:
 Q: Does it add formatting automatically?
-A: It converts your text into a valid Markdown file as-is. You can then add # headings, **bold** and lists in seconds with any Markdown editor.
+A: Yes — underlined titles (=== / ---) become # headings, ALL-CAPS lines become ## headings, and lists are preserved. You can then add **bold** and more in seconds with any Markdown editor.
 
 Q: Does it auto-detect headings?
-A: No — it converts your text faithfully as-is. Adding # marks for headings takes seconds and keeps you in control.
+A: Yes — setext-style underlined titles and standalone ALL-CAPS lines are converted to # / ## headings automatically.
 
 Q: Why convert TXT to Markdown at all?
 A: Markdown renders with formatting on GitHub, in note apps and docs sites — plain .txt files never do.
@@ -2539,6 +2599,70 @@ A: The first 10 seconds of your video. For a custom section or longer clips, the
 Q: Why is my GIF file so big?
 A: GIFs store every frame as an image — they’re inherently heavy. Shorter clips, smaller widths and lower FPS all shrink the file.
 
+### Video to Frames (Extract JPG/PNG Stills)
+
+URL: https://allinoneconverter.vercel.app/convert/video-to-frames/
+
+What it does:
+Extract still frames from any video as JPG or PNG images — delivered as one handy ZIP. Pick how many frames per second; great for storyboards, thumbnails and datasets.
+
+About the source format (Video):
+Videos are just thousands of still images played fast. Sometimes you need those stills — a thumbnail, a storyboard, or frames for analysis.
+
+About the target format (Frames):
+You get every extracted frame as a high-quality JPG or PNG, numbered in order and packed into a single ZIP download.
+
+Use cases:
+- Grabbing a perfect thumbnail from a video
+- Building a storyboard of a clip, one frame per second
+- Extracting frames for a machine-learning image dataset
+- Saving a key moment as a still image
+
+Tip: 1 fps is ideal for storyboards and thumbnails. Use 5 fps only for short clips — a minute of video at 5 fps is already 300 stills.
+
+FAQs:
+Q: How many frames will I get?
+A: At 1 frame per second, a 60-second clip gives 60 stills. For long videos the rate drops automatically so the total never exceeds 200 frames — browsers run out of memory beyond that.
+
+Q: JPG or PNG frames?
+A: JPG for smaller ZIPs (fine for thumbnails and previews); PNG when you need pixel-perfect stills for editing or analysis.
+
+Q: Why is there a 200-frame limit?
+A: Browsers keep everything in memory — beyond a few hundred full-size stills they slow down or crash. For very long videos, extract in sections.
+
+Q: What quality are the JPG frames?
+A: High quality (q:v 2) — visually identical to pausing the video and screenshotting, without the hassle.
+
+### Compress Video
+
+URL: https://allinoneconverter.vercel.app/convert/mp4-compress/
+
+What it does:
+Shrink any video to a much smaller MP4 in one click. Three compression strengths — from light to maximum — so a heavy clip becomes emailable and upload-friendly.
+
+About the source format (Video):
+Phone videos are huge — a minute of 4K can be 400 MB. Too big to email, slow to upload, and painful on mobile data.
+
+About the target format (Compressed MP4):
+A compressed MP4 plays everywhere the original did, just leaner. Same video, same format — the wasted megabytes squeezed out.
+
+Use cases:
+- Making a video small enough to send on WhatsApp or email
+- Shrinking clips before uploading to a site with size limits
+- Saving phone storage by compressing camera roll videos
+
+Tip: Medium is the sweet spot for sharing. Use Strong only when size matters more than fine detail — like a quick preview.
+
+FAQs:
+Q: How much smaller will my video get?
+A: At the recommended Medium setting, typically 50–70% smaller. A 100 MB phone clip often becomes 30–40 MB with quality that still looks great on phones and the web.
+
+Q: Will compressing ruin the video quality?
+A: At Medium, barely — the difference is hard to spot on phones and laptops. Only Strong shows visible softening on big screens.
+
+Q: Does it also convert MOV or MKV?
+A: Yes — any supported input becomes a compressed MP4, so you get smaller size plus universal compatibility in one step.
+
 ### M4V to MP4 Converter
 
 URL: https://allinoneconverter.vercel.app/convert/m4v-to-mp4/
@@ -2849,6 +2973,36 @@ A: No — conversion can’t recover what MP3 compression removed. The benefit i
 
 Q: Why is the WAV so big?
 A: Uncompressed audio is ~10 MB per minute. That’s normal — it’s the price of the studio standard.
+
+### Compress Audio
+
+URL: https://allinoneconverter.vercel.app/convert/mp3-compress/
+
+What it does:
+Shrink any audio file to a compact MP3 in one click. Three bitrate presets — voice notes, music and podcasts all become a fraction of their size.
+
+About the source format (Audio):
+WAV and FLAC files are huge — a 3-minute WAV is 30 MB. Too heavy to message, slow to upload, wasteful to store.
+
+About the target format (Compressed MP3):
+A compressed MP3 plays on every device ever made at a tenth of the size. For voice and casual listening, the difference is inaudible.
+
+Use cases:
+- Shrinking voice recordings before sending on WhatsApp
+- Making podcast episodes download-friendly
+- Converting a WAV library to MP3s that fit on any device
+
+Tip: 128 kbps is the sweet spot — voice sounds identical, music stays enjoyable. Use 96 kbps only for speech when size is critical.
+
+FAQs:
+Q: How much smaller will my audio get?
+A: A WAV typically shrinks 85–90% as a 128 kbps MP3. Even an existing MP3 gets 30–40% smaller dropping from 320 to 128 kbps.
+
+Q: Will my music sound worse?
+A: At 128 kbps most listeners can’t tell on earbuds or phone speakers. Audiophiles with good headphones may prefer 192 kbps.
+
+Q: Can I compress an MP3 that’s already small?
+A: Yes, but re-compressing an MP3 loses a little more each time. For best quality, compress from the original WAV or FLAC when you have it.
 
 ### OGG to WAV Converter
 

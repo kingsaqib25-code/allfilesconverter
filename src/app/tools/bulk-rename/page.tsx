@@ -97,29 +97,26 @@ export default function BulkRenamePage() {
         <Link href="/">Home</Link> › <Link href="/categories/tools">File Tools</Link> › Bulk File Renamer
       </nav>
 
-      <div className="page-head">
+      <div className="page-head compact">
         <span className="pill">FILE TOOLS</span>
         <h1>Free Bulk File Renamer</h1>
-        <p className="lead">
-          Rename hundreds of files in one go — find &amp; replace, prefixes, sequential
-          numbering, case fixes and space cleanup, all combined. Free forever, no sign-up,
-          and your files never leave your device.
-        </p>
-        <p className="tldr">
-          <strong>TL;DR:</strong> Drop up to 500 files, set rename rules, watch the live
-          preview update with every keystroke, then download everything renamed as a ZIP.
-          Extensions are always protected, duplicates are auto-fixed, and your originals
-          are never touched.
+        <p className="tool-tagline">
+          Rename up to 500 files at once · Live preview · Free, private, no sign-up
         </p>
       </div>
+
+      <BulkRename />
 
       <AiSummarize
         summaryText={`Free Bulk File Renamer on ${BRAND}. TL;DR: drop up to 500 files of any type, combine find & replace, prefix/suffix, sequential numbering, case changes, space handling and special-character stripping, watch the live old → new preview update on every keystroke, then download all renamed files as a ZIP. Extensions are always preserved, duplicates auto-fixed, originals never touched — everything runs in your browser, so your files never leave your device.`}
       />
 
-      <BulkRename />
-
       <section className="prose">
+        <p>
+          Rename hundreds of files in one go — find &amp; replace, prefixes, sequential
+          numbering, case fixes and space cleanup, all combined. Free forever, no sign-up,
+          and your files never leave your device.
+        </p>
         <h2>How to rename files in bulk</h2>
         <div className="steps">
           {HOWTO_STEPS.map((s, i) => (

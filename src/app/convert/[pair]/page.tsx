@@ -101,7 +101,10 @@ export default async function ConvertPage({
               : `${entry.fromExts.map((e) => '.' + e).join(', ')} → .${entry.toExt}`}
         </span>
         <h1>Free {entry.title}</h1>
-        <p className="lead">{entry.description}</p>
+        <p className="tool-tagline">
+          {isEdit ? 'Edit your PDF right on the page' : `${entry.from} → ${entry.to}`} · Free
+          forever · No sign-up · Files never leave your device
+        </p>
       </div>
 
       {entry.widget === 'pdf' ? (

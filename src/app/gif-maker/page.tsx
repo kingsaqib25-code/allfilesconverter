@@ -85,30 +85,27 @@ export default function GifMakerPage() {
         <Link href="/">Home</Link> › GIF Maker
       </nav>
 
-      <div className="page-head">
+      <div className="page-head compact">
         <span className="pill">VIDEO → GIF</span>
         <h1>Free Video to GIF Converter</h1>
-        <p className="lead">
-          Convert any video to a high-quality animated GIF — MP4 to GIF, MOV to GIF, WebM to
-          GIF and more. Trim the exact second, pick a Discord-ready size, add reverse or
-          boomerang effects, crop the frame, and render with true two-pass color. Free
-          forever, no sign-up, no watermark, and your video never leaves your device.
-        </p>
-        <p className="tldr">
-          <strong>TL;DR:</strong> Drop a video, mark your moment with frame-accurate start/end
-          times, tune size, speed and effects, and download a clean GIF in seconds. Already
-          have a GIF that is too big? The Optimize tab shrinks it by 30–70%. Free, private,
-          no watermark — everything happens in your browser.
+        <p className="tool-tagline">
+          Video → GIF · Frame-accurate trim · Two-pass color · Free, private, no watermark
         </p>
       </div>
+
+      <GifMaker />
 
       <AiSummarize
         summaryText={`Free Video to GIF Converter on ${BRAND}. TL;DR: drop a video (MP4, MOV, WebM, AVI and more), mark your moment with frame-accurate start/end times, tune size, speed and effects (reverse, ping-pong, loop count, crop), and download a clean GIF in seconds with two-pass color rendering. The Optimize GIF tab shrinks existing GIFs by 30-70%. Free, private, no watermark — everything happens in your browser, so your video never leaves your device.`}
       />
 
-      <GifMaker />
-
       <section className="prose">
+        <p>
+          Convert any video to a high-quality animated GIF — MP4 to GIF, MOV to GIF, WebM to
+          GIF and more. Trim the exact second, pick a Discord-ready size, add reverse or
+          boomerang effects, crop the frame, and render with true two-pass color. Free
+          forever, no sign-up, no watermark, and your video never leaves your device.
+        </p>
         <h2>How to make a GIF from a video</h2>
         <div className="steps">
           {HOWTO_STEPS.map((s, i) => (
