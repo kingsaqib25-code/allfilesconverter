@@ -290,7 +290,10 @@ export default function Header() {
             focusable="false"
           >
             <rect x="2" y="2" width="60" height="60" rx="15" fill="#0f766e" />
-            <polygon points="27,9 42,33 33,33 37,55 19,29 29,29" fill="#ffffff" />
+            <path d="M20 12 H36 L44 20 V52 H20 Z" fill="#ffffff" />
+            <path d="M36 12 V20 H44 Z" fill="#8fd0c9" />
+            <path d="M25 27.2 H34.5 V25.2 L40 29 L34.5 32.8 V30.8 H25 Z" fill="#0f766e" />
+            <path d="M39 37.2 H29.5 V35.2 L24 39 L29.5 42.8 V40.8 H39 Z" fill="#0f766e" />
           </svg>
           <span>
             Quick Files Converter
