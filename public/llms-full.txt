@@ -4,7 +4,7 @@
 
 ## Site summary
 
-Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 108 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (30 tools), Image Converters (29 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
+Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 111 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (30 tools), Image Converters (32 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
 
 ## PDF Converters
 
@@ -96,6 +96,7 @@ Use cases:
 - Turning phone photos of documents into a single PDF for email
 - Combining scanned pages into one file for a job or visa application
 - Converting JPG screenshots into a PDF report
+- Making a PAN card / Aadhaar / certificate photo into a PDF for uploads
 
 Tip: Drop multiple JPGs at once — they become pages in order. Quality 92 is perfect for documents; go lower if the PDF must stay tiny for upload forms.
 
@@ -112,11 +113,11 @@ A: Each page matches its image’s dimensions, so nothing is stretched or croppe
 Q: How do I keep the PDF small for uploads?
 A: Lower the quality slider to 70–80. For scanned documents the difference is invisible and the file shrinks dramatically.
 
+Q: How do I make a PAN card photo into a PDF?
+A: Take a clear photo of the card, drop it here, and download the PDF — one photo, one page. Keep quality at 80+ so the text stays readable for verification.
+
 Q: JPG to PDF or PNG to PDF?
 A: JPG to PDF for photos and scans (smaller). PNG to PDF when the images have sharp text you cannot afford to soften.
-
-Q: Will the PDF look the same when printed?
-A: Yes — each page is your image at full resolution, so printing reproduces it faithfully.
 
 ### PNG to PDF Converter
 
@@ -222,7 +223,7 @@ A: No — pages are copied exactly, so text and images keep their original quali
 URL: https://allinoneconverter.vercel.app/convert/compress-pdf/
 
 What it does:
-Shrink an oversized PDF so it fits email and upload limits. Re-compresses page images at High, Balanced or Small — best for scanned and image-heavy PDFs.
+Compress PDF to 200KB, 500KB, 1MB, or 2MB — pick an exact target size and get the best quality that fits. Perfect for email attachments and upload forms with strict limits. 100% on-device.
 
 About the source format (PDF):
 PDFs balloon when they are full of scanned images — a 40-page scan can be 100 MB, far over email and form limits.
@@ -231,18 +232,22 @@ About the target format (PDF):
 A compressed PDF keeps every page readable at a fraction of the bytes — the same document, emailable again.
 
 Use cases:
-- Shrinking a scanned application to fit a 10 MB upload limit
-- Making a photo-heavy PDF emailable
-- Reducing a large ebook for phone storage
+- Compressing a PDF below 200KB for an online form upload
+- Shrinking a PDF to 1MB for an email attachment
+- Reducing a scanned application to fit a 10 MB upload limit
+- Making a photo-heavy PDF emailable without losing readability
 
-Tip: This works best on scanned/image PDFs. If your PDF is mostly text and already small, there is little left to squeeze — that is normal.
+Tip: For strict limits, use the size presets (200KB/500KB/1MB/2MB) — they hunt the best quality that fits. For general shrinking, Balanced is the sweet spot.
 
 FAQs:
-Q: How much smaller will my PDF get?
-A: It depends on the PDF: scanned and image-heavy PDFs often shrink 50–80%, while text-only PDFs (already small) shrink less. Try "Balanced" first — it is the sweet spot.
+Q: How do I compress a PDF to 200KB?
+A: Drop your PDF, tap the 200KB preset, and hit compress — the tool tries each quality level and keeps the sharpest version that lands at or under 200KB. If even the smallest setting overshoots, you get the smallest possible file with the honest size shown.
 
 Q: Will my text stay sharp?
 A: At High and Balanced settings, yes for normal reading. "Smallest file" visibly softens fine print — use it only when size matters more than crispness.
+
+Q: What is the smallest a PDF can go?
+A: It depends on page count and content. Scanned pages can shrink 80%+, but a 100-page document may never reach 200KB — the tool always shows the honest final size so you know exactly where you landed.
 
 Q: Honest note: how does this compression work?
 A: It re-renders each page as an optimized image — that is why it excels on scanned PDFs and does little for text-only ones. Nothing is uploaded; it all happens on your device.
@@ -1895,6 +1900,115 @@ A: PNG is lossless — a 2×2 collage of screenshots can easily be several MB. T
 
 Q: Do transparent PNGs keep transparency?
 A: Cells render on a white background, so transparency becomes white — consistent and print-friendly.
+
+### Compress Image
+
+URL: https://allinoneconverter.vercel.app/convert/compress-image/
+
+What it does:
+Compress any image to an exact size — target 200KB, 500KB, or any size you need. One-click presets for Instagram, WhatsApp, email attachments, and upload forms. 100% on-device: your photos never leave your browser.
+
+About the source format (Image):
+Phone photos are huge — a single picture can be 5–10 MB, too big for WhatsApp, email attachments, and forms with strict upload limits.
+
+About the target format (Compressed Image):
+A compressed image keeps the same photo at a fraction of the size — same picture, emailable and uploadable again, with quality you control.
+
+Use cases:
+- Compressing a photo to 200KB for an online form upload
+- Shrinking pictures for Instagram (1080px) without the ugly recompress
+- Making images small enough for WhatsApp and email attachments
+- Reducing image size for a website without losing visible quality
+
+Tip: For exact limits (forms, uploads), use the target-size box — it finds the right quality for you. For sharing, the Instagram and WhatsApp presets are one click.
+
+FAQs:
+Q: How do I compress an image to 200KB?
+A: Drop your image, type 200 in the target-size box, and hit compress — the tool hunts the exact quality that lands your file at or under 200KB. No sign-up, no upload, free forever.
+
+Q: Will Instagram recompress my photo anyway?
+A: Yes — Instagram always recompresses uploads. That is exactly why the Instagram preset (1080px, quality 80) exists: it gives Instagram a clean file so the double compression looks far better.
+
+Q: Why does WhatsApp reduce my photo quality?
+A: WhatsApp shrinks every photo to save data. Sending an already-compact image (WhatsApp preset) means less damage and faster sending on slow connections.
+
+Q: Can I compress a PNG without losing quality?
+A: PNG is lossless, so it cannot shrink much without changing format. Pick JPG or WebP output for dramatically smaller files — the visual difference on photos is tiny.
+
+Q: Is there a file size limit?
+A: No — everything runs in your browser, so there is no server limit. Very large images just take a few seconds longer.
+
+### UPC Barcode Generator
+
+URL: https://allinoneconverter.vercel.app/convert/upc-barcode-generator/
+
+What it does:
+Generate a scannable UPC-A barcode free — type 11 digits, get the check digit auto-calculated, and download a print-ready SVG or PNG at GS1 sizes (80–200%). 100% on-device: nothing is uploaded.
+
+About the source format (Number):
+A UPC-A barcode carries 12 digits in 95 bars. The last digit is a check digit — scanners reject the code if it does not add up, so it cannot be guessed.
+
+About the target format (UPC Barcode):
+This generator works out the check digit for you and draws the barcode to GS1 sizes, with the quiet zones scanners need on both sides.
+
+Use cases:
+- Making barcodes for your own stock and warehouse labels
+- Printing test barcodes before ordering packaging
+- Generating a scannable code for internal inventory
+
+Tip: For store shelves you need a GS1-licensed number — this tool draws the barcode, it does not license the number. For your own stock, use a number starting with 4.
+
+FAQs:
+Q: How do I generate a UPC barcode for free?
+A: Type your 11 digits above — the 12th check digit is calculated automatically and the barcode redraws live. Download SVG for packaging/designers (stays sharp at any size) or PNG for label printers. Always print a test and scan it before a full run.
+
+Q: Will my UPC barcode scan?
+A: The bar pattern follows the GS1 specification exactly, including quiet zones. Whether it scans also depends on your printer and label stock — print the test sheet and scan it with the scanner you will use.
+
+Q: Should I download SVG or PNG?
+A: SVG for packaging, designers, and page layouts — it stays sharp at any size. PNG for label printers and office programs; pick your printer’s size so bars land on whole dots.
+
+Q: What UPC number can I use?
+A: For products sold in stores, buy a licensed number from GS1. For internal stock labels, use a number starting with 4 — GS1 reserves that range for in-company use so it cannot clash with a real product.
+
+Q: What size should the barcode be?
+A: 100% is the GS1 standard (0.33mm narrow bar). Use 80% only if the pack is truly small — smaller bars are harder to scan. Never go below 80%.
+
+### QR Code Generator
+
+URL: https://allinoneconverter.vercel.app/convert/qr-code-generator/
+
+What it does:
+Make a free QR code for any link or text — plus WiFi QR codes guests can scan to join your network without typing the password. Custom colors, error correction, SVG + PNG download. 100% on-device.
+
+About the source format (Text):
+QR codes turn a link, a piece of text, or WiFi login into a square anyone’s phone camera can read in a second.
+
+About the target format (QR Code):
+This generator builds the code in your browser — with custom colors, four error-correction levels, and print-ready downloads.
+
+Use cases:
+- Putting a scannable link on a business card, flyer, or menu
+- Sharing WiFi with guests — they scan and connect, no password spelling
+- Linking packaging or receipts to a website or review page
+
+Tip: For print, download SVG. If the QR will be small or partly covered (logo in the middle), use Q or H error correction.
+
+FAQs:
+Q: How do I make a QR code for free?
+A: Type your link or text above — the QR code appears instantly. Download SVG for print (stays sharp at any size) or PNG for screens and documents. No sign-up, no watermark, and nothing is uploaded.
+
+Q: How does the WiFi QR code work?
+A: Enter your WiFi name and password — the QR encodes them in the standard format phones understand. A guest scans it and joins instantly, without you saying the password out loud.
+
+Q: Will a colored QR code still scan?
+A: Yes, if the contrast is strong (dark code on light background). Use Q or H error correction with colors — it adds redundancy so the code survives.
+
+Q: What is error correction?
+A: Extra data woven into the code so it still scans when dirty, damaged, or partly covered. H survives up to 30% damage — best when placing a logo in the middle.
+
+Q: Do QR codes expire?
+A: Codes made here never expire — the pattern encodes your text directly. (Some online services use redirect links that can expire; this tool does not.)
 
 ### Resize Images
 

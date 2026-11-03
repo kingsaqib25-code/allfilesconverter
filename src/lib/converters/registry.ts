@@ -165,7 +165,7 @@ export interface ConverterEntry {
   /** Declarative option controls rendered by the widget (quality slider etc.). */
   options?: OptionDef[];
   /** Which widget renders this entry: default single-file, pdf (custom PDF UI), merge (multi-file). */
-  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode' | 'qr';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   /** Shown while a heavy engine (ffmpeg.wasm) initializes. */
@@ -273,7 +273,7 @@ interface PairSpec {
   faqA: string;
   convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
   options?: OptionDef[];
-  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode' | 'qr';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   loadingNote?: string;
@@ -3481,6 +3481,41 @@ const PAIRS: PairSpec[] = [
       {
         q: 'What size should the barcode be?',
         a: '100% is the GS1 standard (0.33mm narrow bar). Use 80% only if the pack is truly small — smaller bars are harder to scan. Never go below 80%.',
+      },
+    ],
+  },
+  {
+    id: 'qr-code-generator', from: 'Text', to: 'QR Code', fromExts: ['txt'], toExt: 'svg', category: 'image',
+    title: 'QR Code Generator',
+    widget: 'qr',
+    loadingNote: IMAGE_ENGINE_NOTE,
+    blurb: 'Make a free QR code for any link or text — plus WiFi QR codes guests can scan to join your network without typing the password. Custom colors, error correction, SVG + PNG download. 100% on-device.',
+    faqQ: 'How do I make a QR code for free?',
+    faqA: 'Type your link or text above — the QR code appears instantly. Download SVG for print (stays sharp at any size) or PNG for screens and documents. No sign-up, no watermark, and nothing is uploaded.',
+    aboutFrom: 'QR codes turn a link, a piece of text, or WiFi login into a square anyone\u2019s phone camera can read in a second.',
+    aboutTo: 'This generator builds the code in your browser — with custom colors, four error-correction levels, and print-ready downloads.',
+    useCases: [
+      'Putting a scannable link on a business card, flyer, or menu',
+      'Sharing WiFi with guests — they scan and connect, no password spelling',
+      'Linking packaging or receipts to a website or review page',
+    ],
+    tip: 'For print, download SVG. If the QR will be small or partly covered (logo in the middle), use Q or H error correction.',
+    extraFaqs: [
+      {
+        q: 'How does the WiFi QR code work?',
+        a: 'Enter your WiFi name and password — the QR encodes them in the standard format phones understand. A guest scans it and joins instantly, without you saying the password out loud.',
+      },
+      {
+        q: 'Will a colored QR code still scan?',
+        a: 'Yes, if the contrast is strong (dark code on light background). Use Q or H error correction with colors — it adds redundancy so the code survives.',
+      },
+      {
+        q: 'What is error correction?',
+        a: 'Extra data woven into the code so it still scans when dirty, damaged, or partly covered. H survives up to 30% damage — best when placing a logo in the middle.',
+      },
+      {
+        q: 'Do QR codes expire?',
+        a: 'Codes made here never expire — the pattern encodes your text directly. (Some online services use redirect links that can expire; this tool does not.)',
       },
     ],
   },

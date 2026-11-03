@@ -4,7 +4,7 @@
 
 ## What this site is
 
-Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 108 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (30 tools), Image Converters (29 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
+Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-conversion website with 111 online tools. Every tool converts files entirely on the visitor's device using web technology (Canvas, WebAssembly, File API) — there is no server-side processing, no database, no user accounts, no sign-up and no watermarks. Tool categories: PDF Converters (30 tools), Image Converters (32 tools), Text Converters (5 tools), Data Converters (7 tools), Subtitle Converters (12 tools), Video Converters (14 tools), Audio Converters (10 tools), File Tools (1 tool). Flagship tools include the Video to GIF Maker, Edit PDF, Merge PDF, Compress PDF, HEIC to JPG and MP4 to MP3. Privacy policy: files never leave the visitor's device; nothing is uploaded anywhere; the "Summarize with AI" buttons only share a page's public summary text with the chosen AI, never the visitor's files.
 
 ## Privacy / no-upload policy
 
@@ -39,7 +39,7 @@ Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GI
 - https://allinoneconverter.vercel.app/convert/png-to-pdf/ — PNG to PDF Converter: Convert PNG screenshots and graphics into a clean PDF — one image per page.
 - https://allinoneconverter.vercel.app/convert/merge-pdf/ — Merge PDF: Combine multiple PDF files into one document — arrange pages in any order with up/down controls.
 - https://allinoneconverter.vercel.app/convert/split-pdf/ — Split PDF: Extract pages from a PDF — enter a range like "1-3, 5" and download just those pages as a new PDF.
-- https://allinoneconverter.vercel.app/convert/compress-pdf/ — Compress PDF: Shrink an oversized PDF so it fits email and upload limits.
+- https://allinoneconverter.vercel.app/convert/compress-pdf/ — Compress PDF: Compress PDF to 200KB, 500KB, 1MB, or 2MB — pick an exact target size and get the best quality that fits.
 - https://allinoneconverter.vercel.app/convert/pdf-to-text/ — PDF to Text Converter: Extract all the text from a PDF into a clean .txt file.
 - https://allinoneconverter.vercel.app/convert/pdf-to-word/ — PDF to Word Converter: Extract your PDF’s text into an editable Word (.docx) document — free, in your browser.
 - https://allinoneconverter.vercel.app/convert/pdf-to-excel/ — PDF to Excel Converter: Turn PDF tables into editable Excel spreadsheets — right in your browser.
@@ -64,7 +64,7 @@ Free online PDF tools that run entirely in your browser. Turn JPG, PNG, WebP, GI
 - https://allinoneconverter.vercel.app/convert/compare-pdf/ — Compare PDF Files: Compare two PDFs side by side — flip through pages together and spot differences visually.
 - https://allinoneconverter.vercel.app/convert/translate-pdf/ — Translate PDF: Translate a whole PDF with on-device AI — 10 language pairs (English, Spanish, French, German, Arabic, Hindi).
 
-## Image Converters (29)
+## Image Converters (32)
 
 Free online image converters that run entirely in your browser. Change PNG to JPG, WebP to PNG, HEIC to JPG and more — resize and rotate images in bulk, or create PNG to PDF, JPG to PDF, WebP to PDF, GIF to PDF, BMP to PDF and HEIC to PDF documents — your photos are never uploaded anywhere.
 
@@ -95,6 +95,9 @@ Free online image converters that run entirely in your browser. Change PNG to JP
 - https://allinoneconverter.vercel.app/convert/heic-to-pdf/ — HEIC to PDF Converter: Convert iPhone HEIC photos directly into a PDF — one photo per page.
 - https://allinoneconverter.vercel.app/convert/merge-images-jpg/ — Merge Images to JPG: Combine multiple images into one JPG — pick Grid 2×2, Grid 3×3, a horizontal strip or a vertical strip.
 - https://allinoneconverter.vercel.app/convert/merge-images-png/ — Merge Images to PNG: Merge multiple images into one lossless PNG collage — Grid 2×2, Grid 3×3, horizontal or vertical layouts.
+- https://allinoneconverter.vercel.app/convert/compress-image/ — Compress Image: Compress any image to an exact size — target 200KB, 500KB, or any size you need.
+- https://allinoneconverter.vercel.app/convert/upc-barcode-generator/ — UPC Barcode Generator: Generate a scannable UPC-A barcode free — type 11 digits, get the check digit auto-calculated, and download a print-ready SVG or PNG at GS1 sizes (80–200%).
+- https://allinoneconverter.vercel.app/convert/qr-code-generator/ — QR Code Generator: Make a free QR code for any link or text — plus WiFi QR codes guests can scan to join your network without typing the password.
 - https://allinoneconverter.vercel.app/convert/image-resize/ — Resize Images: Resize images in bulk — by percent, exact width, or exact height.
 - https://allinoneconverter.vercel.app/convert/image-rotate/ — Rotate Images: Fix sideways photos in bulk — rotate any number of images 90°, 180° or 270° and download them all as a ZIP.
 
