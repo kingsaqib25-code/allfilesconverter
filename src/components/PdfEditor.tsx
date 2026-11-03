@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EditorBlock, EditorPageData, FinalPage, PageOverlay } from '@/lib/converters/pdf';
 
 /** Annotation toolbar tools (iLovePDF-style). */
-type AnnotTool = 'select' | 'edit-text' | 'add-text' | 'highlight' | 'draw' | 'shape' | 'image';
+type AnnotTool = 'select' | 'edit-text' | 'add-text' | 'highlight' | 'underline' | 'strikeout' | 'draw' | 'shape' | 'image';
 type ShapeKind = 'rect' | 'ellipse' | 'line';
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -114,6 +114,8 @@ export default function PdfEditor() {
   const [selOverlay, setSelOverlay] = useState<string | null>(null);
   const [selBlock, setSelBlock] = useState<string | null>(null);
   const [penHex, setPenHex] = useState('#000000');
+  const [textSize, setTextSize] = useState(14);
+  const [penThick, setPenThick] = useState(2.5);
   const [histPast, setHistPast] = useState<PageOverlay[][]>([]);
   const [histFuture, setHistFuture] = useState<PageOverlay[][]>([]);
   const overlaysRef = useRef<PageOverlay[]>([]);
@@ -159,7 +161,7 @@ export default function PdfEditor() {
   const wrapRef = useRef<HTMLDivElement>(null);
   /** In-progress annotation gesture (highlight rect / draw stroke / shape). */
   const gestureRef = useRef<{
-    kind: 'highlight' | 'draw' | 'shape';
+    kind: 'highlight' | 'underline' | 'strikeout' | 'draw' | 'shape';
     startX: number;
     startY: number;
     pts: Array<{ x: number; y: number }>;
@@ -192,7 +194,7 @@ export default function PdfEditor() {
   );
 
   const commitGesture = useCallback(
-    (g: { kind: 'highlight' | 'draw' | 'shape'; startX: number; startY: number; pts: Array<{ x: number; y: number }> }) => {
+    (g: { kind: 'highlight' | 'underline' | 'strikeout' | 'draw' | 'shape'; startX: number; startY: number; pts: Array<{ x: number; y: number }> }) => {
       if (g.kind === 'draw') {
         if (g.pts.length < 2) return;
         const xs = g.pts.map((p) => p.x);
@@ -210,7 +212,7 @@ export default function PdfEditor() {
             h: Math.max(...ys) - Math.min(...ys) + pad * 2,
             strokes: [g.pts],
             color: hexToRgb(penHex),
-            thickness: 2.5,
+            thickness: penThick,
           },
         ]);
         return;
@@ -233,6 +235,18 @@ export default function PdfEditor() {
             opacity: 0.35,
           },
         ]);
+      } else if (g.kind === 'underline' || g.kind === 'strikeout') {
+        commitOverlays([
+          ...overlaysRef.current,
+          {
+            id: localOvId(),
+            kind: g.kind,
+            pageNum: pages[sel]?.pageNum ?? 1,
+            x: x0, y: y0, w: x1 - x0, h: Math.max(y1 - y0, 8),
+            color: hexToRgb(penHex),
+            thickness: 1.5,
+          },
+        ]);
       } else {
         commitOverlays([
           ...overlaysRef.current,
@@ -249,7 +263,7 @@ export default function PdfEditor() {
         ]);
       }
     },
-    [commitOverlays, penHex, shapeKind, pages, sel]
+    [commitOverlays, penHex, penThick, shapeKind, pages, sel]
   );
 
   const addTextAt = useCallback(
@@ -262,11 +276,11 @@ export default function PdfEditor() {
         kind: 'text',
         pageNum: pg.pageNum,
         x: Math.max(0, p.x - 4),
-        y: Math.max(0, p.y - 16),
-        w: 200,
-        h: 22,
-        text: '',
-        fontSize: 14,
+        y: Math.max(0, p.y - textSize - 4),
+        w: 220,
+        h: textSize + 8,
+        text: 'Your text here',
+        fontSize: textSize,
         color: hexToRgb(penHex),
       };
       commitOverlays([...overlaysRef.current, ov]);
@@ -276,7 +290,7 @@ export default function PdfEditor() {
         document.querySelector<HTMLElement>(`[data-ov-id="${id}"] [contenteditable]`)?.focus();
       });
     },
-    [commitOverlays, penHex, pages, sel]
+    [commitOverlays, penHex, textSize, pages, sel]
   );
 
   const onAnnotDown = useCallback(
@@ -294,7 +308,7 @@ export default function PdfEditor() {
         }
         return;
       }
-      if (tool === 'highlight' || tool === 'draw' || tool === 'shape') {
+      if (tool === 'highlight' || tool === 'underline' || tool === 'strikeout' || tool === 'draw' || tool === 'shape') {
         const p = toPdfPoint(e.clientX, e.clientY);
         if (!p) return;
         gestureRef.current = { kind: tool, startX: p.x, startY: p.y, pts: [{ x: p.x, y: p.y }] };
@@ -371,6 +385,30 @@ export default function PdfEditor() {
     commitOverlays(overlaysRef.current.filter((o) => o.id !== selOverlay));
     setSelOverlay(null);
   }, [selOverlay, commitOverlays]);
+
+  /** Selected text overlay (for the formatting controls). */
+  const selTextOv = overlays.find((o) => o.id === selOverlay && o.kind === 'text') ?? null;
+
+  const bumpTextSize = useCallback(
+    (d: number) => {
+      const ov = overlaysRef.current.find((o) => o.id === selOverlay && o.kind === 'text');
+      if (ov) {
+        const ns = Math.min(72, Math.max(6, (ov.fontSize ?? 14) + d));
+        commitOverlays(overlaysRef.current.map((o) => (o.id === ov.id ? { ...o, fontSize: ns, h: ns + 8 } : o)));
+      } else {
+        setTextSize((v) => Math.min(72, Math.max(6, v + d)));
+      }
+    },
+    [selOverlay, commitOverlays]
+  );
+
+  const toggleTextStyle = useCallback(
+    (k: 'bold' | 'italic') => {
+      const ov = overlaysRef.current.find((o) => o.id === selOverlay && o.kind === 'text');
+      if (ov) commitOverlays(overlaysRef.current.map((o) => (o.id === ov.id ? { ...o, [k]: !o[k] } : o)));
+    },
+    [selOverlay, commitOverlays]
+  );
 
   /** Commit an in-place text overlay edit (empty text removes the overlay). */
   const commitTextOverlay = useCallback(
@@ -1146,6 +1184,22 @@ export default function PdfEditor() {
                   </button>
                   <button
                     type="button"
+                    className={`annot-btn${tool === 'underline' ? ' on' : ''}`}
+                    onClick={() => pickTool('underline')}
+                    title="Drag under text to underline it"
+                  >
+                    <span aria-hidden="true" style={{ textDecoration: 'underline' }}>U</span> Underline
+                  </button>
+                  <button
+                    type="button"
+                    className={`annot-btn${tool === 'strikeout' ? ' on' : ''}`}
+                    onClick={() => pickTool('strikeout')}
+                    title="Drag over text to strike it through"
+                  >
+                    <span aria-hidden="true" style={{ textDecoration: 'line-through' }}>S</span> Strikeout
+                  </button>
+                  <button
+                    type="button"
                     className={`annot-btn${tool === 'draw' ? ' on' : ''}`}
                     onClick={() => pickTool('draw')}
                     title="Draw freehand"
@@ -1184,6 +1238,50 @@ export default function PdfEditor() {
                     <span aria-hidden="true">🖼</span> Image
                   </button>
                 </div>
+                {(tool === 'add-text' || selTextOv) && (
+                  <div className="annot-group" role="group" aria-label="Text formatting">
+                    <button type="button" className="annot-btn annot-btn-sm" onClick={() => bumpTextSize(-2)} title="Smaller text">
+                      <span aria-hidden="true">A−</span>
+                    </button>
+                    <span className="annot-val" aria-label="Font size">{selTextOv?.fontSize ?? textSize}</span>
+                    <button type="button" className="annot-btn annot-btn-sm" onClick={() => bumpTextSize(2)} title="Larger text">
+                      <span aria-hidden="true">A+</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`annot-btn annot-btn-sm${selTextOv?.bold ? ' on' : ''}`}
+                      onClick={() => toggleTextStyle('bold')}
+                      title="Bold"
+                      disabled={!selTextOv}
+                    >
+                      <span aria-hidden="true" style={{ fontWeight: 800 }}>B</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`annot-btn annot-btn-sm${selTextOv?.italic ? ' on' : ''}`}
+                      onClick={() => toggleTextStyle('italic')}
+                      title="Italic"
+                      disabled={!selTextOv}
+                    >
+                      <span aria-hidden="true" style={{ fontStyle: 'italic' }}>I</span>
+                    </button>
+                  </div>
+                )}
+                {(tool === 'draw' || tool === 'shape') && (
+                  <div className="annot-group" role="group" aria-label="Stroke thickness">
+                    {[2, 4, 6].map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`annot-btn annot-btn-sm${penThick === t ? ' on' : ''}`}
+                        onClick={() => setPenThick(t)}
+                        title={`${t} pt stroke`}
+                      >
+                        {t}pt
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="annot-group" role="group" aria-label="Color">
                   {['#000000', '#d62626', '#1a56db', '#0f7a3d'].map((c) => (
                     <button
@@ -1344,11 +1442,24 @@ export default function PdfEditor() {
                     aria-hidden="true"
                   >
                     {overlays
-                      .filter((o) => o.pageNum === page.pageNum && (o.kind === 'draw' || o.kind === 'shape'))
+                      .filter((o) => o.pageNum === page.pageNum && (o.kind === 'draw' || o.kind === 'shape' || o.kind === 'underline' || o.kind === 'strikeout'))
                       .map((o) => {
                         const col = rgbToCss(o.color ?? { r: 0, g: 0, b: 0 }, o.opacity ?? 1);
                         const fy = (y: number) => page.height - y;
                         const sel = selOverlay === o.id;
+                        if (o.kind === 'underline' || o.kind === 'strikeout') {
+                          const ly = o.kind === 'underline' ? o.y + 2 : o.y + o.h * 0.45;
+                          return (
+                            <g key={o.id}>
+                              <line x1={o.x} y1={fy(ly)} x2={o.x + o.w} y2={fy(ly)}
+                                stroke={sel ? '#0f766e' : col} strokeWidth={o.thickness ?? 1.5} strokeLinecap="round" />
+                              {sel && (
+                                <rect x={o.x} y={fy(o.y + o.h)} width={o.w} height={o.h}
+                                  fill="none" stroke="#0f766e" strokeWidth={1.5} strokeDasharray="5 3" />
+                              )}
+                            </g>
+                          );
+                        }
                         if (o.kind === 'draw' && o.strokes) {
                           return (
                             <g key={o.id}>
@@ -1403,7 +1514,7 @@ export default function PdfEditor() {
                       })}
                     {(() => {
                       const g = gestureRef.current;
-                      if (!g || (g.kind !== 'draw' && g.kind !== 'shape' && g.kind !== 'highlight')) return null;
+                      if (!g) return null;
                       const col = rgbToCss(hexToRgb(penHex), 0.9);
                       const fy = (y: number) => page.height - y;
                       if (g.kind === 'draw')
@@ -1424,6 +1535,10 @@ export default function PdfEditor() {
                           <rect x={x0} y={fy(y1)} width={x1 - x0} height={y1 - y0}
                             fill="rgba(255, 224, 102, 0.45)" stroke="none" />
                         );
+                      if (g.kind === 'underline' || g.kind === 'strikeout') {
+                        const ly = g.kind === 'underline' ? y0 + 2 : (y0 + y1) / 2;
+                        return <line x1={x0} y1={fy(ly)} x2={x1} y2={fy(ly)} stroke={col} strokeWidth={1.5} strokeLinecap="round" />;
+                      }
                       if (shapeKind === 'ellipse')
                         return <ellipse cx={(x0 + x1) / 2} cy={fy((y0 + y1) / 2)} rx={(x1 - x0) / 2} ry={(y1 - y0) / 2} fill="none" stroke={col} strokeWidth={2} />;
                       if (shapeKind === 'line')
@@ -1502,6 +1617,7 @@ export default function PdfEditor() {
                               fontSize: `${(((o.fontSize ?? 14) / page.width) * 100).toFixed(3)}cqw`,
                               color: rgbToCss(o.color ?? { r: 0, g: 0, b: 0 }),
                               fontWeight: o.bold ? 700 : 400,
+                              fontStyle: o.italic ? 'italic' : 'normal',
                               lineHeight: 1.25,
                             }}
                             ref={(el) => {
@@ -1521,7 +1637,7 @@ export default function PdfEditor() {
                     })}
                 </div>
                 {/* ---- capture layer for annotation gestures ---- */}
-                {(tool === 'add-text' || tool === 'highlight' || tool === 'draw' || tool === 'shape' || tool === 'image') && (
+                {(tool === 'add-text' || tool === 'highlight' || tool === 'underline' || tool === 'strikeout' || tool === 'draw' || tool === 'shape' || tool === 'image') && (
                   <div
                     className="annot-capture"
                     style={{ cursor: tool === 'add-text' || tool === 'image' ? 'text' : 'crosshair', touchAction: 'none' }}

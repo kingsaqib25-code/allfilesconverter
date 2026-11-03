@@ -594,7 +594,7 @@ export interface FinalPage {
  */
 export interface PageOverlay {
   id: string;
-  kind: 'text' | 'highlight' | 'draw' | 'shape' | 'image';
+  kind: 'text' | 'highlight' | 'draw' | 'shape' | 'image' | 'underline' | 'strikeout';
   /** 1-based page number this overlay belongs to. */
   pageNum: number;
   /** Bounding box in PDF units (origin bottom-left). */
@@ -606,6 +606,7 @@ export interface PageOverlay {
   text?: string;
   fontSize?: number;
   bold?: boolean;
+  italic?: boolean;
   /** stroke/text color */
   color?: { r: number; g: number; b: number };
   /** shape kind: rect | ellipse | line */
@@ -1053,6 +1054,7 @@ interface EditorFontKit {
   notoB: unknown | null;
   helv: unknown;
   helvB: unknown;
+  helvI: unknown;
 }
 
 /** Embed the editor fonts into a pdf-lib document (TTFs cached, fail-soft). */
@@ -1063,7 +1065,7 @@ async function embedEditorFonts(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     registerFontkit?: (fk: any) => void;
   },
-  StandardFonts: { Helvetica: string; HelveticaBold: string }
+  StandardFonts: { Helvetica: string; HelveticaBold: string; HelveticaOblique: string }
 ): Promise<EditorFontKit> {
   await fetchEditorFontBytes();
   // TTF embedding needs fontkit registered on the document instance.
@@ -1090,6 +1092,7 @@ async function embedEditorFonts(
     notoB,
     helv: await doc.embedFont(StandardFonts.Helvetica),
     helvB: await doc.embedFont(StandardFonts.HelveticaBold),
+    helvI: await doc.embedFont(StandardFonts.HelveticaOblique),
   };
 }
 
@@ -1381,9 +1384,18 @@ export async function renderEditedPdf(
           opacity: o.opacity ?? 0.35,
           borderWidth: 0,
         });
+      } else if (o.kind === 'underline' || o.kind === 'strikeout') {
+        const ly = o.kind === 'underline' ? o.y + 2 : o.y + o.h * 0.45;
+        copied.drawLine({
+          start: { x: o.x, y: ly },
+          end: { x: o.x + o.w, y: ly },
+          thickness: Math.max(1, (o.thickness ?? 1.5)),
+          color: rgb(oc.r, oc.g, oc.b),
+          opacity: o.opacity ?? 1,
+        });
       } else if (o.kind === 'text' && o.text) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const font: any = o.bold ? kit.helvB : kit.helv;
+        const font: any = o.bold ? kit.helvB : o.italic ? kit.helvI : kit.helv;
         const size = o.fontSize ?? 12;
         const lines = o.text.split('\n');
         lines.forEach((ln, i) => {
