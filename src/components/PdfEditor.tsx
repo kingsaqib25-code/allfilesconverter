@@ -39,6 +39,20 @@ function baseName(name: string): string {
   return name.replace(/\.[^.]+$/, '') || 'document';
 }
 
+/**
+ * Best-effort font stack for the in-place editing box, from the PDF's raw
+ * font name. We can't use the embedded font on a DOM overlay, but matching
+ * the generic family + exact size removes the "pasted layer" look.
+ */
+function fontStackForBlock(b: { fontName: string }): string {
+  const n = (b.fontName || '').toLowerCase();
+  if (/mono|courier|consol|typewriter/.test(n))
+    return 'ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace';
+  if (/times|georgia|garamond|palatino|bookman|serif/.test(n))
+    return 'Georgia, "Times New Roman", Times, serif';
+  return '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+}
+
 type Phase = 'idle' | 'loading' | 'ready';
 
 export default function PdfEditor() {
@@ -51,6 +65,21 @@ export default function PdfEditor() {
   const [view, setView] = useState<'page' | 'text'>('page');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showOutlines, setShowOutlines] = useState(false);
+  /** Zoom for the page view (read small text, then edit it). 1 = 100%. */
+  const [zoom, setZoom] = useState(1);
+  const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
+  const zoomIn = useCallback(() => {
+    setZoom((z) => {
+      const i = ZOOM_STEPS.findIndex((s) => s > z + 1e-9);
+      return i === -1 ? z : ZOOM_STEPS[i];
+    });
+  }, []);
+  const zoomOut = useCallback(() => {
+    setZoom((z) => {
+      const below = [...ZOOM_STEPS].reverse().find((s) => s < z - 1e-9);
+      return below === undefined ? z : below;
+    });
+  }, []);
   const [working, setWorking] = useState(false);
   const [workLabel, setWorkLabel] = useState('');
   const [outputs, setOutputs] = useState<OutFile[]>([]);
@@ -177,7 +206,7 @@ export default function PdfEditor() {
           render: (o: { canvasContext: CanvasRenderingContext2D; viewport: unknown }) => { promise: Promise<void> };
           cleanup: () => void;
         };
-        const vp = pg.getViewport({ scale: 2 });
+        const vp = pg.getViewport({ scale: 2 * zoom });
         const canvas = canvasRef.current!;
         canvas.width = Math.floor(vp.width);
         canvas.height = Math.floor(vp.height);
@@ -191,7 +220,7 @@ export default function PdfEditor() {
     return () => {
       cancelled = true;
     };
-  }, [phase, page, sel]);
+  }, [phase, page, sel, zoom]);
 
   // ---- thumbnails (once) ----
   useEffect(() => {
@@ -740,19 +769,38 @@ export default function PdfEditor() {
                   </>
                 )}
               </span>
+              <span className="edit-zoom" role="group" aria-label="Zoom page view">
+                <button type="button" className="mini-btn" onClick={zoomOut} disabled={zoom <= 0.5} aria-label="Zoom out">
+                  −
+                </button>
+                <button
+                  type="button"
+                  className="mini-btn edit-zoom-label"
+                  onClick={() => setZoom(1)}
+                  aria-label="Reset zoom to 100%"
+                  title="Reset zoom"
+                >
+                  {Math.round(zoom * 100)}%
+                </button>
+                <button type="button" className="mini-btn" onClick={zoomIn} disabled={zoom >= 3} aria-label="Zoom in">
+                  +
+                </button>
+              </span>
             </div>
 
             {view === 'page' ? (
-              <div className="edit-canvas-wrap">
-                <canvas ref={canvasRef} className="edit-canvas" aria-label={`Page ${page.pageNum} preview`} />
+              <>
+              <div className="edit-zoom-scroll">
+                <div className="edit-canvas-wrap" style={{ width: `${zoom * 100}%` }}>
+                  <canvas ref={canvasRef} className="edit-canvas" aria-label={`Page ${page.pageNum} preview`} />
                 <div className="edit-overlay" aria-hidden={editingId != null}>
                   {page.blocks.map((b) => {
                     const isEditing = editingId === b.id;
                     const isEdited = b.editedText != null && b.editedText !== b.text;
-                    // Overlay box: straddle the baseline (descenders dip below it),
-                    // so the outline sits on the visible glyphs, not above them.
-                    const boxH = b.height * 1.35;
-                    const boxBottom = b.y - b.height * 0.25;
+                    // Overlay box: tight around the visible glyphs so clicks land on
+                    // the exact line — tall boxes overlap neighbours and steal clicks.
+                    const boxH = b.height * 1.1;
+                    const boxBottom = b.y - b.height * 0.2;
                     const style = {
                       left: `${(b.x / page.width) * 100}%`,
                       top: `${((page.height - (boxBottom + boxH)) / page.height) * 100}%`,
@@ -764,7 +812,16 @@ export default function PdfEditor() {
                         <div
                           key={b.id}
                           className="edit-block editing"
-                          style={style}
+                          style={{
+                            ...style,
+                            // Match the PDF's own text size/family so the edit box
+                            // doesn't look like a foreign layer pasted on top.
+                            // cqw = % of the page wrap width → auto-scales with zoom.
+                            fontSize: `${(b.fontSize / page.width) * 100}cqw`,
+                            fontFamily: fontStackForBlock(b),
+                            fontWeight: b.bold ? 700 : 400,
+                            lineHeight: 1.25,
+                          }}
                           contentEditable
                           suppressContentEditableWarning
                           spellCheck={false}
@@ -812,10 +869,12 @@ export default function PdfEditor() {
                     );
                   })}
                 </div>
-                <p className="opt-hint" style={{ marginTop: '0.5rem' }}>
-                  Click any text on the page to edit it in place. Edited blocks are highlighted.
-                </p>
               </div>
+            </div>
+            <p className="opt-hint" style={{ marginTop: '0.5rem' }}>
+              Click any text on the page to edit it in place. Edited blocks are highlighted.
+            </p>
+              </>
             ) : (
               <div className="edit-textview">
                 <label className="opt-label" htmlFor="edit-textarea">
