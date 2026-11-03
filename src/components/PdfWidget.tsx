@@ -304,7 +304,7 @@ export default function PdfWidget({ entryId }: Props) {
     showDeleteRange ||
     showCrop ||
     showExcel;
-  const showSidebar = hasOptions && outputs.length === 0;
+  const showSidebar = hasOptions; // options stay visible side-by-side while working
 
   return (
     <div

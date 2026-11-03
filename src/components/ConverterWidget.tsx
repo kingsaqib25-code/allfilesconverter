@@ -284,7 +284,7 @@ export default function ConverterWidget({ entryId }: Props) {
   const hasOptions = (entry.options?.length ?? 0) > 0;
   const doneCount = items.filter((it) => it.status === 'done').length;
   const pendingCount = items.filter((it) => it.status === 'pending' || it.status === 'error').length;
-  const showSidebar = hasOptions && doneCount === 0;
+  const showSidebar = hasOptions; // options stay visible side-by-side while working
 
   return (
     <div

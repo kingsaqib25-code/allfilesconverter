@@ -155,10 +155,80 @@ export default function BulkRename() {
           </p>
         </div>
       ) : (
-        <>
+        <div className="tool-grid has-side">
+          <div className="tool-main">
           {/* Rename rules */}
-          <div className="options-panel" aria-label="Rename rules">
-            <h3 className="opt-heading">Rename rules</h3>
+
+          {/* Live preview */}
+          <h3 className="opt-heading" style={{ marginTop: '1.25rem' }}>
+            Live preview{' '}
+            <span className="pill-n">
+              {changedCount} of {files.length} will change
+            </span>
+          </h3>
+          <div className="rename-preview" role="region" aria-label="Rename preview">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Current name</th>
+                  <th scope="col">New name</th>
+                  <th scope="col">
+                    <span className="sr-only">Remove</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {preview.map((p, i) => (
+                  <tr key={`${p.old}-${i}`}>
+                    <td className="rn-old" title={p.old}>
+                      {p.old}
+                    </td>
+                    <td className={p.old === p.next ? 'rn-same' : 'rn-new'} title={p.next}>
+                      {p.next}
+                      {p.old !== p.next && / \(\d+\)\./.test(p.next) && (
+                        <span className="rn-conflict" title="Auto-renamed to avoid a duplicate">
+                          {' '}
+                          duplicate fixed
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="rn-remove"
+                        onClick={() => removeAt(i)}
+                        aria-label={`Remove ${p.old}`}
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="widget-actions">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={downloadZip}
+              disabled={files.length === 0 || zipping}
+            >
+              {zipping ? 'Building ZIP…' : `Download all as ZIP (${files.length})`}
+            </button>
+            <button type="button" className="btn-ghost" onClick={clearAll}>
+              Clear all
+            </button>
+          </div>
+
+          <p className="opt-hint">
+            Your original files are never modified or uploaded — the ZIP contains renamed{' '}
+            <em>copies</em>. Extensions are always preserved.
+          </p>
+          </div>
+          <aside className="tool-side" aria-label="Rename rules">
+            <h2 className="tool-side-title">Rename rules</h2>
             <p className="opt-hint">
               Rules apply top to bottom: find → replace, spaces, strip characters, case,
               prefix, numbering, suffix. The extension is always kept.
@@ -325,76 +395,8 @@ export default function BulkRename() {
                 <span className="opt-hint"> (keeps letters, numbers, - _ .)</span>
               </span>
             </label>
-          </div>
-
-          {/* Live preview */}
-          <h3 className="opt-heading" style={{ marginTop: '1.25rem' }}>
-            Live preview{' '}
-            <span className="pill-n">
-              {changedCount} of {files.length} will change
-            </span>
-          </h3>
-          <div className="rename-preview" role="region" aria-label="Rename preview">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Current name</th>
-                  <th scope="col">New name</th>
-                  <th scope="col">
-                    <span className="sr-only">Remove</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {preview.map((p, i) => (
-                  <tr key={`${p.old}-${i}`}>
-                    <td className="rn-old" title={p.old}>
-                      {p.old}
-                    </td>
-                    <td className={p.old === p.next ? 'rn-same' : 'rn-new'} title={p.next}>
-                      {p.next}
-                      {p.old !== p.next && / \(\d+\)\./.test(p.next) && (
-                        <span className="rn-conflict" title="Auto-renamed to avoid a duplicate">
-                          {' '}
-                          duplicate fixed
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="rn-remove"
-                        onClick={() => removeAt(i)}
-                        aria-label={`Remove ${p.old}`}
-                      >
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="widget-actions">
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={downloadZip}
-              disabled={files.length === 0 || zipping}
-            >
-              {zipping ? 'Building ZIP…' : `Download all as ZIP (${files.length})`}
-            </button>
-            <button type="button" className="btn-ghost" onClick={clearAll}>
-              Clear all
-            </button>
-          </div>
-
-          <p className="opt-hint">
-            Your original files are never modified or uploaded — the ZIP contains renamed{' '}
-            <em>copies</em>. Extensions are always preserved.
-          </p>
-        </>
+          </aside>
+        </div>
       )}
     </div>
   );

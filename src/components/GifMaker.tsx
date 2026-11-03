@@ -457,7 +457,8 @@ export default function GifMaker() {
           />
         </div>
       ) : mode === 'optimize' ? (
-        <>
+        <div className="tool-grid has-side">
+          <div className="tool-main">
           <img
             src={videoUrl ?? undefined}
             alt="GIF to optimize"
@@ -468,6 +469,39 @@ export default function GifMaker() {
             Original: <strong>{fmtSize(file.size)}</strong> — pick how aggressively to shrink it.
           </p>
 
+
+          {working ? (
+            <div role="status" aria-label={loadNote ?? 'Optimizing GIF…'}>
+              {loadNote ? <div className="load-note">{loadNote}</div> : null}
+              <div className="progress determinate">
+                <div style={{ width: `${Math.round(progress * 100)}%`, animation: 'none', marginLeft: 0 }} />
+              </div>
+              <p className="gm-note">Optimizing… {Math.round(progress * 100)}%</p>
+            </div>
+          ) : optDone ? (
+            <div className="alert ok">
+              Done! {fmtSize(optDone.orig)} → <strong>{fmtSize(optDone.out)}</strong> (
+              {Math.max(0, Math.round((1 - optDone.out / optDone.orig) * 100))}% smaller).
+            </div>
+          ) : null}
+
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {!optDone ? (
+              <button className="btn" onClick={optimize} disabled={working}>
+                {working ? 'Optimizing…' : 'Optimize my GIF →'}
+              </button>
+            ) : (
+              <a className="btn" href={optDone.url} download={optDone.name}>
+                ⬇ Download {optDone.name}
+              </a>
+            )}
+            <button className="btn secondary" onClick={reset}>
+              {optDone ? 'Optimize another' : 'Choose different file'}
+            </button>
+          </div>
+          </div>
+          <aside className="tool-side" aria-label="GIF options">
+            <h2 className="tool-side-title">Options</h2>
           <div className="gm-opts">
             <div className="gm-opt">
               <span className="gm-label">Width</span>
@@ -523,37 +557,8 @@ export default function GifMaker() {
             Fewer colors = smaller file. 128 colors looks near-identical for most GIFs and
             typically saves 30–50%.
           </p>
-
-          {working ? (
-            <div role="status" aria-label={loadNote ?? 'Optimizing GIF…'}>
-              {loadNote ? <div className="load-note">{loadNote}</div> : null}
-              <div className="progress determinate">
-                <div style={{ width: `${Math.round(progress * 100)}%`, animation: 'none', marginLeft: 0 }} />
-              </div>
-              <p className="gm-note">Optimizing… {Math.round(progress * 100)}%</p>
-            </div>
-          ) : optDone ? (
-            <div className="alert ok">
-              Done! {fmtSize(optDone.orig)} → <strong>{fmtSize(optDone.out)}</strong> (
-              {Math.max(0, Math.round((1 - optDone.out / optDone.orig) * 100))}% smaller).
-            </div>
-          ) : null}
-
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {!optDone ? (
-              <button className="btn" onClick={optimize} disabled={working}>
-                {working ? 'Optimizing…' : 'Optimize my GIF →'}
-              </button>
-            ) : (
-              <a className="btn" href={optDone.url} download={optDone.name}>
-                ⬇ Download {optDone.name}
-              </a>
-            )}
-            <button className="btn secondary" onClick={reset}>
-              {optDone ? 'Optimize another' : 'Choose different file'}
-            </button>
-          </div>
-        </>
+          </aside>
+        </div>
       ) : (
         <>
           <video
@@ -567,7 +572,8 @@ export default function GifMaker() {
             aria-label="Video preview"
           />
           {duration > 0 && (
-            <>
+            <div className="tool-grid has-side">
+              <div className="tool-main">
               <div className="gm-row">
                 <label htmlFor="gm-scrub">
                   Preview <span className="gm-val">{fmtTime(cur)} / {fmtTime(duration)}</span>
@@ -653,6 +659,35 @@ export default function GifMaker() {
                 )}
               </div>
 
+              {working ? (
+                <div role="status" aria-label={loadNote ?? 'Rendering GIF…'}>
+                  {loadNote ? <div className="load-note">{loadNote}</div> : null}
+                  <div className="progress determinate">
+                    <div style={{ width: `${Math.round(progress * 100)}%`, animation: 'none', marginLeft: 0 }} />
+                  </div>
+                  <p className="gm-note">Rendering your GIF… {Math.round(progress * 100)}%</p>
+                </div>
+              ) : doneUrl ? (
+                <div className="alert ok">Done! Your GIF is ready ({doneSize}).</div>
+              ) : null}
+
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {!doneUrl ? (
+                  <button className="btn" onClick={convert} disabled={working}>
+                    {working ? 'Rendering…' : 'Make my GIF →'}
+                  </button>
+                ) : (
+                  <a className="btn" href={doneUrl} download={doneName}>
+                    ⬇ Download {doneName}
+                  </a>
+                )}
+                <button className="btn secondary" onClick={reset}>
+                  {doneUrl ? 'Make another' : 'Choose different video'}
+                </button>
+              </div>
+              </div>
+              <aside className="tool-side" aria-label="GIF options">
+                <h2 className="tool-side-title">Options</h2>
               <p className="gm-sect">Size presets</p>
               <div className="gm-btns" role="group" aria-label="Size presets" style={{ marginBottom: '0.5rem' }}>
                 {PRESETS.map((p) => (
@@ -818,33 +853,8 @@ export default function GifMaker() {
                 </span>
               </p>
 
-              {working ? (
-                <div role="status" aria-label={loadNote ?? 'Rendering GIF…'}>
-                  {loadNote ? <div className="load-note">{loadNote}</div> : null}
-                  <div className="progress determinate">
-                    <div style={{ width: `${Math.round(progress * 100)}%`, animation: 'none', marginLeft: 0 }} />
-                  </div>
-                  <p className="gm-note">Rendering your GIF… {Math.round(progress * 100)}%</p>
-                </div>
-              ) : doneUrl ? (
-                <div className="alert ok">Done! Your GIF is ready ({doneSize}).</div>
-              ) : null}
-
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {!doneUrl ? (
-                  <button className="btn" onClick={convert} disabled={working}>
-                    {working ? 'Rendering…' : 'Make my GIF →'}
-                  </button>
-                ) : (
-                  <a className="btn" href={doneUrl} download={doneName}>
-                    ⬇ Download {doneName}
-                  </a>
-                )}
-                <button className="btn secondary" onClick={reset}>
-                  {doneUrl ? 'Make another' : 'Choose different video'}
-                </button>
-              </div>
-            </>
+              </aside>
+            </div>
           )}
         </>
       )}

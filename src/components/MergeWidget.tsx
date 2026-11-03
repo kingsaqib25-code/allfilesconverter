@@ -141,7 +141,7 @@ export default function MergeWidget({ entryId }: Props) {
     pickFiles(e.dataTransfer.files);
   };
 
-  const showSidebar = !doneUrl;
+  const showSidebar = true; // options stay visible side-by-side while working
 
   return (
     <div className="widget widget-wide" aria-label={`${entry.title} tool`}>

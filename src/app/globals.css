@@ -106,7 +106,7 @@ main { min-height: 60vh; }
 .tool-main .dropzone { margin: 0; max-width: none; }
 @media (min-width: 920px) {
   .tool-grid.has-side { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
-  .tool-side { position: sticky; top: 84px; }
+  .tool-side { position: sticky; top: 84px; max-height: calc(100vh - 100px); overflow-y: auto; }
 }
 .tool-side {
   background: var(--bg-soft);
