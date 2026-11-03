@@ -165,7 +165,7 @@ export interface ConverterEntry {
   /** Declarative option controls rendered by the widget (quality slider etc.). */
   options?: OptionDef[];
   /** Which widget renders this entry: default single-file, pdf (custom PDF UI), merge (multi-file). */
-  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   /** Shown while a heavy engine (ffmpeg.wasm) initializes. */
@@ -273,7 +273,7 @@ interface PairSpec {
   faqA: string;
   convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
   options?: OptionDef[];
-  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   loadingNote?: string;
@@ -3446,6 +3446,41 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Is there a file size limit?',
         a: 'No — everything runs in your browser, so there is no server limit. Very large images just take a few seconds longer.',
+      },
+    ],
+  },
+  {
+    id: 'upc-barcode-generator', from: 'Number', to: 'UPC Barcode', fromExts: ['txt'], toExt: 'svg', category: 'image',
+    title: 'UPC Barcode Generator',
+    widget: 'barcode',
+    loadingNote: IMAGE_ENGINE_NOTE,
+    blurb: 'Generate a scannable UPC-A barcode free — type 11 digits, get the check digit auto-calculated, and download a print-ready SVG or PNG at GS1 sizes (80\u2013200%). 100% on-device: nothing is uploaded.',
+    faqQ: 'How do I generate a UPC barcode for free?',
+    faqA: 'Type your 11 digits above — the 12th check digit is calculated automatically and the barcode redraws live. Download SVG for packaging/designers (stays sharp at any size) or PNG for label printers. Always print a test and scan it before a full run.',
+    aboutFrom: 'A UPC-A barcode carries 12 digits in 95 bars. The last digit is a check digit — scanners reject the code if it does not add up, so it cannot be guessed.',
+    aboutTo: 'This generator works out the check digit for you and draws the barcode to GS1 sizes, with the quiet zones scanners need on both sides.',
+    useCases: [
+      'Making barcodes for your own stock and warehouse labels',
+      'Printing test barcodes before ordering packaging',
+      'Generating a scannable code for internal inventory',
+    ],
+    tip: 'For store shelves you need a GS1-licensed number — this tool draws the barcode, it does not license the number. For your own stock, use a number starting with 4.',
+    extraFaqs: [
+      {
+        q: 'Will my UPC barcode scan?',
+        a: 'The bar pattern follows the GS1 specification exactly, including quiet zones. Whether it scans also depends on your printer and label stock — print the test sheet and scan it with the scanner you will use.',
+      },
+      {
+        q: 'Should I download SVG or PNG?',
+        a: 'SVG for packaging, designers, and page layouts — it stays sharp at any size. PNG for label printers and office programs; pick your printer\u2019s size so bars land on whole dots.',
+      },
+      {
+        q: 'What UPC number can I use?',
+        a: 'For products sold in stores, buy a licensed number from GS1. For internal stock labels, use a number starting with 4 — GS1 reserves that range for in-company use so it cannot clash with a real product.',
+      },
+      {
+        q: 'What size should the barcode be?',
+        a: '100% is the GS1 standard (0.33mm narrow bar). Use 80% only if the pack is truly small — smaller bars are harder to scan. Never go below 80%.',
       },
     ],
   },

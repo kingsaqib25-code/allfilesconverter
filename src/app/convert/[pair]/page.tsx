@@ -8,6 +8,7 @@ import HtmlWidget from '@/components/HtmlWidget';
 import CompareWidget from '@/components/CompareWidget';
 import TranslateWidget from '@/components/TranslateWidget';
 import CompressImageWidget from '@/components/CompressImageWidget';
+import BarcodeWidget from '@/components/BarcodeWidget';
 import MergeWidget from '@/components/MergeWidget';
 import PdfEditor from '@/components/PdfEditor';
 import AiSummarize from '@/components/AiSummarize';
@@ -124,6 +125,8 @@ export default async function ConvertPage({
         <TranslateWidget entry={entry} />
       ) : entry.widget === 'compress-image' ? (
         <CompressImageWidget entry={entry} />
+      ) : entry.widget === 'barcode' ? (
+        <BarcodeWidget entry={entry} />
       ) : entry.widget === 'merge' ? (
         <MergeWidget entryId={entry.id} />
       ) : entry.widget === 'edit' ? (
