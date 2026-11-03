@@ -236,6 +236,22 @@ export default function PdfWidget({ entryId }: Props) {
           outs.push({ blob: r.blob, filename: r.filename });
           break;
         }
+        case 'pdf-to-markdown': {
+          const r = await mod.pdfToMarkdown(files[0]);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'repair-pdf': {
+          const r = await mod.repairPdf(files[0]);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
+        case 'organize-pdf': {
+          if (!range.trim()) throw new Error('Tell us the new page order, e.g. "3, 1, 2".');
+          const r = await mod.organizePdf(files[0], range);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
         default:
           throw new Error('This PDF tool is not wired up yet.');
       }
@@ -274,7 +290,7 @@ export default function PdfWidget({ entryId }: Props) {
     pickFiles(e.dataTransfer.files);
   };
 
-  const showRange = entry.id === 'split-pdf';
+  const showRange = entry.id === 'split-pdf' || entry.id === 'organize-pdf';
   const showCompress = entry.id === 'compress-pdf';
   const showQuality =
     entry.id === 'jpg-to-pdf' ||
@@ -420,12 +436,12 @@ export default function PdfWidget({ entryId }: Props) {
             <h2 className="tool-side-title">Options</h2>
             {showRange && (
               <label className="opt-row">
-                <span className="opt-label">Pages to extract <span className="opt-hint">(e.g. 1-3, 5)</span></span>
+                <span className="opt-label">{entry.id === 'organize-pdf' ? (<>New page order <span className="opt-hint">(e.g. 3, 1, 2)</span></>) : (<>Pages to extract <span className="opt-hint">(e.g. 1-3, 5)</span></>)}</span>
                 <input
                   type="text"
                   value={range}
                   onChange={(e) => setRange(e.target.value)}
-                  placeholder="1-3, 5"
+                  placeholder={entry.id === 'organize-pdf' ? '3, 1, 2' : '1-3, 5'}
                   aria-label="Page range"
                   style={{ maxWidth: '12rem' }}
                 />

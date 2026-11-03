@@ -260,6 +260,78 @@ export async function splitPdf(file: File, range: string): Promise<ConvertResult
 }
 
 // ---------------------------------------------------------------------------
+// Organize PDF (reorder pages: "3,1,2" — duplicates and out-of-range dropped)
+// ---------------------------------------------------------------------------
+
+function parseOrder(order: string, numPages: number): number[] {
+  const seen = new Set<number>();
+  const out: number[] = [];
+  for (const part of order.split(',')) {
+    const n = parseInt(part.trim(), 10);
+    if (!Number.isNaN(n) && n >= 1 && n <= numPages && !seen.has(n)) {
+      seen.add(n);
+      out.push(n - 1);
+    }
+  }
+  return out;
+}
+
+export async function organizePdf(file: File, order: string): Promise<ConvertResult> {
+  const pdf = await openPdf(file);
+  const indices = parseOrder(order, pdf.numPages);
+  if (indices.length === 0) {
+    throw new Error(
+      'No valid page numbers found — type the new order like "3, 1, 2". ' +
+        `This PDF has ${pdf.numPages} pages.`
+    );
+  }
+  const { PDFDocument } = await import('pdf-lib');
+  let src: Awaited<ReturnType<typeof PDFDocument.load>>;
+  try {
+    src = await PDFDocument.load(await file.arrayBuffer());
+  } catch (e) {
+    throw friendlyPdfError(e);
+  }
+  const out = await PDFDocument.create();
+  const pages = await out.copyPages(src, indices);
+  pages.forEach((p) => out.addPage(p));
+  const bytes = await out.save();
+  const base = baseName(file);
+  return {
+    blob: new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }),
+    filename: `${base}-organized.pdf`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Repair PDF (rebuild a damaged PDF by re-saving what still parses)
+// ---------------------------------------------------------------------------
+
+export async function repairPdf(file: File): Promise<ConvertResult> {
+  const { PDFDocument } = await import('pdf-lib');
+  let src: Awaited<ReturnType<typeof PDFDocument.load>>;
+  try {
+    src = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+  } catch (e) {
+    throw new Error(
+      'This PDF is too damaged to repair — none of its pages could be read. ' +
+        'Try re-downloading or re-exporting the original file.'
+    );
+  }
+  const out = await PDFDocument.create();
+  const n = src.getPageCount();
+  if (n === 0) throw new Error('No readable pages found in this PDF.');
+  const pages = await out.copyPages(src, [...Array(n).keys()]);
+  pages.forEach((p) => out.addPage(p));
+  const bytes = await out.save();
+  const base = baseName(file);
+  return {
+    blob: new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }),
+    filename: `${base}-repaired.pdf`,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Compress PDF (re-render pages at reduced scale/quality)
 // ---------------------------------------------------------------------------
 
@@ -372,6 +444,36 @@ export async function pdfToText(file: File): Promise<ConvertResult> {
   }
   const base = baseName(file);
   return { blob: new Blob([text], { type: 'text/plain' }), filename: `${base}.txt` };
+}
+
+// ---------------------------------------------------------------------------
+// PDF -> Markdown (text extraction with heading/list structure)
+// ---------------------------------------------------------------------------
+
+export async function pdfToMarkdown(file: File): Promise<ConvertResult> {
+  const pages = await extractPageTexts(file);
+  const hasText = pages.some((p) => p.join('').trim().length > 0);
+  if (!hasText) {
+    throw new Error(
+      'No text found in this PDF — it may be a scanned document (pictures of text). ' +
+        'Scanned PDFs need OCR, which the browser version does not do yet.'
+    );
+  }
+  const md: string[] = [];
+  pages.forEach((paras, pi) => {
+    if (pi > 0) md.push('\n---\n');
+    paras.forEach((para, idx) => {
+      const t = para.trim();
+      if (!t) return;
+      const isHeading = idx === 0 && t.length < 80 && !/[.!?]$/.test(t);
+      const isList = /^([•\-\*]|\d+[.)])\s+/.test(t);
+      if (isHeading) md.push(`# ${t}\n`);
+      else if (isList) md.push(`- ${t.replace(/^([•\-\*]|\d+[.)])\s+/, '')}\n`);
+      else md.push(`${t}\n`);
+    });
+  });
+  const base = baseName(file);
+  return { blob: new Blob([md.join('\n')], { type: 'text/markdown' }), filename: `${base}.md` };
 }
 
 // ---------------------------------------------------------------------------

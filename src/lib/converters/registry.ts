@@ -3094,6 +3094,99 @@ const PAIRS: PairSpec[] = [
       },
     ],
   },
+  {
+    id: 'pdf-to-markdown', from: 'PDF', to: 'Markdown', fromExts: ['pdf'], toExt: 'md', category: 'pdf',
+    title: 'PDF to Markdown Converter',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Turn any PDF into clean Markdown — headings, lists, and paragraphs preserved. Perfect for notes, docs, and feeding documents to AI chatbots.',
+    faqQ: 'How do I convert a PDF to Markdown?',
+    faqA: 'Drop the PDF and download a .md file. Text becomes paragraphs, big titles become headings, and bullet lists stay as lists — all in your browser, nothing uploaded.',
+    aboutFrom: 'PDFs lock text inside a fixed layout — copying it into notes, wikis, or AI tools means losing all structure.',
+    aboutTo: 'Markdown keeps the structure (headings, lists, paragraphs) in a plain-text format that notes apps, GitHub, and AI chatbots all understand.',
+    useCases: [
+      'Turning a PDF report into notes for Obsidian or Notion',
+      'Feeding a PDF manual to ChatGPT or Claude as Markdown',
+      'Publishing PDF content on GitHub or a docs site',
+    ],
+    tip: 'Scanned PDFs (photos of text) have no real text to convert — those need OCR first.',
+    extraFaqs: [
+      {
+        q: 'Are tables preserved?',
+        a: 'Honest answer: table structure is flattened into text lines. For clean spreadsheet data, use PDF to Excel instead.',
+      },
+      {
+        q: 'What about images in the PDF?',
+        a: 'Images are skipped — only text is converted. Use Extract Images from PDF if you need the pictures too.',
+      },
+      {
+        q: 'Does formatting like bold and italics survive?',
+        a: 'Bold and italic styling is not carried over — Markdown output focuses on structure: headings, lists, and paragraphs.',
+      },
+    ],
+  },
+  {
+    id: 'repair-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Repair PDF',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Fix a damaged or corrupted PDF — rebuilds the file from whatever pages still read correctly, so you can open it again.',
+    faqQ: 'How do I repair a corrupted PDF?',
+    faqA: 'Drop the damaged PDF. The tool reads every page it still can and rebuilds a fresh, valid PDF from them. Download the repaired file.',
+    aboutFrom: 'A PDF can get corrupted by a bad download, a crashed save, or a faulty email attachment — then nothing opens it.',
+    aboutTo: 'A repaired PDF contains every page that was still readable, rebuilt into a clean file that opens normally again.',
+    useCases: [
+      'Opening a PDF that shows "file is damaged" errors',
+      'Recovering a half-downloaded PDF attachment',
+      'Fixing a PDF that one app refuses to open',
+    ],
+    tip: 'If repair fails, the file is likely beyond recovery — try re-downloading or asking the sender to re-export it.',
+    extraFaqs: [
+      {
+        q: 'Will I get all my pages back?',
+        a: 'Every page that still parses correctly is recovered. Pages whose data is truly destroyed cannot be rebuilt — no tool can invent missing bytes.',
+      },
+      {
+        q: 'Does repair change my content?',
+        a: 'Readable pages are copied exactly. The only change is the file structure around them, rebuilt cleanly.',
+      },
+      {
+        q: 'Can it remove a password?',
+        a: 'No — repair only fixes structural damage. Password-protected PDFs stay locked; use Unlock PDF if you know the password.',
+      },
+    ],
+  },
+  {
+    id: 'organize-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Organize PDF Pages',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Reorder PDF pages however you like — type the new order like "3, 1, 2" and download the rearranged document.',
+    faqQ: 'How do I reorder pages in a PDF?',
+    faqA: 'Drop the PDF, type the new page order (e.g. "3, 1, 2" puts page 3 first), and download. Pages not listed are left out — so this also trims pages.',
+    aboutFrom: 'Merged scans and assembled reports often land with pages in the wrong order — the cover at the end, chapter 2 before chapter 1.',
+    aboutTo: 'An organized PDF has every page exactly where it belongs, in one clean download.',
+    useCases: [
+      'Fixing the page order of a badly assembled scan',
+      'Moving the cover page to the front of a merged PDF',
+      'Reordering chapters of an ebook export',
+    ],
+    tip: 'List every page you want to keep — pages you skip are dropped from the output.',
+    extraFaqs: [
+      {
+        q: 'Can I also delete pages this way?',
+        a: 'Yes — simply leave out the page numbers you do not want. Only listed pages end up in the download.',
+      },
+      {
+        q: 'What happens with duplicate or invalid numbers?',
+        a: 'Duplicates are ignored (each page appears once) and out-of-range numbers are skipped.',
+      },
+      {
+        q: 'Does reordering reduce quality?',
+        a: 'No — pages are copied untouched, just placed in your new order.',
+      },
+    ],
+  },
   /* ------------------ competitor-gap round: image tools ------------------ */
   {
     id: 'image-resize', from: 'Image', to: 'Image', fromExts: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'], toExt: 'png', category: 'image',
