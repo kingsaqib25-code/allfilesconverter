@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { BRAND, CATEGORIES, convertersByCategory } from '@/lib/converters/registry';
+import { BRAND, CATEGORIES, CONVERTERS, convertersByCategory } from '@/lib/converters/registry';
 
 export const metadata: Metadata = {
   title: 'All Converters — Free, No Upload',
@@ -14,11 +14,10 @@ export default function AllConverters() {
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link href="/">Home</Link> › All converters
       </nav>
-      <div className="page-head">
+      <div className="page-head compact">
         <h1>All converters</h1>
-        <p className="lead">
-          Every free converter on {BRAND}, grouped by category. Each one runs
-          entirely in your browser — no uploads, no sign-up, free forever.
+        <p className="tool-tagline">
+          {CONVERTERS.length} free tools · No sign-up · Files never leave your device
         </p>
       </div>
       {CATEGORIES.map((cat) => (

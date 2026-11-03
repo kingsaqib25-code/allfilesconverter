@@ -36,19 +36,26 @@ export default async function CategoryPage({
   const converters = convertersByCategory(meta.id).sort(
     (a, b) => (b.to === 'PDF' ? 1 : 0) - (a.to === 'PDF' ? 1 : 0)
   );
+  const standalone = STANDALONE_TOOLS.filter((t) => t.category === meta.id);
+  const totalTools = converters.length + standalone.length;
 
   return (
     <div className="wrap">
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link href="/">Home</Link> › {meta.name}
       </nav>
-      <div className="page-head">
+      <div className="page-head compact">
         <h1>{meta.name}</h1>
-        <p className="lead">{meta.description}</p>
+        <div className="cat-sub">
+          <p className="tool-tagline">
+            {totalTools} free tools · No sign-up · Files never leave your device
+          </p>
+          <AiSummarize
+            compact
+            summaryText={`${meta.name} converters on ${BRAND}. ${meta.description} TL;DR: every tool on this page is free forever with no sign-up, and your files never leave your device because all conversions run on-device in your browser.`}
+          />
+        </div>
       </div>
-      <AiSummarize
-        summaryText={`${meta.name} converters on ${BRAND}. ${meta.description} TL;DR: every tool on this page is free forever with no sign-up, and your files never leave your device because all conversions run on-device in your browser.`}
-      />
       <div className="tools-grid">
         {converters.map((c) => (
           <ToolCard
@@ -56,13 +63,17 @@ export default async function CategoryPage({
             entry={{ id: c.id, title: c.title, description: c.description, category: c.category }}
           />
         ))}
-        {STANDALONE_TOOLS.filter((t) => t.category === meta.id).map((t) => (
+        {standalone.map((t) => (
           <ToolCard
             key={t.id}
             entry={{ id: t.id, title: t.title, description: t.description, category: t.category, href: t.href }}
           />
         ))}
       </div>
+      <section className="prose">
+        <h2>About {meta.name}</h2>
+        <p>{meta.description}</p>
+      </section>
       <p style={{ marginTop: '2rem' }}>
         <Link href="/all-converters">Browse all categories →</Link>
       </p>

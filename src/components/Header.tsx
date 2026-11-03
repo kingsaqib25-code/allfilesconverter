@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SearchBar from './SearchBar';
@@ -30,7 +30,7 @@ const MEGA_ORDER: (typeof CATEGORIES)[number]['id'][] = [
 /** Trailing-slash-insensitive path compare (hrefs omit it, pathname keeps it). */
 const normPath = (p: string) => p.replace(/\/+$/, '') || '/';
 
-function MegaMenu({ currentPath }: { currentPath: string }) {
+function MegaMenu({ currentPath, onNavigate }: { currentPath: string; onNavigate: () => void }) {
   const cur = normPath(currentPath);
   return (
     <div className="nav-drop-panel nav-drop-mega" role="menu" aria-label="All tools by category">
@@ -57,6 +57,7 @@ function MegaMenu({ currentPath }: { currentPath: string }) {
                   className={`mega-row${active ? ' mega-row-current' : ''}`}
                   role="menuitem"
                   aria-current={active ? 'page' : undefined}
+                  onClick={onNavigate}
                 >
                   <ToolIcon id={r.id} size={26} title={r.title} />
                   <span className="mega-row-t">{r.title}</span>
@@ -74,15 +75,43 @@ function ConvertersDropdown() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const closeTimer = useRef<number | null>(null);
   const pathname = usePathname();
+
+  const cancelClose = useCallback(() => {
+    if (closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }, []);
+
+  const close = useCallback(() => {
+    cancelClose();
+    setOpen(false);
+  }, [cancelClose]);
+
+  /** Grace-period close: only shuts when the cursor TRULY leaves the panel. */
+  const scheduleClose = useCallback(() => {
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => setOpen(false), 220);
+  }, [cancelClose]);
+
+  const canHover = () =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // Auto-close on navigation (tool click) so the landing page is fully visible.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) close();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setOpen(false);
+        close();
         btnRef.current?.focus();
       }
     };
@@ -91,19 +120,24 @@ function ConvertersDropdown() {
     return () => {
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('keydown', onKey);
+      cancelClose();
     };
-  }, []);
+  }, [close, cancelClose]);
 
-  const close = () => setOpen(false);
-
-  // Click-to-toggle: the panel stays open while the user browses it.
-  // It closes on outside click, Escape, the toggle button, or a link click.
-  // (Deliberately no hover open/close — the panel used to vanish mid-browse.)
   return (
     <div
       className="nav-drop"
       ref={ref}
       data-slot="converters-dropdown"
+      onMouseEnter={() => {
+        if (!canHover()) return;
+        cancelClose();
+        setOpen(true);
+      }}
+      onMouseLeave={() => {
+        if (!canHover()) return;
+        scheduleClose();
+      }}
     >
       <button
         ref={btnRef}
@@ -111,7 +145,10 @@ function ConvertersDropdown() {
         className="nav-drop-btn"
         aria-expanded={open}
         aria-haspopup="true"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          cancelClose();
+          setOpen((o) => !o);
+        }}
       >
         Converters <span aria-hidden="true">{open ? '▴' : '▾'}</span>
       </button>
@@ -135,7 +172,7 @@ function ConvertersDropdown() {
               </Link>
             ))}
           </div>
-          <MegaMenu currentPath={pathname} />
+          <MegaMenu currentPath={pathname} onNavigate={close} />
         </>
       )}
     </div>

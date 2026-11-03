@@ -733,3 +733,7 @@ a.card:hover { text-decoration: none; border-color: var(--brand); box-shadow: va
 .edit-zoom .mini-btn { min-width: 2rem; text-align: center; }
 .edit-zoom-label { font-weight: 700; min-width: 3.2rem !important; }
 .edit-block.editing { font-kerning: normal; }
+
+/* ---------- category hero: tagline + compact summary, tools above the fold ---------- */
+.cat-sub { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.cat-sub .tool-tagline { margin: 0; }
