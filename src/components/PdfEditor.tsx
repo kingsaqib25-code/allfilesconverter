@@ -9,7 +9,20 @@
  * a whole page as plain text. Nothing is ever uploaded.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { EditorBlock, EditorPageData, FinalPage } from '@/lib/converters/pdf';
+import type { EditorBlock, EditorPageData, FinalPage, PageOverlay } from '@/lib/converters/pdf';
+
+/** Annotation toolbar tools (iLovePDF-style). */
+type AnnotTool = 'select' | 'edit-text' | 'add-text' | 'highlight' | 'draw' | 'shape' | 'image';
+type ShapeKind = 'rect' | 'ellipse' | 'line';
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+  return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 };
+}
+function rgbToCss(c: { r: number; g: number; b: number }, a = 1): string {
+  return `rgba(${Math.round(c.r * 255)}, ${Math.round(c.g * 255)}, ${Math.round(c.b * 255)}, ${a})`;
+}
 
 interface BlockState extends EditorBlock {
   editedText: string | null;
@@ -80,6 +93,7 @@ export default function PdfEditor() {
       return below === undefined ? z : below;
     });
   }, []);
+
   const [working, setWorking] = useState(false);
   const [workLabel, setWorkLabel] = useState('');
   const [outputs, setOutputs] = useState<OutFile[]>([]);
@@ -93,15 +107,314 @@ export default function PdfEditor() {
     pageUrls: string[];
   } | null>(null);
 
+  // ---- annotation tools (toolbar) ----
+  const [tool, setTool] = useState<AnnotTool>('edit-text');
+  const [shapeKind, setShapeKind] = useState<ShapeKind>('rect');
+  const [overlays, setOverlays] = useState<PageOverlay[]>([]);
+  const [selOverlay, setSelOverlay] = useState<string | null>(null);
+  const [selBlock, setSelBlock] = useState<string | null>(null);
+  const [penHex, setPenHex] = useState('#000000');
+  const [histPast, setHistPast] = useState<PageOverlay[][]>([]);
+  const [histFuture, setHistFuture] = useState<PageOverlay[][]>([]);
+  const overlaysRef = useRef<PageOverlay[]>([]);
+  overlaysRef.current = overlays;
+  /** Switch annotation tool, clearing any in-progress text edit/selection. */
+  const pickTool = useCallback((t: AnnotTool) => {
+    setEditingId(null);
+    setSelBlock(null);
+    setSelOverlay(null);
+    setTool(t);
+  }, []);
+  /** Commit a new overlays array with undo history. */
+  const commitOverlays = useCallback((next: PageOverlay[]) => {
+    setHistPast((h) => [...h.slice(-49), overlaysRef.current]);
+    setHistFuture([]);
+    setOverlays(next);
+  }, []);
+  const undoAnnot = useCallback(() => {
+    setHistPast((h) => {
+      if (!h.length) return h;
+      const prev = h[h.length - 1];
+      setHistFuture((f) => [overlaysRef.current, ...f].slice(0, 50));
+      setOverlays(prev);
+      setSelOverlay(null);
+      return h.slice(0, -1);
+    });
+  }, []);
+  const redoAnnot = useCallback(() => {
+    setHistFuture((f) => {
+      if (!f.length) return f;
+      const next = f[0];
+      setHistPast((h) => [...h.slice(-49), overlaysRef.current]);
+      setOverlays(next);
+      setSelOverlay(null);
+      return f.slice(1);
+    });
+  }, []);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const srcRef = useRef<ArrayBuffer | null>(null);
   const previewToken = useRef(0);
   const tvPreviewRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  /** In-progress annotation gesture (highlight rect / draw stroke / shape). */
+  const gestureRef = useRef<{
+    kind: 'highlight' | 'draw' | 'shape';
+    startX: number;
+    startY: number;
+    pts: Array<{ x: number; y: number }>;
+  } | null>(null);
+  const [gestureTick, setGestureTick] = useState(0); // re-render during gesture
+  const imgInputRef = useRef<HTMLInputElement>(null);
+  const imgUrlCache = useRef(new Map<string, string>());
+  const pendingImgPos = useRef<{ x: number; y: number } | null>(null);
   const docRef = useRef<{ getPage: (n: number) => Promise<unknown>; destroy?: () => void } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const thumbsDone = useRef(false);
 
   const page = pages[sel];
+
+  const localOvId = () =>
+    `ov-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+  /** Client coords -> PDF-unit point on the selected page. */
+  const toPdfPoint = useCallback(
+    (clientX: number, clientY: number) => {
+      const el = wrapRef.current;
+      const pg = pages[sel];
+      if (!el || !pg) return null;
+      const r = el.getBoundingClientRect();
+      const fx = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+      const fy = Math.min(1, Math.max(0, (clientY - r.top) / r.height));
+      return { x: fx * pg.width, y: (1 - fy) * pg.height };
+    },
+    [pages, sel]
+  );
+
+  const commitGesture = useCallback(
+    (g: { kind: 'highlight' | 'draw' | 'shape'; startX: number; startY: number; pts: Array<{ x: number; y: number }> }) => {
+      if (g.kind === 'draw') {
+        if (g.pts.length < 2) return;
+        const xs = g.pts.map((p) => p.x);
+        const ys = g.pts.map((p) => p.y);
+        const pad = 3;
+        commitOverlays([
+          ...overlaysRef.current,
+          {
+            id: localOvId(),
+            kind: 'draw',
+            pageNum: pages[sel]?.pageNum ?? 1,
+            x: Math.min(...xs) - pad,
+            y: Math.min(...ys) - pad,
+            w: Math.max(...xs) - Math.min(...xs) + pad * 2,
+            h: Math.max(...ys) - Math.min(...ys) + pad * 2,
+            strokes: [g.pts],
+            color: hexToRgb(penHex),
+            thickness: 2.5,
+          },
+        ]);
+        return;
+      }
+      const last = g.pts[g.pts.length - 1];
+      const x0 = Math.min(g.startX, last.x);
+      const x1 = Math.max(g.startX, last.x);
+      const y0 = Math.min(g.startY, last.y);
+      const y1 = Math.max(g.startY, last.y);
+      if (x1 - x0 < 4 && y1 - y0 < 4) return; // accidental click, not a drag
+      if (g.kind === 'highlight') {
+        commitOverlays([
+          ...overlaysRef.current,
+          {
+            id: localOvId(),
+            kind: 'highlight',
+            pageNum: pages[sel]?.pageNum ?? 1,
+            x: x0, y: y0, w: x1 - x0, h: y1 - y0,
+            fill: { r: 1, g: 0.92, b: 0.35 },
+            opacity: 0.35,
+          },
+        ]);
+      } else {
+        commitOverlays([
+          ...overlaysRef.current,
+          {
+            id: localOvId(),
+            kind: 'shape',
+            shape: shapeKind,
+            pageNum: pages[sel]?.pageNum ?? 1,
+            x: x0, y: y0,
+            w: Math.max(x1 - x0, 5), h: Math.max(y1 - y0, 5),
+            color: hexToRgb(penHex),
+            thickness: 2,
+          },
+        ]);
+      }
+    },
+    [commitOverlays, penHex, shapeKind, pages, sel]
+  );
+
+  const addTextAt = useCallback(
+    (p: { x: number; y: number }) => {
+      const id = localOvId();
+      const pg = pages[sel];
+      if (!pg) return;
+      const ov: PageOverlay = {
+        id,
+        kind: 'text',
+        pageNum: pg.pageNum,
+        x: Math.max(0, p.x - 4),
+        y: Math.max(0, p.y - 16),
+        w: 200,
+        h: 22,
+        text: '',
+        fontSize: 14,
+        color: hexToRgb(penHex),
+      };
+      commitOverlays([...overlaysRef.current, ov]);
+      setSelOverlay(id);
+      setTool('select');
+      requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>(`[data-ov-id="${id}"] [contenteditable]`)?.focus();
+      });
+    },
+    [commitOverlays, penHex, pages, sel]
+  );
+
+  const onAnnotDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (tool === 'add-text') {
+        const p = toPdfPoint(e.clientX, e.clientY);
+        if (p) addTextAt(p);
+        return;
+      }
+      if (tool === 'image') {
+        const p = toPdfPoint(e.clientX, e.clientY);
+        if (p) {
+          pendingImgPos.current = p;
+          imgInputRef.current?.click();
+        }
+        return;
+      }
+      if (tool === 'highlight' || tool === 'draw' || tool === 'shape') {
+        const p = toPdfPoint(e.clientX, e.clientY);
+        if (!p) return;
+        gestureRef.current = { kind: tool, startX: p.x, startY: p.y, pts: [{ x: p.x, y: p.y }] };
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        e.preventDefault();
+      }
+    },
+    [tool, toPdfPoint, addTextAt]
+  );
+
+  const onAnnotMove = useCallback(
+    (e: React.PointerEvent) => {
+      const g = gestureRef.current;
+      if (!g) return;
+      const p = toPdfPoint(e.clientX, e.clientY);
+      if (!p) return;
+      g.pts.push({ x: p.x, y: p.y });
+      setGestureTick((t) => t + 1);
+    },
+    [toPdfPoint]
+  );
+
+  const onAnnotUp = useCallback(() => {
+    const g = gestureRef.current;
+    gestureRef.current = null;
+    setGestureTick((t) => t + 1);
+    if (g) commitGesture(g);
+  }, [commitGesture]);
+
+  const onImagePicked = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      e.target.value = '';
+      const pos = pendingImgPos.current;
+      pendingImgPos.current = null;
+      if (!f || !pos || !page) return;
+      const buf = await f.arrayBuffer();
+      // natural size for aspect ratio
+      const url = URL.createObjectURL(new Blob([buf], { type: f.type }));
+      const dims = await new Promise<{ w: number; h: number }>((res) => {
+        const im = new Image();
+        im.onload = () => res({ w: im.naturalWidth || 300, h: im.naturalHeight || 200 });
+        im.onerror = () => res({ w: 300, h: 200 });
+        im.src = url;
+      });
+      URL.revokeObjectURL(url);
+      const w = Math.min(220, page.width * 0.5);
+      const h = (w * dims.h) / Math.max(1, dims.w);
+      const ov: PageOverlay = {
+        id: localOvId(),
+        kind: 'image',
+        pageNum: page.pageNum,
+        x: Math.max(0, pos.x - w / 2),
+        y: Math.max(0, pos.y - h / 2),
+        w, h,
+        imageBytes: buf,
+        imageMime: f.type,
+      };
+      imgUrlCache.current.set(ov.id, URL.createObjectURL(new Blob([buf], { type: f.type })));
+      commitOverlays([...overlaysRef.current, ov]);
+      setSelOverlay(ov.id);
+      setTool('select');
+    },
+    [page, commitOverlays]
+  );
+
+  const deleteSelOverlay = useCallback(() => {
+    if (!selOverlay) return;
+    const url = imgUrlCache.current.get(selOverlay);
+    if (url) {
+      URL.revokeObjectURL(url);
+      imgUrlCache.current.delete(selOverlay);
+    }
+    commitOverlays(overlaysRef.current.filter((o) => o.id !== selOverlay));
+    setSelOverlay(null);
+  }, [selOverlay, commitOverlays]);
+
+  /** Commit an in-place text overlay edit (empty text removes the overlay). */
+  const commitTextOverlay = useCallback(
+    (id: string, text: string) => {
+      const ov = overlaysRef.current.find((o) => o.id === id);
+      if (!ov) return;
+      const t = text.replace(/\n{3,}/g, '\n\n').trimEnd();
+      if (!t) {
+        const url = imgUrlCache.current.get(id);
+        if (url) {
+          URL.revokeObjectURL(url);
+          imgUrlCache.current.delete(id);
+        }
+        commitOverlays(overlaysRef.current.filter((o) => o.id !== id));
+      } else if (t !== ov.text) {
+        commitOverlays(overlaysRef.current.map((o) => (o.id === id ? { ...o, text: t } : o)));
+      }
+      setSelOverlay(null);
+    },
+    [commitOverlays]
+  );
+
+  // Delete key removes the selected overlay (not while typing in one).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.isContentEditable || /^(INPUT|TEXTAREA)$/.test(t.tagName));
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selOverlay && !typing) {
+        e.preventDefault();
+        deleteSelOverlay();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [selOverlay, deleteSelOverlay]);
+
+  // Revoke image object URLs on unmount.
+  useEffect(() => {
+    const cache = imgUrlCache.current;
+    return () => {
+      cache.forEach((u) => URL.revokeObjectURL(u));
+      cache.clear();
+    };
+  }, []);
   const totalEdits = pages.reduce(
     (n, p) => n + p.blocks.filter((b) => b.editedText != null && b.editedText !== b.text).length,
     0
@@ -494,6 +807,7 @@ export default function PdfEditor() {
         }
         out.push({
           pageNum: p.pageNum,
+          overlays: overlays.filter((o) => o.pageNum === p.pageNum),
           blocks: p.blocks.map((b) => {
             const fin = b.editedText ?? b.text;
             const isEdited = b.editedText != null && b.editedText !== b.text;
@@ -510,7 +824,7 @@ export default function PdfEditor() {
       }
       return out;
     },
-    [page?.pageNum, renderPageOffscreen]
+    [page?.pageNum, renderPageOffscreen, overlays]
   );
 
   const pushOutput = useCallback((blob: Blob, filename: string, label: string) => {
@@ -793,10 +1107,128 @@ export default function PdfEditor() {
               </span>
             </div>
 
+            {view === 'page' && (
+              <div className="annot-toolbar" role="toolbar" aria-label="PDF annotation tools">
+                <div className="annot-group" role="group" aria-label="Mode">
+                  <button
+                    type="button"
+                    className={`annot-btn${tool === 'select' ? ' on' : ''}`}
+                    onClick={() => pickTool('select')}
+                    title="Select text and annotations"
+                  >
+                    <span aria-hidden="true">⬚</span> Select
+                  </button>
+                  <button
+                    type="button"
+                    className={`annot-btn${tool === 'edit-text' ? ' on' : ''}`}
+                    onClick={() => pickTool('edit-text')}
+                    title="Click any text to edit it"
+                  >
+                    <span aria-hidden="true">✎</span> Edit text
+                  </button>
+                </div>
+                <div className="annot-group" role="group" aria-label="Annotate">
+                  <button
+                    type="button"
+                    className={`annot-btn${tool === 'add-text' ? ' on' : ''}`}
+                    onClick={() => pickTool('add-text')}
+                    title="Click anywhere to add text"
+                  >
+                    <span aria-hidden="true">A</span> Add text
+                  </button>
+                  <button
+                    type="button"
+                    className={`annot-btn${tool === 'highlight' ? ' on' : ''}`}
+                    onClick={() => pickTool('highlight')}
+                    title="Drag over text to highlight it"
+                  >
+                    <span aria-hidden="true">🖍</span> Highlight
+                  </button>
+                  <button
+                    type="button"
+                    className={`annot-btn${tool === 'draw' ? ' on' : ''}`}
+                    onClick={() => pickTool('draw')}
+                    title="Draw freehand"
+                  >
+                    <span aria-hidden="true">✏</span> Draw
+                  </button>
+                  <button
+                    type="button"
+                    className={`annot-btn${tool === 'shape' ? ' on' : ''}`}
+                    onClick={() => pickTool('shape')}
+                    title="Draw a shape"
+                  >
+                    <span aria-hidden="true">{shapeKind === 'rect' ? '▢' : shapeKind === 'ellipse' ? '○' : '╱'}</span> Shape
+                  </button>
+                  {tool === 'shape' && (
+                    <span className="annot-shapes" role="group" aria-label="Shape kind">
+                      {(['rect', 'ellipse', 'line'] as ShapeKind[]).map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          className={`annot-btn annot-btn-sm${shapeKind === k ? ' on' : ''}`}
+                          onClick={() => setShapeKind(k)}
+                          title={k}
+                        >
+                          <span aria-hidden="true">{k === 'rect' ? '▢' : k === 'ellipse' ? '○' : '╱'}</span>
+                        </button>
+                      ))}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className={`annot-btn${tool === 'image' ? ' on' : ''}`}
+                    onClick={() => pickTool('image')}
+                    title="Click to place an image"
+                  >
+                    <span aria-hidden="true">🖼</span> Image
+                  </button>
+                </div>
+                <div className="annot-group" role="group" aria-label="Color">
+                  {['#000000', '#d62626', '#1a56db', '#0f7a3d'].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`annot-swatch${penHex.toLowerCase() === c ? ' on' : ''}`}
+                      style={{ background: c }}
+                      onClick={() => setPenHex(c)}
+                      aria-label={`Color ${c}`}
+                      title={c}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    className="annot-swatch annot-custom"
+                    value={penHex}
+                    onChange={(e) => setPenHex(e.target.value)}
+                    aria-label="Custom color"
+                    title="Custom color"
+                  />
+                </div>
+                <div className="annot-group" role="group" aria-label="Undo and redo">
+                  <button type="button" className="annot-btn" onClick={undoAnnot} disabled={histPast.length === 0} title="Undo annotation">
+                    <span aria-hidden="true">↩</span>
+                  </button>
+                  <button type="button" className="annot-btn" onClick={redoAnnot} disabled={histFuture.length === 0} title="Redo annotation">
+                    <span aria-hidden="true">↪</span>
+                  </button>
+                </div>
+                <input
+                  ref={imgInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  style={{ display: 'none' }}
+                  onChange={onImagePicked}
+                  aria-hidden="true"
+                  tabIndex={-1}
+                />
+              </div>
+            )}
+
             {view === 'page' ? (
               <>
               <div className="edit-zoom-scroll">
-                <div className="edit-canvas-wrap" style={{ width: `${zoom * 100}%` }}>
+                <div className="edit-canvas-wrap" ref={wrapRef} style={{ width: `${zoom * 100}%` }}>
                   <canvas ref={canvasRef} className="edit-canvas" aria-label={`Page ${page.pageNum} preview`} />
                 <div className="edit-overlay" aria-hidden={editingId != null}>
                   {page.blocks.map((b) => {
@@ -877,14 +1309,233 @@ export default function PdfEditor() {
                     return (
                       <div
                         key={b.id}
-                        className={`edit-block${isEdited ? ' edited' : ''}${showOutlines ? ' outlined' : ''}`}
+                        className={`edit-block${isEdited ? ' edited' : ''}${showOutlines ? ' outlined' : ''}${tool === 'select' && selBlock === b.id ? ' selected' : ''}`}
                         style={style}
-                        title="Click to edit"
-                        onClick={() => setEditingId(b.id)}
+                        title={tool === 'select' ? 'Click to select, double-click to edit' : 'Click to edit'}
+                        onClick={() => {
+                          if (tool === 'select') {
+                            setSelBlock(b.id);
+                            setSelOverlay(null);
+                          } else {
+                            setEditingId(b.id);
+                          }
+                        }}
+                        onDoubleClick={() => {
+                          if (tool === 'select') setEditingId(b.id);
+                        }}
                       />
                     );
                   })}
                 </div>
+                {/* ---- annotation display layer (toolbar overlays) ---- */}
+                <div
+                  className="annot-layer"
+                  style={{ pointerEvents: 'none' }}
+                  onClick={() => {
+                    setSelOverlay(null);
+                    setSelBlock(null);
+                  }}
+                >
+                  {/* vector overlays: drawings + shapes (+ live gesture preview) */}
+                  <svg
+                    className="annot-svg"
+                    viewBox={`0 0 ${page.width} ${page.height}`}
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    {overlays
+                      .filter((o) => o.pageNum === page.pageNum && (o.kind === 'draw' || o.kind === 'shape'))
+                      .map((o) => {
+                        const col = rgbToCss(o.color ?? { r: 0, g: 0, b: 0 }, o.opacity ?? 1);
+                        const fy = (y: number) => page.height - y;
+                        const sel = selOverlay === o.id;
+                        if (o.kind === 'draw' && o.strokes) {
+                          return (
+                            <g key={o.id}>
+                              {o.strokes.map((st, i) => (
+                                <polyline
+                                  key={i}
+                                  points={st.map((p) => `${p.x},${fy(p.y)}`).join(' ')}
+                                  fill="none"
+                                  stroke={col}
+                                  strokeWidth={o.thickness ?? 2.5}
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              ))}
+                              {sel && (
+                                <rect
+                                  x={o.x} y={fy(o.y + o.h)} width={o.w} height={o.h}
+                                  fill="none" stroke="#0f766e" strokeWidth={1.5} strokeDasharray="5 3"
+                                />
+                              )}
+                            </g>
+                          );
+                        }
+                        if (o.kind === 'shape') {
+                          const sw = o.thickness ?? 2;
+                          const dash = sel ? { strokeDasharray: '5 3' } : {};
+                          if (o.shape === 'ellipse')
+                            return (
+                              <ellipse
+                                key={o.id} cx={o.x + o.w / 2} cy={fy(o.y + o.h / 2)}
+                                rx={Math.max(0.5, o.w / 2)} ry={Math.max(0.5, o.h / 2)}
+                                fill={o.fill ? rgbToCss(o.fill, o.opacity ?? 0.25) : 'none'}
+                                stroke={sel ? '#0f766e' : col} strokeWidth={sw} {...dash}
+                              />
+                            );
+                          if (o.shape === 'line')
+                            return (
+                              <line
+                                key={o.id} x1={o.x} y1={fy(o.y)} x2={o.x + o.w} y2={fy(o.y + o.h)}
+                                stroke={sel ? '#0f766e' : col} strokeWidth={sw} strokeLinecap="round" {...dash}
+                              />
+                            );
+                          return (
+                            <rect
+                              key={o.id} x={o.x} y={fy(o.y + o.h)} width={o.w} height={o.h}
+                              fill={o.fill ? rgbToCss(o.fill, o.opacity ?? 0.25) : 'none'}
+                              stroke={sel ? '#0f766e' : col} strokeWidth={sw} {...dash}
+                            />
+                          );
+                        }
+                        return null;
+                      })}
+                    {(() => {
+                      const g = gestureRef.current;
+                      if (!g || (g.kind !== 'draw' && g.kind !== 'shape' && g.kind !== 'highlight')) return null;
+                      const col = rgbToCss(hexToRgb(penHex), 0.9);
+                      const fy = (y: number) => page.height - y;
+                      if (g.kind === 'draw')
+                        return (
+                          <polyline
+                            points={g.pts.map((p) => `${p.x},${fy(p.y)}`).join(' ')}
+                            fill="none" stroke={col} strokeWidth={2.5}
+                            strokeLinecap="round" strokeLinejoin="round"
+                          />
+                        );
+                      const last = g.pts[g.pts.length - 1];
+                      const x0 = Math.min(g.startX, last.x);
+                      const x1 = Math.max(g.startX, last.x);
+                      const y0 = Math.min(g.startY, last.y);
+                      const y1 = Math.max(g.startY, last.y);
+                      if (g.kind === 'highlight')
+                        return (
+                          <rect x={x0} y={fy(y1)} width={x1 - x0} height={y1 - y0}
+                            fill="rgba(255, 224, 102, 0.45)" stroke="none" />
+                        );
+                      if (shapeKind === 'ellipse')
+                        return <ellipse cx={(x0 + x1) / 2} cy={fy((y0 + y1) / 2)} rx={(x1 - x0) / 2} ry={(y1 - y0) / 2} fill="none" stroke={col} strokeWidth={2} />;
+                      if (shapeKind === 'line')
+                        return <line x1={x0} y1={fy(y0)} x2={x1} y2={fy(y1)} stroke={col} strokeWidth={2} strokeLinecap="round" />;
+                      return <rect x={x0} y={fy(y1)} width={x1 - x0} height={y1 - y0} fill="none" stroke={col} strokeWidth={2} />;
+                    })()}
+                  </svg>
+                  {/* box overlays: text / highlight / image */}
+                  {overlays
+                    .filter((o) => o.pageNum === page.pageNum && (o.kind === 'text' || o.kind === 'highlight' || o.kind === 'image'))
+                    .map((o) => {
+                      const sel = selOverlay === o.id;
+                      const boxStyle = {
+                        left: `${(o.x / page.width) * 100}%`,
+                        top: `${((page.height - (o.y + o.h)) / page.height) * 100}%`,
+                        width: `${(o.w / page.width) * 100}%`,
+                        height: `${(o.h / page.height) * 100}%`,
+                      } as React.CSSProperties;
+                      if (o.kind === 'highlight') {
+                        return (
+                          <div
+                            key={o.id}
+                            data-ov-id={o.id}
+                            className={`annot annot-hl${sel ? ' selected' : ''}`}
+                            style={{ ...boxStyle, background: rgbToCss(o.fill ?? { r: 1, g: 0.92, b: 0.35 }, o.opacity ?? 0.35), pointerEvents: 'auto' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelOverlay(o.id);
+                            }}
+                          >
+                            {sel && (
+                              <button type="button" className="annot-del" aria-label="Delete highlight"
+                                onClick={(e) => { e.stopPropagation(); deleteSelOverlay(); }}>×</button>
+                            )}
+                          </div>
+                        );
+                      }
+                      if (o.kind === 'image') {
+                        const url = imgUrlCache.current.get(o.id);
+                        return (
+                          <div
+                            key={o.id}
+                            data-ov-id={o.id}
+                            className={`annot annot-img${sel ? ' selected' : ''}`}
+                            style={{ ...boxStyle, pointerEvents: 'auto' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelOverlay(o.id);
+                            }}
+                          >
+                            {url ? <img src={url} alt="Placed image" draggable={false} /> : null}
+                            {sel && (
+                              <button type="button" className="annot-del" aria-label="Delete image"
+                                onClick={(e) => { e.stopPropagation(); deleteSelOverlay(); }}>×</button>
+                            )}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div
+                          key={o.id}
+                          data-ov-id={o.id}
+                          className={`annot annot-text${sel ? ' selected' : ''}`}
+                          style={{ ...boxStyle, pointerEvents: 'auto' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelOverlay(o.id);
+                          }}
+                        >
+                          <div
+                            contentEditable
+                            suppressContentEditableWarning
+                            spellCheck={false}
+                            className="annot-textedit"
+                            style={{
+                              fontSize: `${(((o.fontSize ?? 14) / page.width) * 100).toFixed(3)}cqw`,
+                              color: rgbToCss(o.color ?? { r: 0, g: 0, b: 0 }),
+                              fontWeight: o.bold ? 700 : 400,
+                              lineHeight: 1.25,
+                            }}
+                            ref={(el) => {
+                              if (el && document.activeElement !== el && el.innerText !== (o.text ?? '')) {
+                                el.innerText = o.text ?? '';
+                              }
+                            }}
+                            onFocus={() => setSelOverlay(o.id)}
+                            onBlur={(e) => commitTextOverlay(o.id, e.currentTarget.innerText)}
+                          />
+                          {sel && (
+                            <button type="button" className="annot-del" aria-label="Delete text"
+                              onClick={(e) => { e.stopPropagation(); deleteSelOverlay(); }}>×</button>
+                            )}
+                        </div>
+                      );
+                    })}
+                </div>
+                {/* ---- capture layer for annotation gestures ---- */}
+                {(tool === 'add-text' || tool === 'highlight' || tool === 'draw' || tool === 'shape' || tool === 'image') && (
+                  <div
+                    className="annot-capture"
+                    style={{ cursor: tool === 'add-text' || tool === 'image' ? 'text' : 'crosshair', touchAction: 'none' }}
+                    onPointerDown={onAnnotDown}
+                    onPointerMove={onAnnotMove}
+                    onPointerUp={onAnnotUp}
+                    onPointerCancel={onAnnotUp}
+                    title={
+                      tool === 'add-text' ? 'Click to place text'
+                      : tool === 'image' ? 'Click to place an image'
+                      : 'Drag to annotate'
+                    }
+                  />
+                )}
               </div>
             </div>
             <p className="opt-hint" style={{ marginTop: '0.5rem' }}>

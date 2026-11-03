@@ -585,6 +585,48 @@ export interface FinalBlock extends EditorBlock {
 export interface FinalPage {
   pageNum: number; // 1-based index into the source document
   blocks: FinalBlock[];
+  overlays: PageOverlay[];
+}
+
+/**
+ * A user annotation placed on a page (iLovePDF-style toolbar tools).
+ * Coordinates are PDF units, origin bottom-left — the same space as blocks.
+ */
+export interface PageOverlay {
+  id: string;
+  kind: 'text' | 'highlight' | 'draw' | 'shape' | 'image';
+  /** 1-based page number this overlay belongs to. */
+  pageNum: number;
+  /** Bounding box in PDF units (origin bottom-left). */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** text kind */
+  text?: string;
+  fontSize?: number;
+  bold?: boolean;
+  /** stroke/text color */
+  color?: { r: number; g: number; b: number };
+  /** shape kind: rect | ellipse | line */
+  shape?: 'rect' | 'ellipse' | 'line';
+  /** fill color for shapes, marker color for highlights */
+  fill?: { r: number; g: number; b: number };
+  opacity?: number;
+  /** draw stroke width / shape border width (PDF units) */
+  thickness?: number;
+  /** draw kind: freehand strokes, absolute PDF-unit coords */
+  strokes?: Array<Array<{ x: number; y: number }>>;
+  /** image kind */
+  imageBytes?: ArrayBuffer;
+  imageMime?: string;
+}
+
+let overlaySeq = 0;
+/** Fresh overlay id (unique per session). */
+export function newOverlayId(): string {
+  overlaySeq += 1;
+  return `ov-${Date.now().toString(36)}-${overlaySeq}`;
 }
 
 const EDITOR_MAX_PAGES = 50;
@@ -1324,6 +1366,81 @@ export async function renderEditedPdf(
           color: rgb(fgc.r, fgc.g, fgc.b),
         });
       });
+    }
+    // ---- user annotations (toolbar tools) ----
+    for (const o of fp.overlays ?? []) {
+      const oc = o.color ?? { r: 0, g: 0, b: 0 };
+      if (o.kind === 'highlight') {
+        const fc = o.fill ?? { r: 1, g: 0.92, b: 0.35 };
+        copied.drawRectangle({
+          x: o.x,
+          y: o.y,
+          width: o.w,
+          height: o.h,
+          color: rgb(fc.r, fc.g, fc.b),
+          opacity: o.opacity ?? 0.35,
+          borderWidth: 0,
+        });
+      } else if (o.kind === 'text' && o.text) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const font: any = o.bold ? kit.helvB : kit.helv;
+        const size = o.fontSize ?? 12;
+        const lines = o.text.split('\n');
+        lines.forEach((ln, i) => {
+          if (!ln) return;
+          copied.drawText(safeWinAnsi(ln), {
+            x: o.x,
+            y: o.y + o.h - size * 0.8 - i * size * 1.25,
+            size,
+            font,
+            color: rgb(oc.r, oc.g, oc.b),
+          });
+        });
+      } else if (o.kind === 'draw' && o.strokes) {
+        for (const st of o.strokes) {
+          for (let i = 1; i < st.length; i++) {
+            copied.drawLine({
+              start: { x: st[i - 1].x, y: st[i - 1].y },
+              end: { x: st[i].x, y: st[i].y },
+              thickness: o.thickness ?? 2,
+              color: rgb(oc.r, oc.g, oc.b),
+              opacity: o.opacity ?? 1,
+            });
+          }
+        }
+      } else if (o.kind === 'shape' && o.shape) {
+        const sc = { r: oc.r, g: oc.g, b: oc.b };
+        const th = o.thickness ?? 2;
+        if (o.shape === 'rect') {
+          copied.drawRectangle({
+            x: o.x, y: o.y, width: o.w, height: o.h,
+            borderColor: rgb(sc.r, sc.g, sc.b), borderWidth: th,
+            ...(o.fill ? { color: rgb(o.fill.r, o.fill.g, o.fill.b), opacity: o.opacity ?? 0.25 } : {}),
+          });
+        } else if (o.shape === 'ellipse') {
+          copied.drawEllipse({
+            x: o.x + o.w / 2, y: o.y + o.h / 2,
+            xScale: Math.max(0.5, o.w / 2), yScale: Math.max(0.5, o.h / 2),
+            borderColor: rgb(sc.r, sc.g, sc.b), borderWidth: th,
+            ...(o.fill ? { color: rgb(o.fill.r, o.fill.g, o.fill.b), opacity: o.opacity ?? 0.25 } : {}),
+          });
+        } else {
+          copied.drawLine({
+            start: { x: o.x, y: o.y }, end: { x: o.x + o.w, y: o.y + o.h },
+            thickness: th, color: rgb(sc.r, sc.g, sc.b), opacity: o.opacity ?? 1,
+          });
+        }
+      } else if (o.kind === 'image' && o.imageBytes) {
+        try {
+          const mime = (o.imageMime || '').toLowerCase();
+          const img = mime.includes('jpeg') || mime.includes('jpg')
+            ? await out.embedJpg(o.imageBytes)
+            : await out.embedPng(o.imageBytes);
+          copied.drawImage(img, { x: o.x, y: o.y, width: o.w, height: o.h });
+        } catch {
+          // corrupt image bytes: skip this overlay, keep the rest
+        }
+      }
     }
   }
   const bytes = await out.save();
