@@ -165,7 +165,7 @@ export interface ConverterEntry {
   /** Declarative option controls rendered by the widget (quality slider etc.). */
   options?: OptionDef[];
   /** Which widget renders this entry: default single-file, pdf (custom PDF UI), merge (multi-file). */
-  widget?: 'default' | 'pdf' | 'merge' | 'edit';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   /** Shown while a heavy engine (ffmpeg.wasm) initializes. */
@@ -273,7 +273,7 @@ interface PairSpec {
   faqA: string;
   convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
   options?: OptionDef[];
-  widget?: 'default' | 'pdf' | 'merge' | 'edit';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   loadingNote?: string;
@@ -3250,6 +3250,155 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Is my spreadsheet uploaded anywhere?',
         a: 'Never. Everything runs on your device in the browser.',
+      },
+    ],
+  },
+  {
+    id: 'pdf-to-powerpoint', from: 'PDF', to: 'PowerPoint', fromExts: ['pdf'], toExt: 'pptx', category: 'pdf',
+    title: 'PDF to PowerPoint Converter',
+    widget: 'pdf',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Turn PDF pages into editable PowerPoint slides — each page becomes a slide with its text. Free, no sign-up, files never leave your device.',
+    faqQ: 'How do I convert PDF to PowerPoint for free?',
+    faqA: 'Drop the PDF and download a .pptx file. Every page becomes one slide with its text laid out and editable — converted entirely in your browser.',
+    aboutFrom: 'PDFs are frozen — you cannot edit or present their content as slides without retyping everything.',
+    aboutTo: 'A PowerPoint file gives you editable slides: rearrange, restyle, and present the content however you like.',
+    useCases: [
+      'Turning a PDF report into a presentation',
+      'Extracting PDF content into editable slides',
+      'Reusing PDF text in a pitch deck',
+    ],
+    tip: 'Scanned PDFs (pictures of text) have no text to convert — those need OCR first.',
+    extraFaqs: [
+      {
+        q: 'Are images and charts kept?',
+        a: 'Honest answer: this version converts text content. Images and complex graphics are not carried over to slides yet.',
+      },
+      {
+        q: 'Can I edit the slides afterwards?',
+        a: 'Yes — every text box is fully editable in PowerPoint, Google Slides, or Keynote.',
+      },
+      {
+        q: 'Is my PDF uploaded anywhere?',
+        a: 'Never. Everything runs on your device in the browser.',
+      },
+    ],
+  },
+  {
+    id: 'sign-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Sign PDF',
+    widget: 'sign',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Sign a PDF online — draw your signature with mouse or finger, pick the page and position, download the signed document.',
+    faqQ: 'How do I sign a PDF online for free?',
+    faqA: 'Drop the PDF, draw your signature on the pad, choose the page and corner, and download. The signature is embedded into the document — all in your browser.',
+    aboutFrom: 'Printing, signing by hand, and scanning is slow — and most "free" sign tools upload your document to their servers.',
+    aboutTo: 'A signed PDF is ready to send in seconds, and your document never leaves your device.',
+    useCases: [
+      'Signing a contract or offer letter',
+      'Approving an invoice with your signature',
+      'Signing a form without printing anything',
+    ],
+    tip: 'Draw slowly with a steady hand — a bigger pad stroke looks more like a real pen signature.',
+    extraFaqs: [
+      {
+        q: 'Is this a legally valid signature?',
+        a: 'Honest answer: this places your drawn signature visibly on the document, which is fine for everyday agreements. For high-stakes contracts, check what your country or counterparty requires (some need certified digital signatures).',
+      },
+      {
+        q: 'Can I reuse my signature?',
+        a: 'Redraw it each time for now — the pad clears after every download for your privacy.',
+      },
+      {
+        q: 'Is my document uploaded anywhere?',
+        a: 'Never. Signing runs entirely in your browser.',
+      },
+    ],
+  },
+  {
+    id: 'html-to-pdf', from: 'HTML', to: 'PDF', fromExts: ['html', 'htm'], toExt: 'pdf', category: 'pdf',
+    title: 'HTML to PDF Converter',
+    widget: 'html',
+    blurb: 'Turn HTML code or web pages into PDF — paste your HTML, preview it, and save as PDF with your browser\u2019s own printer.',
+    faqQ: 'How do I convert HTML to PDF?',
+    faqA: 'Paste your HTML code (or drop a .html file), check the live preview, then hit Print / Save as PDF. Your browser renders the PDF — nothing is uploaded.',
+    aboutFrom: 'HTML is made for screens — sharing it means sending code that looks different in every email client.',
+    aboutTo: 'A PDF freezes the page exactly as designed: printable, emailable, identical everywhere.',
+    useCases: [
+      'Saving a designed web page as a PDF',
+      'Turning an HTML email template into a document',
+      'Converting HTML reports to printable PDFs',
+    ],
+    tip: 'Use the preview to check layout before printing — what you see is what the PDF gets.',
+    extraFaqs: [
+      {
+        q: 'Can I convert a website URL directly?',
+        a: 'Paste the page\u2019s HTML source (right-click → View Source, copy). Direct URL fetching is blocked by browser security rules.',
+      },
+      {
+        q: 'Is my HTML uploaded anywhere?',
+        a: 'Never. Rendering and printing happen entirely in your browser.',
+      },
+    ],
+  },
+  {
+    id: 'compare-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Compare PDF Files',
+    widget: 'compare',
+    blurb: 'Compare two PDFs side by side — flip through pages together and spot differences visually. Free, private, in your browser.',
+    faqQ: 'How do I compare two PDF files?',
+    faqA: 'Drop both PDFs and flip pages with the page control. Both documents render side by side at the same page number so differences jump out.',
+    aboutFrom: 'Two versions of a contract or report look identical until you find the one changed paragraph — on page 14.',
+    aboutTo: 'Side-by-side comparison makes changes visible instantly, without printing anything.',
+    useCases: [
+      'Checking what changed between two contract drafts',
+      'Comparing report versions before a meeting',
+      'Verifying a translated document matches the original layout',
+    ],
+    tip: 'If the documents have different page counts, comparison stops at the shorter one.',
+    extraFaqs: [
+      {
+        q: 'Does it highlight differences automatically?',
+        a: 'Honest answer: this is visual side-by-side comparison — you spot the changes with your eyes. Automatic diff highlighting is not included.',
+      },
+      {
+        q: 'Are my documents uploaded?',
+        a: 'Never. Both PDFs render locally in your browser.',
+      },
+    ],
+  },
+  {
+    id: 'translate-pdf', from: 'PDF', to: 'PDF', fromExts: ['pdf'], toExt: 'pdf', category: 'pdf',
+    title: 'Translate PDF',
+    widget: 'translate',
+    loadingNote: PDF_ENGINE_NOTE,
+    blurb: 'Translate a whole PDF with on-device AI — 10 language pairs (English, Spanish, French, German, Arabic, Hindi). No text ever leaves your browser.',
+    faqQ: 'How do I translate a PDF for free?',
+    faqA: 'Drop the PDF, pick a language pair, and download the translated document. AI translation runs 100% on your device — nothing is uploaded anywhere.',
+    aboutFrom: 'PDFs in a foreign language are unreadable walls of text — and online translators upload your document to their servers.',
+    aboutTo: 'A translated PDF you can actually read, produced privately on your own device.',
+    useCases: [
+      'Reading a foreign-language contract or manual',
+      'Translating a research paper to English',
+      'Sharing a document with someone in their language',
+    ],
+    tip: 'First use downloads the AI language model once (~30–100MB) — after that it works fully offline.',
+    extraFaqs: [
+      {
+        q: 'Which languages are supported?',
+        a: 'English, Spanish, French, German, Arabic, and Hindi — in both directions (10 pairs). Urdu is not available yet.',
+      },
+      {
+        q: 'How good is the translation?',
+        a: 'Honest answer: good enough for understanding — roughly 80% quality. It is machine translation, not a human translator. Fine for free and private use.',
+      },
+      {
+        q: 'Is my document uploaded anywhere?',
+        a: 'Never. The AI model downloads to your browser once, then everything runs on your device.',
+      },
+      {
+        q: 'Does it keep the layout?',
+        a: 'Text is reflowed into clean pages — the original fancy layout is simplified, but nothing is lost in reading order.',
       },
     ],
   },

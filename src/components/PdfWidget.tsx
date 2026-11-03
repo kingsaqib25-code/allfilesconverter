@@ -262,6 +262,11 @@ export default function PdfWidget({ entryId }: Props) {
           outs.push({ blob: r.blob, filename: r.filename });
           break;
         }
+        case 'pdf-to-powerpoint': {
+          const r = await mod.pdfToPowerpoint(files[0]);
+          outs.push({ blob: r.blob, filename: r.filename });
+          break;
+        }
         default:
           throw new Error('This PDF tool is not wired up yet.');
       }

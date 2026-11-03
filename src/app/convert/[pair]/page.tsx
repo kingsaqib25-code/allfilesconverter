@@ -3,6 +3,10 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import ConverterWidget from '@/components/ConverterWidget';
 import PdfWidget from '@/components/PdfWidget';
+import SignWidget from '@/components/SignWidget';
+import HtmlWidget from '@/components/HtmlWidget';
+import CompareWidget from '@/components/CompareWidget';
+import TranslateWidget from '@/components/TranslateWidget';
 import MergeWidget from '@/components/MergeWidget';
 import PdfEditor from '@/components/PdfEditor';
 import AiSummarize from '@/components/AiSummarize';
@@ -109,6 +113,14 @@ export default async function ConvertPage({
 
       {entry.widget === 'pdf' ? (
         <PdfWidget entryId={entry.id} />
+      ) : entry.widget === 'sign' ? (
+        <SignWidget entry={entry} />
+      ) : entry.widget === 'html' ? (
+        <HtmlWidget entry={entry} />
+      ) : entry.widget === 'compare' ? (
+        <CompareWidget entry={entry} />
+      ) : entry.widget === 'translate' ? (
+        <TranslateWidget entry={entry} />
       ) : entry.widget === 'merge' ? (
         <MergeWidget entryId={entry.id} />
       ) : entry.widget === 'edit' ? (

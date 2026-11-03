@@ -386,7 +386,7 @@ export async function compressPdf(
 // PDF -> text
 // ---------------------------------------------------------------------------
 
-async function extractPageTexts(file: File): Promise<string[][]> {
+export async function extractPageTexts(file: File): Promise<string[][]> {
   const pdf = await openPdf(file);
   const pages: string[][] = [];
   try {
@@ -1797,6 +1797,40 @@ export async function markdownToPdf(file: File): Promise<ConvertResult> {
   const bytes = await doc.save();
   return { blob: pdfBlob(bytes), filename: pdfOutName(file) };
 }
+
+/** PDF -> PowerPoint (.pptx): each PDF page becomes a slide with its text. */
+export async function pdfToPowerpoint(file: File): Promise<ConvertResult> {
+  const pages = await extractPageTexts(file);
+  const hasText = pages.some((p) => p.join('').trim().length > 0);
+  if (!hasText) {
+    throw new Error(
+      'No text found in this PDF — it may be a scanned document (pictures of text). ' +
+        'Scanned PDFs need OCR first.'
+    );
+  }
+  const PptxMod = await import('pptxgenjs');
+  const PptxGenJS = (PptxMod as any).default ?? PptxMod;
+  const pptx = new PptxGenJS();
+  pptx.defineLayout({ name: 'W16x9', width: 13.33, height: 7.5 });
+  pptx.layout = 'W16x9';
+  pages.forEach((paras, pi) => {
+    const slide = pptx.addSlide();
+    const title = paras[0]?.trim() ?? `Page ${pi + 1}`;
+    const body = paras.slice(1).join('\n\n');
+    if (title.length < 90) {
+      slide.addText(title, { x: 0.5, y: 0.3, w: 12.3, h: 0.8, fontSize: 28, bold: true, color: '0F766E' });
+      if (body.trim()) {
+        slide.addText(body.slice(0, 2000), { x: 0.5, y: 1.3, w: 12.3, h: 5.7, fontSize: 14, color: '333333', valign: 'top' });
+      }
+    } else {
+      slide.addText([title, body].filter(Boolean).join('\n\n').slice(0, 2000), { x: 0.5, y: 0.3, w: 12.3, h: 6.9, fontSize: 14, color: '333333', valign: 'top' });
+    }
+    slide.addText(`Page ${pi + 1}`, { x: 12.3, y: 7.1, w: 0.8, h: 0.3, fontSize: 9, color: '999999', align: 'right' });
+  });
+  const base = baseName(file);
+  const blob = (await pptx.write({ outputType: 'blob' })) as Blob;
+  return { blob, filename: `${base}.pptx` };
+};
 
 /** Excel (.xlsx/.xls/.csv) -> PDF table: first sheet, header row, grid. */
 export async function excelToPdf(file: File): Promise<ConvertResult> {
