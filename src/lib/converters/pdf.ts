@@ -743,6 +743,8 @@ export interface PageOverlay {
   fontSize?: number;
   bold?: boolean;
   italic?: boolean;
+  /** text font family: serif (Times), sans (Helvetica), mono (Courier). Default sans. */
+  fontFamily?: 'serif' | 'sans' | 'mono';
   /** stroke/text color */
   color?: { r: number; g: number; b: number };
   /** shape kind: rect | ellipse | line */
@@ -1191,6 +1193,15 @@ interface EditorFontKit {
   helv: unknown;
   helvB: unknown;
   helvI: unknown;
+  helvBI: unknown;
+  times: unknown;
+  timesB: unknown;
+  timesI: unknown;
+  timesBI: unknown;
+  cour: unknown;
+  courB: unknown;
+  courO: unknown;
+  courBO: unknown;
 }
 
 /** Embed the editor fonts into a pdf-lib document (TTFs cached, fail-soft). */
@@ -1201,7 +1212,20 @@ async function embedEditorFonts(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     registerFontkit?: (fk: any) => void;
   },
-  StandardFonts: { Helvetica: string; HelveticaBold: string; HelveticaOblique: string }
+  StandardFonts: {
+    Helvetica: string;
+    HelveticaBold: string;
+    HelveticaOblique: string;
+    HelveticaBoldOblique: string;
+    TimesRoman: string;
+    TimesRomanBold: string;
+    TimesRomanItalic: string;
+    TimesRomanBoldItalic: string;
+    Courier: string;
+    CourierBold: string;
+    CourierOblique: string;
+    CourierBoldOblique: string;
+  }
 ): Promise<EditorFontKit> {
   await fetchEditorFontBytes();
   // TTF embedding needs fontkit registered on the document instance.
@@ -1229,6 +1253,15 @@ async function embedEditorFonts(
     helv: await doc.embedFont(StandardFonts.Helvetica),
     helvB: await doc.embedFont(StandardFonts.HelveticaBold),
     helvI: await doc.embedFont(StandardFonts.HelveticaOblique),
+    helvBI: await doc.embedFont(StandardFonts.HelveticaBoldOblique),
+    times: await doc.embedFont(StandardFonts.TimesRoman),
+    timesB: await doc.embedFont(StandardFonts.TimesRomanBold),
+    timesI: await doc.embedFont(StandardFonts.TimesRomanItalic),
+    timesBI: await doc.embedFont(StandardFonts.TimesRomanBoldItalic),
+    cour: await doc.embedFont(StandardFonts.Courier),
+    courB: await doc.embedFont(StandardFonts.CourierBold),
+    courO: await doc.embedFont(StandardFonts.CourierOblique),
+    courBO: await doc.embedFont(StandardFonts.CourierBoldOblique),
   };
 }
 
@@ -1530,8 +1563,15 @@ export async function renderEditedPdf(
           opacity: o.opacity ?? 1,
         });
       } else if (o.kind === 'text' && o.text) {
+        // Pick the embedded font matching the overlay's family + bold/italic.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const font: any = o.bold ? kit.helvB : o.italic ? kit.helvI : kit.helv;
+        const font: any = (() => {
+          const fam = o.fontFamily ?? 'sans';
+          const b = !!o.bold, i = !!o.italic;
+          if (fam === 'serif') return b && i ? kit.timesBI : b ? kit.timesB : i ? kit.timesI : kit.times;
+          if (fam === 'mono') return b && i ? kit.courBO : b ? kit.courB : i ? kit.courO : kit.cour;
+          return b && i ? kit.helvBI : b ? kit.helvB : i ? kit.helvI : kit.helv;
+        })();
         const size = o.fontSize ?? 12;
         const lines = o.text.split('\n');
         lines.forEach((ln, i) => {

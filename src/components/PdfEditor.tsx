@@ -26,6 +26,8 @@ function rgbToCss(c: { r: number; g: number; b: number }, a = 1): string {
 
 interface BlockState extends EditorBlock {
   editedText: string | null;
+  /** Sampled foreground (glyph) color 0..1, for auto-matching edit/add-text styling. */
+  fgRgb?: { r: number; g: number; b: number };
 }
 
 interface PageState extends EditorPageData {
@@ -64,6 +66,43 @@ function fontStackForBlock(b: { fontName: string }): string {
   if (/times|georgia|garamond|palatino|bookman|serif/.test(n))
     return 'Georgia, "Times New Roman", Times, serif';
   return '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+}
+
+type TextFam = 'serif' | 'sans' | 'mono';
+
+/** Map a PDF font name to our small family enum (matches fontStackForBlock). */
+function fontFamForBlock(b: { fontName: string }): TextFam {
+  const n = (b.fontName || '').toLowerCase();
+  if (/mono|courier|consol|typewriter/.test(n)) return 'mono';
+  if (/times|georgia|garamond|palatino|bookman|serif/.test(n)) return 'serif';
+  return 'sans';
+}
+
+function cssStackForFam(fam: TextFam): string {
+  if (fam === 'mono') return 'ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace';
+  if (fam === 'serif') return 'Georgia, "Times New Roman", Times, serif';
+  return '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+}
+
+/** Nearest text block to a PDF-unit point (for style auto-pickup), or null. */
+function nearestBlock<T extends { x: number; y: number; width: number; height: number }>(
+  blocks: T[],
+  x: number,
+  y: number,
+  maxDist: number
+): T | null {
+  let best: T | null = null;
+  let bestD = maxDist;
+  for (const b of blocks) {
+    const cx = b.x + b.width / 2;
+    const cy = b.y - b.height / 2; // y is baseline; center the box
+    const d = Math.hypot(cx - x, cy - y);
+    if (d < bestD) {
+      bestD = d;
+      best = b;
+    }
+  }
+  return best;
 }
 
 type Phase = 'idle' | 'loading' | 'ready';
@@ -115,6 +154,10 @@ export default function PdfEditor() {
   const [selBlock, setSelBlock] = useState<string | null>(null);
   const [penHex, setPenHex] = useState('#000000');
   const [textSize, setTextSize] = useState(14);
+  /** Pending add-text style (used when no nearby text to auto-pickup from). */
+  const [textBold, setTextBold] = useState(false);
+  const [textItalic, setTextItalic] = useState(false);
+  const [textFont, setTextFont] = useState<'auto' | TextFam>('auto');
   const [penThick, setPenThick] = useState(2.5);
   const [histPast, setHistPast] = useState<PageOverlay[][]>([]);
   const [histFuture, setHistFuture] = useState<PageOverlay[][]>([]);
@@ -271,17 +314,25 @@ export default function PdfEditor() {
       const id = localOvId();
       const pg = pages[sel];
       if (!pg) return;
+      // Auto-pickup: inherit font/size/color/bold from the nearest text block
+      // so added text blends in. Falls back to the panel's pending style.
+      const near = nearestBlock(pg.blocks, p.x, p.y, 150);
+      const fs = near ? near.fontSize : textSize;
+      const fam: TextFam = near ? fontFamForBlock(near) : textFont === 'auto' ? 'sans' : textFont;
       const ov: PageOverlay = {
         id,
         kind: 'text',
         pageNum: pg.pageNum,
         x: Math.max(0, p.x - 4),
-        y: Math.max(0, p.y - textSize - 4),
+        y: Math.max(0, p.y - fs - 4),
         w: 220,
-        h: textSize + 8,
+        h: fs + 8,
         text: 'Your text here',
-        fontSize: textSize,
-        color: hexToRgb(penHex),
+        fontSize: fs,
+        fontFamily: fam,
+        bold: near ? near.bold : textBold,
+        italic: near ? false : textItalic,
+        color: near?.fgRgb ?? hexToRgb(penHex),
       };
       commitOverlays([...overlaysRef.current, ov]);
       setSelOverlay(id);
@@ -290,7 +341,7 @@ export default function PdfEditor() {
         document.querySelector<HTMLElement>(`[data-ov-id="${id}"] [contenteditable]`)?.focus();
       });
     },
-    [commitOverlays, penHex, textSize, pages, sel]
+    [commitOverlays, penHex, textSize, textBold, textItalic, textFont, pages, sel]
   );
 
   const onAnnotDown = useCallback(
@@ -405,7 +456,27 @@ export default function PdfEditor() {
   const toggleTextStyle = useCallback(
     (k: 'bold' | 'italic') => {
       const ov = overlaysRef.current.find((o) => o.id === selOverlay && o.kind === 'text');
-      if (ov) commitOverlays(overlaysRef.current.map((o) => (o.id === ov.id ? { ...o, [k]: !o[k] } : o)));
+      if (ov) {
+        commitOverlays(overlaysRef.current.map((o) => (o.id === ov.id ? { ...o, [k]: !o[k] } : o)));
+      } else {
+        // No text selected: toggle the pending add-text style instead.
+        if (k === 'bold') setTextBold((v) => !v);
+        else setTextItalic((v) => !v);
+      }
+    },
+    [selOverlay, commitOverlays]
+  );
+
+  /** Set font family for the selected text overlay, or the pending add-text style. */
+  const setTextFontFam = useCallback(
+    (fam: 'auto' | TextFam) => {
+      const ov = overlaysRef.current.find((o) => o.id === selOverlay && o.kind === 'text');
+      if (ov) {
+        const real: TextFam = fam === 'auto' ? 'sans' : fam;
+        commitOverlays(overlaysRef.current.map((o) => (o.id === ov.id ? { ...o, fontFamily: real } : o)));
+      } else {
+        setTextFont(fam);
+      }
     },
     [selOverlay, commitOverlays]
   );
@@ -506,10 +577,47 @@ export default function PdfEditor() {
         lib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
         const doc = await lib.getDocument({ data: buf.slice(0) }).promise;
         docRef.current = doc;
+        // Best-effort: sample every text block's glyph color once (offscreen
+        // render) so text edits and added text can auto-match the color of
+        // the surrounding text. The editor works fine without it.
+        const fgById = new Map<string, { r: number; g: number; b: number }>();
+        for (const p of extracted) {
+          try {
+            const pg = (await doc.getPage(p.pageNum)) as unknown as {
+              getViewport: (o: { scale: number }) => { width: number; height: number };
+              render: (o: { canvasContext: CanvasRenderingContext2D; viewport: unknown }) => { promise: Promise<void> };
+              cleanup: () => void;
+            };
+            const vp = pg.getViewport({ scale: 2 });
+            const cv = document.createElement('canvas');
+            cv.width = Math.max(1, Math.ceil(vp.width));
+            cv.height = Math.max(1, Math.ceil(vp.height));
+            const ctx = cv.getContext('2d', { willReadFrequently: true });
+            if (!ctx) continue;
+            await pg.render({ canvasContext: ctx, viewport: vp }).promise;
+            pg.cleanup();
+            const img = ctx.getImageData(0, 0, cv.width, cv.height);
+            for (const b of p.blocks) {
+              try {
+                const s = pdfMod.sampleBlockColors(
+                  { data: img.data, width: img.width, height: img.height },
+                  p.width,
+                  p.height,
+                  { x: b.x, y: b.y - b.height * 0.25, w: b.width, h: b.height * 1.15 }
+                );
+                fgById.set(b.id, { r: s.fg.r, g: s.fg.g, b: s.fg.b });
+              } catch {
+                /* leave this block uncolored */
+              }
+            }
+          } catch {
+            /* sampling is best-effort; editor works without it */
+          }
+        }
         setPages(
           extracted.map((p) => ({
             ...p,
-            blocks: p.blocks.map((b) => ({ ...b, editedText: null })),
+            blocks: p.blocks.map((b) => ({ ...b, editedText: null, fgRgb: fgById.get(b.id) })),
             tvTouched: [] as string[],
             thumb: null,
           }))
@@ -1249,22 +1357,32 @@ export default function PdfEditor() {
                     </button>
                     <button
                       type="button"
-                      className={`annot-btn annot-btn-sm${selTextOv?.bold ? ' on' : ''}`}
+                      className={`annot-btn annot-btn-sm${(selTextOv ? !!selTextOv.bold : textBold) ? ' on' : ''}`}
                       onClick={() => toggleTextStyle('bold')}
-                      title="Bold"
-                      disabled={!selTextOv}
+                      title={selTextOv ? 'Bold' : 'Bold for new text'}
                     >
                       <span aria-hidden="true" style={{ fontWeight: 800 }}>B</span>
                     </button>
                     <button
                       type="button"
-                      className={`annot-btn annot-btn-sm${selTextOv?.italic ? ' on' : ''}`}
+                      className={`annot-btn annot-btn-sm${(selTextOv ? !!selTextOv.italic : textItalic) ? ' on' : ''}`}
                       onClick={() => toggleTextStyle('italic')}
-                      title="Italic"
-                      disabled={!selTextOv}
+                      title={selTextOv ? 'Italic' : 'Italic for new text'}
                     >
                       <span aria-hidden="true" style={{ fontStyle: 'italic' }}>I</span>
                     </button>
+                    <select
+                      className="annot-select"
+                      aria-label="Font family"
+                      title={selTextOv ? 'Font family' : 'Font family for new text'}
+                      value={selTextOv ? selTextOv.fontFamily ?? 'sans' : textFont}
+                      onChange={(e) => setTextFontFam(e.target.value as 'auto' | TextFam)}
+                    >
+                      {!selTextOv && <option value="auto">Auto font</option>}
+                      <option value="serif">Serif</option>
+                      <option value="sans">Sans</option>
+                      <option value="mono">Mono</option>
+                    </select>
                   </div>
                 )}
                 {(tool === 'draw' || tool === 'shape') && (
@@ -1361,6 +1479,8 @@ export default function PdfEditor() {
                       fontFamily: fontStackForBlock(b),
                       fontWeight: b.bold ? 700 : 400,
                       lineHeight: 1.25,
+                      // Auto-match the block's sampled glyph color while editing.
+                      ...(b.fgRgb ? { color: rgbToCss(b.fgRgb) } : null),
                     } as React.CSSProperties;
                     if (isEditing) {
                       return (
@@ -1616,6 +1736,7 @@ export default function PdfEditor() {
                             style={{
                               fontSize: `${(((o.fontSize ?? 14) / page.width) * 100).toFixed(3)}cqw`,
                               color: rgbToCss(o.color ?? { r: 0, g: 0, b: 0 }),
+                              fontFamily: cssStackForFam(o.fontFamily ?? 'sans'),
                               fontWeight: o.bold ? 700 : 400,
                               fontStyle: o.italic ? 'italic' : 'normal',
                               lineHeight: 1.25,

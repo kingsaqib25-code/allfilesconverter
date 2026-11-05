@@ -774,6 +774,12 @@ a.card:hover { text-decoration: none; border-color: var(--brand); box-shadow: va
 .annot-btn:disabled { opacity: 0.4; cursor: default; }
 .annot-btn:disabled:hover { background: transparent; color: var(--ink-soft); }
 .annot-btn-sm { padding: 0.3rem 0.45rem; }
+.annot-select {
+  font-size: 0.8rem; font-weight: 600; color: var(--ink-soft);
+  background: transparent; border: 1px solid var(--line); border-radius: 8px;
+  padding: 0.3rem 0.4rem; cursor: pointer; max-width: 7rem;
+}
+.annot-select:hover { background: var(--brand-soft); color: var(--brand-dark); }
 .annot-val { min-width: 2ch; text-align: center; font-size: 0.85rem; font-weight: 600; color: #334155; }
 .annot-shapes { display: inline-flex; gap: 0.2rem; }
 .annot-swatch {
