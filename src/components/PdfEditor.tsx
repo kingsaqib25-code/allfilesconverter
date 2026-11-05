@@ -94,9 +94,14 @@ function nearestBlock<T extends { x: number; y: number; width: number; height: n
   let best: T | null = null;
   let bestD = maxDist;
   for (const b of blocks) {
-    const cx = b.x + b.width / 2;
-    const cy = b.y - b.height / 2; // y is baseline; center the box
-    const d = Math.hypot(cx - x, cy - y);
+    // Distance to the block's RECT (closest point), not its center — a wide
+    // block's center can be far from a click on its own text, which used to
+    // let a nearer wrong (black) block win and break color pickup.
+    const dx = Math.max(b.x - x, 0, x - (b.x + b.width));
+    const yTop = b.y + b.height;
+    const yBot = b.y - b.height * 0.3;
+    const dy = Math.max(yBot - y, 0, y - yTop);
+    const d = Math.hypot(dx, dy);
     if (d < bestD) {
       bestD = d;
       best = b;
