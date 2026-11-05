@@ -261,6 +261,13 @@ export default function PdfEditor() {
   const imgInputRef = useRef<HTMLInputElement>(null);
   const imgUrlCache = useRef(new Map<string, string>());
   const pendingImgPos = useRef<{ x: number; y: number } | null>(null);
+  /** Signature pad (draw with pen / finger / stylus / mouse). */
+  const [sigPadOpen, setSigPadOpen] = useState(false);
+  const [sigHasInk, setSigHasInk] = useState(false);
+  const sigCanvasRef = useRef<HTMLCanvasElement>(null);
+  const sigDrawing = useRef(false);
+  const sigLast = useRef<{ x: number; y: number } | null>(null);
+  const pendingSigBytes = useRef<{ buf: ArrayBuffer; mime: string } | null>(null);
   const docRef = useRef<{ getPage: (n: number) => Promise<unknown>; destroy?: () => void } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const thumbsDone = useRef(false);
@@ -346,15 +353,24 @@ export default function PdfEditor() {
           },
         ]);
       } else if (g.kind === 'whiteout') {
-        // Whiteout covers the dragged box with opaque white — unlike a
-        // highlight, the drag box IS the rect (any height the user drags).
+        // Whiteout covers the dragged box with opaque white. A short drag
+        // over a text line snaps to that line's band (like a highlight), so
+        // one drag hides the whole line instead of half of it; a tall drag
+        // keeps its own box (for covering images or blocks of text).
+        let wy0 = y0;
+        let wh = Math.max(y1 - y0, 8);
+        if (y1 - y0 < 20) {
+          const snap = snapHighlightY(pages[sel]?.blocks ?? [], (y0 + y1) / 2);
+          wy0 = snap.cy - snap.h / 2;
+          wh = snap.h;
+        }
         commitOverlays([
           ...overlaysRef.current,
           {
             id: localOvId(),
             kind: 'whiteout',
             pageNum: pages[sel]?.pageNum ?? 1,
-            x: x0, y: y0, w: Math.max(x1 - x0, 5), h: Math.max(y1 - y0, 8),
+            x: x0, y: wy0, w: Math.max(x1 - x0, 5), h: wh,
           },
         ]);
       } else {
@@ -436,7 +452,14 @@ export default function PdfEditor() {
       }
       if (tool === 'image') {
         const p = toPdfPoint(e.clientX, e.clientY);
-        if (p) {
+        if (!p) return;
+        // A drawn signature waiting to be placed goes down directly (no
+        // file picker); otherwise open the picker for an image file.
+        const sig = pendingSigBytes.current;
+        if (sig) {
+          pendingSigBytes.current = null;
+          void placeImageBytes(sig.buf, sig.mime, p);
+        } else {
           pendingImgPos.current = p;
           imgInputRef.current?.click();
         }
@@ -450,7 +473,7 @@ export default function PdfEditor() {
         e.preventDefault();
       }
     },
-    [tool, toPdfPoint, addTextAt]
+    [tool, toPdfPoint, addTextAt, placeImageBytes]
   );
 
   const onAnnotMove = useCallback(
@@ -472,16 +495,12 @@ export default function PdfEditor() {
     if (g) commitGesture(g);
   }, [commitGesture]);
 
-  const onImagePicked = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const f = e.target.files?.[0];
-      e.target.value = '';
-      const pos = pendingImgPos.current;
-      pendingImgPos.current = null;
-      if (!f || !pos || !page) return;
-      const buf = await f.arrayBuffer();
+  /** Place image bytes (file pick or drawn signature) as an overlay at pos. */
+  const placeImageBytes = useCallback(
+    async (buf: ArrayBuffer, mime: string, pos: { x: number; y: number }) => {
+      if (!page) return;
       // natural size for aspect ratio
-      const url = URL.createObjectURL(new Blob([buf], { type: f.type }));
+      const url = URL.createObjectURL(new Blob([buf], { type: mime }));
       const dims = await new Promise<{ w: number; h: number }>((res) => {
         const im = new Image();
         im.onload = () => res({ w: im.naturalWidth || 300, h: im.naturalHeight || 200 });
@@ -499,15 +518,115 @@ export default function PdfEditor() {
         y: Math.max(0, pos.y - h / 2),
         w, h,
         imageBytes: buf,
-        imageMime: f.type,
+        imageMime: mime,
       };
-      imgUrlCache.current.set(ov.id, URL.createObjectURL(new Blob([buf], { type: f.type })));
+      imgUrlCache.current.set(ov.id, URL.createObjectURL(new Blob([buf], { type: mime })));
       commitOverlays([...overlaysRef.current, ov]);
       setSelOverlay(ov.id);
       setTool('select');
     },
     [page, commitOverlays]
   );
+
+  const onImagePicked = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      e.target.value = '';
+      const pos = pendingImgPos.current;
+      pendingImgPos.current = null;
+      // A file pick discards any undrawn-placed signature.
+      pendingSigBytes.current = null;
+      if (!f || !pos) return;
+      const buf = await f.arrayBuffer();
+      await placeImageBytes(buf, f.type, pos);
+    },
+    [placeImageBytes]
+  );
+
+  /** Size the signature canvas to its displayed box when the pad opens. */
+  useEffect(() => {
+    if (!sigPadOpen) return;
+    const c = sigCanvasRef.current;
+    if (!c) return;
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const cw = Math.max(280, c.clientWidth || 480);
+    c.width = Math.round(cw * dpr);
+    c.height = Math.round(180 * dpr);
+    const ctx = c.getContext('2d');
+    if (ctx) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cw, 180);
+    }
+    setSigHasInk(false);
+  }, [sigPadOpen]);
+
+  /** Signature pad drawing (PointerEvents: pen / finger / stylus / mouse). */
+  const sigPos = (e: React.PointerEvent) => {
+    const c = sigCanvasRef.current;
+    if (!c) return null;
+    const r = c.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+  const sigStart = (e: React.PointerEvent) => {
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const p = sigPos(e);
+    if (!p) return;
+    sigDrawing.current = true;
+    sigLast.current = p;
+    setSigHasInk(true);
+    const ctx = sigCanvasRef.current?.getContext('2d');
+    if (ctx) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#111111';
+      ctx.fill();
+    }
+  };
+  const sigMove = (e: React.PointerEvent) => {
+    if (!sigDrawing.current) return;
+    const p = sigPos(e);
+    const last = sigLast.current;
+    if (!p || !last) return;
+    const ctx = sigCanvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    sigLast.current = p;
+  };
+  const sigEnd = () => {
+    sigDrawing.current = false;
+    sigLast.current = null;
+  };
+  const sigClear = () => {
+    const c = sigCanvasRef.current;
+    const ctx = c?.getContext('2d');
+    if (c && ctx) {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, c.width, c.height);
+      ctx.restore();
+    }
+    setSigHasInk(false);
+  };
+  /** Save the drawing as a transparent PNG and arm it for placement. */
+  const sigPlace = () => {
+    const c = sigCanvasRef.current;
+    if (!c || !sigHasInk) return;
+    c.toBlob(async (blob) => {
+      if (!blob) return;
+      const buf = await blob.arrayBuffer();
+      pendingSigBytes.current = { buf, mime: 'image/png' };
+      setSigPadOpen(false);
+      pickTool('image');
+    }, 'image/png');
+  };
 
   const deleteSelOverlay = useCallback(() => {
     if (!selOverlay) return;
@@ -1509,6 +1628,14 @@ export default function PdfEditor() {
                   >
                     <span aria-hidden="true">🖼</span> Image
                   </button>
+                  <button
+                    type="button"
+                    className="annot-btn"
+                    onClick={() => setSigPadOpen(true)}
+                    title="Draw your signature, then click the page to place it"
+                  >
+                    <span aria-hidden="true">✍</span> Signature
+                  </button>
                 </div>
                 {(tool === 'add-text' || selTextOv) && (
                   <div className="annot-group" role="group" aria-label="Text formatting">
@@ -2223,6 +2350,48 @@ export default function PdfEditor() {
               {preview.pageUrls.map((u, i) => (
                 <img key={i} src={u} alt={`Preview of edited page ${i + 1}`} className="modal-page" />
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sigPadOpen && (
+        <div className="modal-overlay" role="presentation">
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Draw your signature"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <strong>Draw your signature</strong>
+                <div className="opt-hint">Pen, finger, stylus or mouse — then click the page to place it.</div>
+              </div>
+              <button type="button" className="mini-btn" onClick={() => setSigPadOpen(false)} aria-label="Close signature pad">
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <canvas
+                ref={sigCanvasRef}
+                className="sig-pad"
+                style={{ touchAction: 'none', cursor: 'crosshair' }}
+                onPointerDown={sigStart}
+                onPointerMove={sigMove}
+                onPointerUp={sigEnd}
+                onPointerCancel={sigEnd}
+              />
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn" onClick={sigPlace} disabled={!sigHasInk}>
+                Place signature
+              </button>
+              <button type="button" className="mini-btn" onClick={sigClear}>
+                Clear
+              </button>
+              <span className="opt-hint">After placing, click on the page where the signature goes.</span>
             </div>
           </div>
         </div>
