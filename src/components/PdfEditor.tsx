@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EditorBlock, EditorPageData, FinalPage, PageOverlay } from '@/lib/converters/pdf';
 
 /** Build marker for the live-bundle check (QA round 2, 2026-11-05). */
-const QA_BUILD = 'pdfqa-20261105-r2';
+const QA_BUILD = 'pdfqa-20261105-r3';
 
 /** Annotation toolbar tools (iLovePDF-style). */
 type AnnotTool = 'select' | 'edit-text' | 'add-text' | 'highlight' | 'underline' | 'strikeout' | 'draw' | 'shape' | 'image' | 'whiteout';
@@ -1954,6 +1954,15 @@ export default function PdfEditor() {
                     // editing, which is fine — it collapses back on blur.
                     const editTop = b.y + b.fontSize * 0.95;
                     const editBottom = b.y - b.fontSize * 0.4;
+                    // The mask must cover the ORIGINAL glyphs too — pdf.js
+                    // block.width understates their true right edge by ~6%
+                    // (pixel-measured 2026-11-05: 293.5pt true vs 279.4pt
+                    // reported on one heading), so a max-content box hugging
+                    // a SHORTER edited text left the original tail peeking
+                    // out beside it ("ghosting"). minWidth holds the mask
+                    // over the widened original extent; max-content still
+                    // lets a longer edited text grow right.
+                    const coverMinW = Math.min(b.width * 1.1 + 8, page.width - b.x - 8);
                     const editStyle = {
                       left: `${(b.x / page.width) * 100}%`,
                       top: `${((page.height - editTop) / page.height) * 100}%`,
@@ -1962,6 +1971,7 @@ export default function PdfEditor() {
                       // box made wider redrawn text wrap and overlap the line
                       // below. Height stays generous so descenders stay covered.
                       width: 'max-content',
+                      minWidth: `${(coverMinW / page.width) * 100}%`,
                       maxWidth: `${((page.width - b.x - 8) / page.width) * 100}%`,
                       height: `${((editTop - editBottom) / page.height) * 100}%`,
                       // Match the PDF's own text size/family so the edit box

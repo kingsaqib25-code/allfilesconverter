@@ -1653,17 +1653,19 @@ export async function layoutEditedBlock(
     flushLine();
   }
   // Cover must hide the ORIGINAL line too — pdf.js block.width can understate
-  // the true glyph extent (QA run 1: ")E)" tail peeking past the cover), so
-  // size it to the widest of original width, measured original text and
-  // measured new text. Clamp the right edge at maxRight so a neighbour on
-  // the same row is never covered.
+  // the true glyph extent (measured 2026-11-05 by pixel render: the MEETING
+  // heading's true right edge is 293.5pt but pdf.js reports 279.4pt — a 14.1pt
+  // / 6.3% shortfall from TJ adjustments + the zero-width emoji item). So the
+  // cover gets a proportional safety margin: 10% + 8pt over the widest of
+  // original width, measured original text and measured new text. Clamp the
+  // right edge at maxRight so a neighbour on the same row is never covered.
   let maxW = block.width;
   if (opts.originalText) maxW = Math.max(maxW, measureText(opts.originalText));
   for (const runs of lineRuns) {
     if (runs.length) maxW = Math.max(maxW, measureRuns(kit, runs, size));
   }
   const coverX = block.x - 2;
-  let coverW = maxW + 4;
+  let coverW = maxW * 1.1 + 8;
   const roomRight = maxRight - coverX;
   if (roomRight > 20) coverW = Math.min(coverW, roomRight);
   const h = Math.max(block.height + 6, lines.length * lineH + 4);
@@ -1841,10 +1843,13 @@ export async function renderEditedPdf(
     for (const b of fp.blocks) {
       if (!b.edited) continue;
       // Same-row neighbour limit: the next block on this baseline (if any)
-      // caps how far this block's cover/text may grow to the right.
+      // caps how far this block's cover/text may grow to the right. Window is
+      // +/-10pt, not just the baseline, because the cover is now widened by
+      // a safety margin and a slightly offset neighbour's glyphs could
+      // otherwise be clipped by it.
       let maxRight = pageW - 8;
       for (const o of fp.blocks) {
-        if (o !== b && Math.abs(o.y - b.y) <= 2.5 && o.x > b.x) {
+        if (o !== b && Math.abs(o.y - b.y) <= 10 && o.x > b.x) {
           maxRight = Math.min(maxRight, o.x - 2);
         }
       }
