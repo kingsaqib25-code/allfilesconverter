@@ -2323,7 +2323,7 @@ export default function PdfEditor() {
                 are redrawn — colors, images and layout stay as they were. Longer replacement
                 text grows its box to the right; nearby content never moves. Complex tables may
                 shift slightly. Redrawn text uses a matching font (Noto Sans for Noto-based PDFs,
-                Helvetica otherwise); non-Latin scripts may still show as ?. Scanned PDFs
+                Carlito for Calibri, Caladea for Cambria, Helvetica otherwise); non-Latin scripts may still show as ?. Scanned PDFs
                 (pictures of text) can’t be edited — they need OCR first.
               </span>
             </div>
