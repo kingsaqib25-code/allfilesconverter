@@ -24,6 +24,11 @@ function rgbToCss(c: { r: number; g: number; b: number }, a = 1): string {
   return `rgba(${Math.round(c.r * 255)}, ${Math.round(c.g * 255)}, ${Math.round(c.b * 255)}, ${a})`;
 }
 
+function rgbToHex(c: { r: number; g: number; b: number }): string {
+  const h = (v: number) => Math.round(v * 255).toString(16).padStart(2, '0');
+  return `#${h(c.r)}${h(c.g)}${h(c.b)}`;
+}
+
 interface BlockState extends EditorBlock {
   editedText: string | null;
   /** Sampled foreground (glyph) color 0..1, for auto-matching edit/add-text styling. */
@@ -482,6 +487,18 @@ export default function PdfEditor() {
       } else {
         setTextFont(fam);
       }
+    },
+    [selOverlay, commitOverlays]
+  );
+
+  /** Set color for the selected text overlay, or the pending pen color. */
+  const setTextColor = useCallback(
+    (hex: string) => {
+      const ov = overlaysRef.current.find((o) => o.id === selOverlay && o.kind === 'text');
+      if (ov) {
+        commitOverlays(overlaysRef.current.map((o) => (o.id === ov.id ? { ...o, color: hexToRgb(hex) } : o)));
+      }
+      setPenHex(hex);
     },
     [selOverlay, commitOverlays]
   );
@@ -1406,24 +1423,29 @@ export default function PdfEditor() {
                   </div>
                 )}
                 <div className="annot-group" role="group" aria-label="Color">
-                  {['#000000', '#d62626', '#1a56db', '#0f7a3d'].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={`annot-swatch${penHex.toLowerCase() === c ? ' on' : ''}`}
-                      style={{ background: c }}
-                      onClick={() => setPenHex(c)}
-                      aria-label={`Color ${c}`}
-                      title={c}
-                    />
-                  ))}
+                  {['#000000', '#d62626', '#1a56db', '#0f7a3d'].map((c) => {
+                    // Show the selected text's own color (not the pen's) so the
+                    // toolbar never lies about what is on the page.
+                    const shown = selTextOv && selTextOv.color ? rgbToHex(selTextOv.color) : penHex;
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        className={`annot-swatch${shown.toLowerCase() === c ? ' on' : ''}`}
+                        style={{ background: c }}
+                        onClick={() => setTextColor(c)}
+                        aria-label={`Color ${c}`}
+                        title={selTextOv ? `Color ${c} (selected text)` : c}
+                      />
+                    );
+                  })}
                   <input
                     type="color"
                     className="annot-swatch annot-custom"
-                    value={penHex}
-                    onChange={(e) => setPenHex(e.target.value)}
+                    value={selTextOv && selTextOv.color ? rgbToHex(selTextOv.color) : penHex}
+                    onChange={(e) => setTextColor(e.target.value)}
                     aria-label="Custom color"
-                    title="Custom color"
+                    title={selTextOv ? 'Custom color (selected text)' : 'Custom color'}
                   />
                 </div>
                 <div className="annot-group" role="group" aria-label="Undo and redo">
