@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EditorBlock, EditorPageData, FinalPage, PageOverlay } from '@/lib/converters/pdf';
 
 /** Build marker for the live-bundle check (QA round 2, 2026-11-05). */
-const QA_BUILD = 'pdfqa-20261105-r4';
+const QA_BUILD = 'pdfqa-20261105-r5';
 
 /** Annotation toolbar tools (iLovePDF-style). */
 type AnnotTool = 'select' | 'edit-text' | 'add-text' | 'highlight' | 'underline' | 'strikeout' | 'draw' | 'shape' | 'image' | 'whiteout';
@@ -2067,7 +2067,20 @@ export default function PdfEditor() {
                     if (isEditing) {
                       return (
                         <div
-                          key={b.id}
+                          // Key differs from the display div below on purpose:
+                          // typing mutates this contentEditable's DOM (the
+                          // browser splits text nodes, wraps chars), so
+                          // React's virtual DOM goes stale. If the editing
+                          // and display divs shared a key, React would try
+                          // to reconcile the mutated children into the
+                          // display div on close — and a stale removeChild
+                          // throws a client-side exception that kills the
+                          // whole app (Escape crash, QA rounds 2–3, flaky:
+                          // it depends on how the browser split the nodes
+                          // while typing). A distinct key makes React remove
+                          // this subtree whole and mount a fresh display
+                          // div — no child reconciliation, no crash.
+                          key={`${b.id}:editing`}
                           className="edit-block editing"
                           style={editStyle}
                           contentEditable
@@ -2077,12 +2090,18 @@ export default function PdfEditor() {
                             // Focus once so the caret appears immediately after click.
                             if (el && document.activeElement !== el) {
                               el.focus();
-                              const range = document.createRange();
-                              range.selectNodeContents(el);
-                              range.collapse(false);
-                              const sel = window.getSelection();
-                              sel?.removeAllRanges();
-                              sel?.addRange(range);
+                              // Selection setup is best-effort: if the node
+                              // is detached mid-commit this must never throw.
+                              try {
+                                const range = document.createRange();
+                                range.selectNodeContents(el);
+                                range.collapse(false);
+                                const sel = window.getSelection();
+                                sel?.removeAllRanges();
+                                sel?.addRange(range);
+                              } catch {
+                                /* caret placement failed; typing still works */
+                              }
                             }
                           }}
                           onBlur={(e) => {
@@ -2096,14 +2115,24 @@ export default function PdfEditor() {
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Escape') {
-                              // Cancel directly and close: the old path set
-                              // a dataset flag on the element and called
-                              // blur(), which crashed the app with a
-                              // client-side exception in QA round 2 (edit
-                              // lost, reload needed). Closing here lets the
-                              // unmount blur hit the ref flag above instead.
+                              // Cancel directly and close. Also drop the live
+                              // selection first: it points into the node
+                              // React is about to remove, and a stale
+                              // selection across the unmount is part of the
+                              // crash surface (QA rounds 2–3). The ref flag
+                              // makes the unmount blur skip the save; a
+                              // timeout clears it if that blur never fires,
+                              // so a later edit is never wrongly discarded.
                               e.preventDefault();
+                              try {
+                                window.getSelection()?.removeAllRanges();
+                              } catch {
+                                /* selection already gone */
+                              }
                               editCancelRef.current = true;
+                              window.setTimeout(() => {
+                                editCancelRef.current = false;
+                              }, 1000);
                               setEditingId(null);
                             }
                             e.stopPropagation();
