@@ -148,6 +148,12 @@ export default function PdfEditor() {
   const [outputs, setOutputs] = useState<OutFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [textDraft, setTextDraft] = useState('');
+  // Baseline the Text-view draft was last synced from (effective block text).
+  // Apply diffs baseline -> draft, never current blocks -> draft, so even a
+  // stale draft cannot clobber page-view edits made after the draft was built.
+  const draftBaseRef = useRef<{ blocks: Array<{ id: string; text: string }>; text: string } | null>(null);
+  const textDraftRef = useRef('');
+  textDraftRef.current = textDraft;
   const [preview, setPreview] = useState<{
     bytes: ArrayBuffer;
     filename: string;
@@ -546,10 +552,15 @@ export default function PdfEditor() {
       cache.clear();
     };
   }, []);
-  const totalEdits = pages.reduce(
-    (n, p) => n + p.blocks.filter((b) => b.editedText != null && b.editedText !== b.text).length,
-    0
-  );
+  // Edits = edited text blocks PLUS annotation overlays (highlight, underline,
+  // strikeout, draw, shape, image, added text). Counting blocks only meant a
+  // highlight-only document showed "0 edits" and could never be Reviewed or
+  // downloaded — the Highlight re-test hit exactly that wall.
+  const totalEdits =
+    pages.reduce(
+      (n, p) => n + p.blocks.filter((b) => b.editedText != null && b.editedText !== b.text).length,
+      0
+    ) + overlays.length;
 
   const clearOutputs = useCallback(() => {
     setOutputs((os) => {
@@ -739,14 +750,25 @@ export default function PdfEditor() {
     };
   }, [phase, pages.length]);
 
-  // ---- text view draft follows selection ----
-  // NOTE: draft is built from the EFFECTIVE text (editedText ?? text) so
-  // page-view edits are visible here and never get clobbered by Apply.
+  // ---- text view draft follows selection AND page-view edits ----
+  // The draft is built from the EFFECTIVE text (editedText ?? text). It
+  // refreshes whenever the page's block text changes (blocksSig) so page-view
+  // edits appear here — but only while the user has no unapplied text-view
+  // typing, so their in-progress draft is never discarded. Apply is safe
+  // either way: it diffs baseline -> draft (see applyDraftPure), so even a
+  // stale draft cannot clobber page-view edits.
+  const blocksSig = page ? page.blocks.map((b) => b.editedText ?? b.text).join('\n') : '';
   useEffect(() => {
     if (!page) return;
-    setTextDraft(page.blocks.map((b) => b.editedText ?? b.text).join('\n\n'));
+    const effBlocks = page.blocks.map((b) => ({ id: b.id, text: b.editedText ?? b.text }));
+    const effText = effBlocks.map((b) => b.text).join('\n\n');
+    const draftClean = draftBaseRef.current == null || textDraftRef.current === draftBaseRef.current.text;
+    if (draftClean) {
+      setTextDraft(effText);
+      draftBaseRef.current = { blocks: effBlocks, text: effText };
+    }
     setEditingId(null);
-  }, [sel, page?.pageNum, phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sel, page?.pageNum, phase, blocksSig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Live preview in Text view: the page thumbnail with the draft's pending
@@ -847,20 +869,20 @@ export default function PdfEditor() {
     selIdx: number,
     v: 'page' | 'text',
     draft: string,
-    diffFn: (blocks: Array<{ id: string; text: string }>, d: string) => Array<{ blockId: string; newText: string | null }>
+    diffFn: (blocks: Array<{ id: string; text: string }>, d: string) => Array<{ blockId: string; newText: string | null }>,
+    baseline?: Array<{ id: string; text: string }>
   ): PageState[] {
     if (v !== 'text') return all;
     const p = all[selIdx];
     if (!p) return all;
-    // Effective text (page-view edits included) — diffing against the
-    // ORIGINAL text here would silently wipe page-view edits on Apply.
+    // Diff BASELINE -> draft, never current blocks -> draft: a stale draft
+    // (built before page-view edits) then carries only the user's text-view
+    // changes, so Apply can never revert page-view edits.
     const cur = (b: BlockState) => b.editedText ?? b.text;
-    const original = p.blocks.map(cur).join('\n\n');
+    const base = baseline ?? p.blocks.map((b) => ({ id: b.id, text: cur(b) }));
+    const original = base.map((b) => b.text).join('\n\n');
     if (draft === original) return all;
-    const edits = diffFn(
-      p.blocks.map((b) => ({ id: b.id, text: cur(b) })),
-      draft
-    );
+    const edits = diffFn(base, draft);
     const touched: string[] = [];
     const blocks = p.blocks.map((b) => {
       const e = edits.find((x) => x.blockId === b.id);
@@ -874,24 +896,40 @@ export default function PdfEditor() {
   const applyTextView = useCallback(async () => {
     if (!page) return;
     const mod = await import('@/lib/converters/pdf');
-    setPages((prev) => applyDraftPure(prev, sel, view, textDraft, mod.diffTextViewToBlocks));
-  }, [sel, view, textDraft, page]);
+    const next = applyDraftPure(pages, sel, view, textDraft, mod.diffTextViewToBlocks, draftBaseRef.current?.blocks);
+    setPages(next);
+    // Baseline moves to the applied state so the next Apply diffs from here.
+    const np = next[sel];
+    if (np) {
+      const eff = np.blocks.map((b) => ({ id: b.id, text: b.editedText ?? b.text }));
+      draftBaseRef.current = { blocks: eff, text: eff.map((b) => b.text).join('\n\n') };
+    }
+  }, [sel, view, textDraft, page, pages]);
 
   const discardTextView = useCallback(() => {
-    setPages((prev) =>
-      prev.map((p, i) =>
-        i === sel
-          ? {
-              ...p,
-              blocks: p.blocks.map((b) =>
-                p.tvTouched.includes(b.id) ? { ...b, editedText: null } : b
-              ),
-              tvTouched: [],
-            }
-          : p
-      )
+    if (!page) return;
+    const next = pages.map((p, i) =>
+      i === sel
+        ? {
+            ...p,
+            blocks: p.blocks.map((b) =>
+              p.tvTouched.includes(b.id) ? { ...b, editedText: null } : b
+            ),
+            tvTouched: [],
+          }
+        : p
     );
-  }, [sel]);
+    setPages(next);
+    // Keep the draft and baseline in step with the reverted page, or the next
+    // Apply would resurrect the discarded text-view edits.
+    const np = next[sel];
+    if (np) {
+      const eff = np.blocks.map((b) => ({ id: b.id, text: b.editedText ?? b.text }));
+      const effText = eff.map((b) => b.text).join('\n\n');
+      setTextDraft(effText);
+      draftBaseRef.current = { blocks: eff, text: effText };
+    }
+  }, [sel, page, pages]);
 
   /** Cache of sampled design colors per page+block (original render never changes). */
   const colorCache = useRef(new Map<string, { bg: [number, number, number]; fg: [number, number, number] }>());
@@ -1006,7 +1044,7 @@ export default function PdfEditor() {
    */
   const prepareFinalPages = useCallback(async (): Promise<FinalPage[] | null> => {
     const mod = await import('@/lib/converters/pdf');
-    const effective = applyDraftPure(pages, sel, view, textDraft, mod.diffTextViewToBlocks);
+    const effective = applyDraftPure(pages, sel, view, textDraft, mod.diffTextViewToBlocks, draftBaseRef.current?.blocks);
     if (effective !== pages) setPages(effective);
     return buildFinalPagesWithColors(effective);
   }, [pages, sel, view, textDraft, buildFinalPagesWithColors]);

@@ -1573,7 +1573,23 @@ export async function renderEditedPdf(
           return b && i ? kit.helvBI : b ? kit.helvB : i ? kit.helvI : kit.helv;
         })();
         const size = o.fontSize ?? 12;
-        const lines = o.text.split('\n');
+        // Wrap added text inside the page (36pt right margin) so a long line
+        // never runs off the right edge clipped — the fidelity test caught
+        // exactly that ("This sentence was added with th").
+        const maxW = Math.max(40, copied.getWidth() - o.x - 36);
+        const lines: string[] = [];
+        for (const raw of o.text.split('\n')) {
+          let cur = '';
+          for (const word of raw.split(' ')) {
+            const trial = cur ? `${cur} ${word}` : word;
+            if (!cur || font.widthOfTextAtSize(safeWinAnsi(trial), size) <= maxW) cur = trial;
+            else {
+              lines.push(cur);
+              cur = word;
+            }
+          }
+          lines.push(cur);
+        }
         lines.forEach((ln, i) => {
           if (!ln) return;
           copied.drawText(safeWinAnsi(ln), {
