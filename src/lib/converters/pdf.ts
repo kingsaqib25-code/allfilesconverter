@@ -730,7 +730,7 @@ export interface FinalPage {
  */
 export interface PageOverlay {
   id: string;
-  kind: 'text' | 'highlight' | 'draw' | 'shape' | 'image' | 'underline' | 'strikeout';
+  kind: 'text' | 'highlight' | 'draw' | 'shape' | 'image' | 'underline' | 'strikeout' | 'whiteout';
   /** 1-based page number this overlay belongs to. */
   pageNum: number;
   /** Bounding box in PDF units (origin bottom-left). */
@@ -745,6 +745,10 @@ export interface PageOverlay {
   italic?: boolean;
   /** text font family: serif (Times), sans (Helvetica), mono (Courier). Default sans. */
   fontFamily?: 'serif' | 'sans' | 'mono';
+  /** text alignment inside the overlay box. Default left. */
+  align?: 'left' | 'center' | 'right';
+  /** underline the added text. Default false. */
+  underline?: boolean;
   /** stroke/text color */
   color?: { r: number; g: number; b: number };
   /** shape kind: rect | ellipse | line */
@@ -1553,6 +1557,19 @@ export async function renderEditedPdf(
           opacity: o.opacity ?? 0.35,
           borderWidth: 0,
         });
+      } else if (o.kind === 'whiteout') {
+        // Opaque white cover — hides whatever was underneath, like correction
+        // fluid. Drawn after earlier overlays in page order, so it covers
+        // original content (and any highlight under it).
+        copied.drawRectangle({
+          x: o.x,
+          y: o.y,
+          width: o.w,
+          height: o.h,
+          color: rgb(1, 1, 1),
+          opacity: 1,
+          borderWidth: 0,
+        });
       } else if (o.kind === 'underline' || o.kind === 'strikeout') {
         const ly = o.kind === 'underline' ? o.y + 2 : o.y + o.h * 0.45;
         copied.drawLine({
@@ -1592,13 +1609,26 @@ export async function renderEditedPdf(
         }
         lines.forEach((ln, i) => {
           if (!ln) return;
+          // Alignment shifts each line inside the overlay box (same wrap as
+          // the editor); underline draws a rule under the line's baseline.
+          const lw = font.widthOfTextAtSize(safeWinAnsi(ln), size);
+          const xOff = o.align === 'center' ? (maxW - lw) / 2 : o.align === 'right' ? maxW - lw : 0;
+          const ly = o.y + o.h - size * 0.8 - i * size * 1.25;
           copied.drawText(safeWinAnsi(ln), {
-            x: o.x,
-            y: o.y + o.h - size * 0.8 - i * size * 1.25,
+            x: o.x + xOff,
+            y: ly,
             size,
             font,
             color: rgb(oc.r, oc.g, oc.b),
           });
+          if (o.underline) {
+            copied.drawLine({
+              start: { x: o.x + xOff, y: ly - 1.5 },
+              end: { x: o.x + xOff + lw, y: ly - 1.5 },
+              thickness: 1,
+              color: rgb(oc.r, oc.g, oc.b),
+            });
+          }
         });
       } else if (o.kind === 'draw' && o.strokes) {
         for (const st of o.strokes) {
