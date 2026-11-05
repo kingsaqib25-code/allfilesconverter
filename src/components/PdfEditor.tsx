@@ -443,6 +443,39 @@ export default function PdfEditor() {
     [commitOverlays, penHex, textSize, textBold, textItalic, textUnderline, textAlign, textFont, pages, sel]
   );
 
+  /** Place image bytes (file pick or drawn signature) as an overlay at pos. */
+  const placeImageBytes = useCallback(
+    async (buf: ArrayBuffer, mime: string, pos: { x: number; y: number }) => {
+      if (!page) return;
+      // natural size for aspect ratio
+      const url = URL.createObjectURL(new Blob([buf], { type: mime }));
+      const dims = await new Promise<{ w: number; h: number }>((res) => {
+        const im = new Image();
+        im.onload = () => res({ w: im.naturalWidth || 300, h: im.naturalHeight || 200 });
+        im.onerror = () => res({ w: 300, h: 200 });
+        im.src = url;
+      });
+      URL.revokeObjectURL(url);
+      const w = Math.min(220, page.width * 0.5);
+      const h = (w * dims.h) / Math.max(1, dims.w);
+      const ov: PageOverlay = {
+        id: localOvId(),
+        kind: 'image',
+        pageNum: page.pageNum,
+        x: Math.max(0, pos.x - w / 2),
+        y: Math.max(0, pos.y - h / 2),
+        w, h,
+        imageBytes: buf,
+        imageMime: mime,
+      };
+      imgUrlCache.current.set(ov.id, URL.createObjectURL(new Blob([buf], { type: mime })));
+      commitOverlays([...overlaysRef.current, ov]);
+      setSelOverlay(ov.id);
+      setTool('select');
+    },
+    [page, commitOverlays]
+  );
+
   const onAnnotDown = useCallback(
     (e: React.PointerEvent) => {
       if (tool === 'add-text') {
@@ -496,38 +529,6 @@ export default function PdfEditor() {
   }, [commitGesture]);
 
   /** Place image bytes (file pick or drawn signature) as an overlay at pos. */
-  const placeImageBytes = useCallback(
-    async (buf: ArrayBuffer, mime: string, pos: { x: number; y: number }) => {
-      if (!page) return;
-      // natural size for aspect ratio
-      const url = URL.createObjectURL(new Blob([buf], { type: mime }));
-      const dims = await new Promise<{ w: number; h: number }>((res) => {
-        const im = new Image();
-        im.onload = () => res({ w: im.naturalWidth || 300, h: im.naturalHeight || 200 });
-        im.onerror = () => res({ w: 300, h: 200 });
-        im.src = url;
-      });
-      URL.revokeObjectURL(url);
-      const w = Math.min(220, page.width * 0.5);
-      const h = (w * dims.h) / Math.max(1, dims.w);
-      const ov: PageOverlay = {
-        id: localOvId(),
-        kind: 'image',
-        pageNum: page.pageNum,
-        x: Math.max(0, pos.x - w / 2),
-        y: Math.max(0, pos.y - h / 2),
-        w, h,
-        imageBytes: buf,
-        imageMime: mime,
-      };
-      imgUrlCache.current.set(ov.id, URL.createObjectURL(new Blob([buf], { type: mime })));
-      commitOverlays([...overlaysRef.current, ov]);
-      setSelOverlay(ov.id);
-      setTool('select');
-    },
-    [page, commitOverlays]
-  );
-
   const onImagePicked = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const f = e.target.files?.[0];
