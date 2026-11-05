@@ -679,6 +679,15 @@ export async function mergeImagesToPdf(
 // (rebuilt flowing layout) / renderEditedDocx(). Everything stays in the
 // browser; pdf-lib's standard fonts approximate original fonts.
 
+/** One font run inside a block: consecutive glyphs sharing a font/weight. */
+export interface TextRun {
+  text: string;
+  /** Raw pdf.js font name (lowercased) for this run. */
+  fontName: string;
+  bold: boolean;
+  italic: boolean;
+}
+
 export interface EditorBlock {
   id: string;
   /** Original extracted text. */
@@ -692,6 +701,13 @@ export interface EditorBlock {
   bold: boolean;
   /** Raw pdf.js font name (lowercased), for font-family matching. */
   fontName: string;
+  /**
+   * Per-run font splits (same order as the text). A line like "Insight: ..."
+   * is usually bold label + regular body — redrawing the WHOLE line in bold
+   * makes it up to ~7% wider than the original, which is what wrapped the
+   * editor boxes and pushed redrawn lines past their card edge (QA run 1).
+   */
+  spans?: TextRun[];
 }
 
 /** RGB color as 0..1 floats (for sampled design colors). */
@@ -712,6 +728,8 @@ export interface EditorPageData {
 /** Resolved page passed to the render functions: text is final (edited). */
 export interface FinalBlock extends EditorBlock {
   edited: boolean;
+  /** Original text before the edit (for cover sizing — see layoutEditedBlock). */
+  origText?: string;
   /** Sampled from the original page render — cover fill for surgical redraw. */
   bgRgb?: SampledRgb;
   /** Sampled from the original page render — redrawn text color. */
@@ -924,13 +942,29 @@ export function groupTextItems(
     const flush = () => {
       if (!cur.length) return;
       let text = '';
+      const spans: TextRun[] = [];
+      const pushSpan = (s: string, fontName: string) => {
+        if (!s) return;
+        const last = spans[spans.length - 1];
+        const bold = /bold|black|heavy|demi/.test(fontName);
+        const italic = /italic|oblique/.test(fontName);
+        if (last && last.fontName === fontName && last.bold === bold && last.italic === italic) {
+          last.text += s;
+        } else {
+          spans.push({ text: s, fontName, bold, italic });
+        }
+      };
       cur.forEach((s, i) => {
         if (i > 0) {
           const prev = cur[i - 1];
           const gap = s.x - (prev.x + prev.w);
-          if (gap > s.fontSize * 0.25 && !/\s$/.test(text) && !/^\s/.test(s.str)) text += ' ';
+          if (gap > s.fontSize * 0.25 && !/\s$/.test(text) && !/^\s/.test(s.str)) {
+            text += ' ';
+            pushSpan(' ', prev.fontName);
+          }
         }
         text += s.str;
+        pushSpan(s.str, s.fontName);
       });
       const x0 = Math.min(...cur.map((c) => c.x));
       const x1 = Math.max(...cur.map((c) => c.x + c.w));
@@ -947,6 +981,7 @@ export function groupTextItems(
         fontSize: fs,
         bold,
         fontName: cur.map((c) => c.fontName).sort().join('|'),
+        spans,
       });
       cur = [];
     };
@@ -1104,6 +1139,19 @@ export function sampleBlockColors(
     const o = (y * px.width + x) * 4;
     return [px.data[o], px.data[o + 1], px.data[o + 2]];
   };
+  // Transparent pixels are NOT paint — a never-painted canvas is all
+  // RGBA(0,0,0,0), which the old code read as a black page with white
+  // glyphs and produced the white-on-black download bars (QA run 1,
+  // page 2: 19 black covers + 19 white text draws). Skip them entirely;
+  // a fully transparent sample is an unpainted page: white bg, black fg.
+  const opaque = (x: number, y: number): boolean => px.data[(y * px.width + x) * 4 + 3] >= 128;
+  let opaqueSeen = 0;
+  for (let y = oy0; y <= oy1; y += Math.max(1, Math.floor((oy1 - oy0) / 40))) {
+    for (let x = ox0; x <= ox1; x += Math.max(1, Math.floor((ox1 - ox0) / 40))) {
+      if (opaque(x, y)) opaqueSeen++;
+    }
+  }
+  if (opaqueSeen === 0) return { bg: white, fg: black };
   const medianOf = (arr: Array<[number, number, number]>): SampledRgb => {
     if (!arr.length) return white;
     const ch = (k: 0 | 1 | 2) => arr.map((c) => c[k]).sort((a, b) => a - b);
@@ -1116,6 +1164,7 @@ export function sampleBlockColors(
   for (let y = oy0; y <= oy1; y++) {
     for (let x = ox0; x <= ox1; x++) {
       if (x >= ix0 && x <= ix1 && y >= iyTop && y <= iyBot) continue;
+      if (!opaque(x, y)) continue;
       const c = at(x, y);
       ringAll.push(c);
       if (lum(c[0], c[1], c[2]) >= 25) ringBright.push(c);
@@ -1129,6 +1178,7 @@ export function sampleBlockColors(
   let inner = 0;
   for (let y = iyTop; y <= iyBot; y++) {
     for (let x = ix0; x <= ix1; x++) {
+      if (!opaque(x, y)) continue;
       inner++;
       const c = at(x, y);
       const d = Math.sqrt(
@@ -1239,22 +1289,7 @@ type EditorFontKind =
  */
 export function pickEditorFontKind(block: { fontName: string; bold: boolean }): EditorFontKind {
   const name = (block.fontName || '').toLowerCase();
-  const isBold = block.bold || /bold|black|heavy|demi/.test(name);
-  const isItalic = /italic|oblique/.test(name);
-  if (/calibri|carlito/.test(name)) {
-    if (isBold && isItalic) return 'carlitoBI';
-    if (isBold) return 'carlitoB';
-    if (isItalic) return 'carlitoI';
-    return 'carlito';
-  }
-  if (/cambria|caladea/.test(name)) {
-    if (isBold && isItalic) return 'caladeaBI';
-    if (isBold) return 'caladeaB';
-    if (isItalic) return 'caladeaI';
-    return 'caladea';
-  }
-  if (name.includes('noto')) return isBold ? 'notoB' : 'noto';
-  return isBold ? 'helvB' : 'helv';
+  return kindFromName(name, block.bold, false);
 }
 
 interface EditorFontKit {
@@ -1403,6 +1438,118 @@ export interface CoverLayout {
   h: number;
   lines: string[];
   lineH: number;
+  /** Per-line font runs for drawing (same text as `lines`, split by font). */
+  lineRuns?: Array<Array<{ text: string; kind: EditorFontKind }>>;
+}
+
+/** Font kind for one run, from its own font name + weight (not the block's). */
+function kindFromName(name: string, bold: boolean, italic: boolean): EditorFontKind {
+  const n = (name || '').toLowerCase();
+  const isBold = bold || /bold|black|heavy|demi/.test(n);
+  const isItalic = italic || /italic|oblique/.test(n);
+  if (/calibri|carlito/.test(n)) {
+    if (isBold && isItalic) return 'carlitoBI';
+    if (isBold) return 'carlitoB';
+    if (isItalic) return 'carlitoI';
+    return 'carlito';
+  }
+  if (/cambria|caladea/.test(n)) {
+    if (isBold && isItalic) return 'caladeaBI';
+    if (isBold) return 'caladeaB';
+    if (isItalic) return 'caladeaI';
+    return 'caladea';
+  }
+  if (n.includes('noto')) return isBold ? 'notoB' : 'noto';
+  // DejaVu / Arial / Helvetica / Liberation Sans: no bundled twin, but the
+  // embedded Noto Sans is a close sans with far wider glyph coverage than
+  // standard Helvetica — and standard fonts THROW on non-WinAnsi chars
+  // (arrows, dashes) instead of drawing them.
+  if (/dejavu|arial|helvetica|liberation/.test(n)) return isBold ? 'notoB' : 'noto';
+  return isBold ? 'helvB' : 'helv';
+}
+
+/** True when the kind resolves to a bundled embedded TTF (wide glyph cover). */
+function fontIsEmbedded(kit: EditorFontKit, kind: EditorFontKind): boolean {
+  switch (kind) {
+    case 'noto': return !!kit.noto;
+    case 'notoB': return !!kit.notoB;
+    case 'carlito': return !!kit.carlito;
+    case 'carlitoB': return !!kit.carlitoB;
+    case 'carlitoI': return !!kit.carlitoI;
+    case 'carlitoBI': return !!kit.carlitoBI;
+    case 'caladea': return !!kit.caladea;
+    case 'caladeaB': return !!kit.caladeaB;
+    case 'caladeaI': return !!kit.caladeaI;
+    case 'caladeaBI': return !!kit.caladeaBI;
+    default: return false;
+  }
+}
+
+/**
+ * Width of one run's text in its font. Embedded TTFs take the wide sanitizer
+ * (dashes/arrows render); standard fonts take the strict WinAnsi sanitizer —
+ * measuring '→' against Helvetica throws instead of drawing.
+ */
+function widthOfRun(kit: EditorFontKit, kind: EditorFontKind, text: string, size: number): number {
+  const font = kitFontFor(kit, kind);
+  const clean = fontIsEmbedded(kit, kind) ? sanitizeDrawText(text) : safeWinAnsi(text);
+  return font.widthOfTextAtSize(clean, size);
+}
+
+/** Draw one run's text, with the sanitizer matching its font (see widthOfRun). */
+function cleanRunText(kit: EditorFontKit, kind: EditorFontKind, text: string): string {
+  return fontIsEmbedded(kit, kind) ? sanitizeDrawText(text) : safeWinAnsi(text);
+}
+
+/**
+ * Map (possibly edited) text onto the block's original font runs, word by
+ * word: word N of the new text takes the font of word N of the original
+ * (extra words take the last run's font). So "Insight: ..." stays bold-label
+ * + regular-body after any word edit, and the first word's replacement
+ * inherits the first word's weight.
+ */
+export function runsForText(
+  spans: TextRun[] | undefined,
+  text: string,
+  fallback: { fontName?: string; bold: boolean }
+): Array<{ text: string; kind: EditorFontKind }> {
+  const fallbackKind = pickEditorFontKind({ fontName: fallback.fontName ?? '', bold: fallback.bold });
+  if (!spans || spans.length === 0 || !text) {
+    return text ? [{ text, kind: fallbackKind }] : [];
+  }
+  const origKinds: EditorFontKind[] = [];
+  for (const sp of spans) {
+    const kind = kindFromName(sp.fontName, sp.bold, sp.italic);
+    for (const w of sp.text.split(/\s+/).filter(Boolean)) origKinds.push(kind);
+  }
+  if (origKinds.length === 0) return [{ text, kind: fallbackKind }];
+  const out: Array<{ text: string; kind: EditorFontKind }> = [];
+  const push = (t: string, kind: EditorFontKind) => {
+    if (!t) return;
+    const last = out[out.length - 1];
+    if (last && last.kind === kind) last.text += t;
+    else out.push({ text: t, kind });
+  };
+  let wi = 0;
+  for (const tok of text.split(/(\s+)/)) {
+    if (!tok) continue;
+    const kind = origKinds[Math.min(wi, origKinds.length - 1)];
+    push(tok, kind);
+    if (!/^\s+$/.test(tok)) wi++;
+  }
+  return out;
+}
+
+function measureRuns(
+  kit: EditorFontKit,
+  runs: Array<{ text: string; kind: EditorFontKind }>,
+  size: number
+): number {
+  let w = 0;
+  for (const r of runs) {
+    w += widthOfRun(kit, r.kind, r.text, size);
+  }
+  return w;
 }
 
 export async function layoutEditedBlock(
@@ -1415,76 +1562,119 @@ export async function layoutEditedBlock(
     fontSize: number;
     bold: boolean;
     fontName?: string;
+    spans?: TextRun[];
   },
-  pageW: number
+  pageW: number,
+  opts: { originalText?: string; maxRight?: number } = {}
 ): Promise<CoverLayout> {
   const { PDFDocument, StandardFonts } = await import('pdf-lib');
   const probe = await PDFDocument.create();
   const kit = await embedEditorFonts(probe, StandardFonts);
-  const font = kitFontFor(kit, pickEditorFontKind({ fontName: block.fontName ?? '', bold: block.bold }));
   const size = block.fontSize;
   const lineH = size * 1.25;
   const EDGE = 8; // keep text off the page edge
   const wrapW = Math.max(40, block.width);
+  // Right limit for a single line: page edge, or the next block on the same
+  // visual row (never draw/cover over a neighbour's glyphs).
+  const maxRight = opts.maxRight ?? pageW - EDGE;
+  const measureText = (s: string) => measureRuns(kit, runsForText(block.spans, s, block), size);
   const lines: string[] = [];
-  const measure = (s: string) => font.widthOfTextAtSize(safeWinAnsi(s), size);
+  const lineRuns: Array<Array<{ text: string; kind: EditorFontKind }>> = [];
+  const pushLine = (runs: Array<{ text: string; kind: EditorFontKind }>) => {
+    lines.push(runs.map((r) => r.text).join(''));
+    lineRuns.push(runs);
+  };
   for (const para of block.text.split('\n')) {
     const clean = para.split(/\s+/).filter(Boolean).join(' ');
     if (!clean) {
       lines.push('');
+      lineRuns.push([]);
       continue;
     }
-    if (block.x + measure(clean) + 4 <= pageW - EDGE) {
-      lines.push(clean); // fits on one line — box grows right
-    } else {
-      // wrap at the original block width — box grows taller instead
-      let line = '';
-      for (const w of clean.split(' ')) {
-        if (w.length > 1 && measure(w) > wrapW) {
-          // a single word longer than the wrap width (URL, long string):
-          // hard-break it instead of letting the box explode off the page
-          if (line) {
-            lines.push(line);
-            line = '';
-          }
-          let rest = w;
-          while (rest.length > 1 && measure(rest) > wrapW) {
-            let lo = 1;
-            let hi = rest.length;
-            while (lo < hi) {
-              const mid = (lo + hi + 1) >> 1;
-              if (measure(rest.slice(0, mid)) <= wrapW) lo = mid;
-              else hi = mid - 1;
-            }
-            lines.push(rest.slice(0, lo));
-            rest = rest.slice(lo);
-          }
-          line = rest;
-          continue;
-        }
-        const test = line ? `${line} ${w}` : w;
-        if (measure(test) > wrapW && line) {
-          lines.push(line);
-          line = w;
-        } else {
-          line = test;
-        }
-      }
-      lines.push(line);
+    if (block.x + measureText(clean) + 4 <= maxRight) {
+      pushLine(runsForText(block.spans, clean, block)); // fits on one line — box grows right
+      continue;
     }
+    // Wrap at the original block width — box grows taller instead.
+    // Words keep their own font run so a wrapped line still measures/draws
+    // bold-label + regular-body instead of one wide bold blob.
+    const words: Array<{ word: string; kind: EditorFontKind; w: number }> = [];
+    for (const r of runsForText(block.spans, clean, block)) {
+      for (const w of r.text.split(/\s+/).filter(Boolean)) {
+        words.push({ word: w, kind: r.kind, w: widthOfRun(kit, r.kind, w, size) });
+      }
+    }
+    const spaceW = (kind: EditorFontKind) => widthOfRun(kit, kind, ' ', size);
+    let line: Array<{ word: string; kind: EditorFontKind; w: number }> = [];
+    let lineW = 0;
+    const flushLine = () => {
+      if (!line.length) return;
+      const runs: Array<{ text: string; kind: EditorFontKind }> = [];
+      for (const t of line) {
+        const last = runs[runs.length - 1];
+        if (last && last.kind === t.kind) last.text += ` ${t.word}`;
+        else runs.push({ text: t.word, kind: t.kind });
+      }
+      pushLine(runs);
+      line = [];
+      lineW = 0;
+    };
+    for (const tok of words) {
+      if (tok.word.length > 1 && tok.w > wrapW) {
+        // A single word longer than the wrap width (URL, long string):
+        // hard-break it instead of letting the box explode off the page.
+        flushLine();
+        let rest = tok.word;
+        while (rest.length > 1 && widthOfRun(kit, tok.kind, rest, size) > wrapW) {
+          let lo = 1;
+          let hi = rest.length;
+          while (lo < hi) {
+            const mid = (lo + hi + 1) >> 1;
+            if (widthOfRun(kit, tok.kind, rest.slice(0, mid), size) <= wrapW) lo = mid;
+            else hi = mid - 1;
+          }
+          pushLine([{ text: rest.slice(0, lo), kind: tok.kind }]);
+          rest = rest.slice(lo);
+        }
+        line = [{ word: rest, kind: tok.kind, w: widthOfRun(kit, tok.kind, rest, size) }];
+        lineW = line[0].w;
+        continue;
+      }
+      const add = line.length ? spaceW(line[line.length - 1].kind) + tok.w : tok.w;
+      if (line.length && lineW + add > wrapW) {
+        flushLine();
+        line = [tok];
+        lineW = tok.w;
+      } else {
+        line.push(tok);
+        lineW += add;
+      }
+    }
+    flushLine();
   }
+  // Cover must hide the ORIGINAL line too — pdf.js block.width can understate
+  // the true glyph extent (QA run 1: ")E)" tail peeking past the cover), so
+  // size it to the widest of original width, measured original text and
+  // measured new text. Clamp the right edge at maxRight so a neighbour on
+  // the same row is never covered.
   let maxW = block.width;
-  for (const ln of lines) {
-    if (ln) maxW = Math.max(maxW, measure(ln));
+  if (opts.originalText) maxW = Math.max(maxW, measureText(opts.originalText));
+  for (const runs of lineRuns) {
+    if (runs.length) maxW = Math.max(maxW, measureRuns(kit, runs, size));
   }
+  const coverX = block.x - 2;
+  let coverW = maxW + 4;
+  const roomRight = maxRight - coverX;
+  if (roomRight > 20) coverW = Math.min(coverW, roomRight);
   const h = Math.max(block.height + 6, lines.length * lineH + 4);
   return {
-    x: block.x - 2,
+    x: coverX,
     y: block.y - 4,
-    w: maxW + 4,
+    w: coverW,
     h,
     lines,
     lineH,
+    lineRuns,
   };
 }
 
@@ -1571,7 +1761,31 @@ export async function extractEditablePages(file: File): Promise<EditorPageData[]
   return pages;
 }
 
-/** Standard PDF fonts only speak Latin — sanitize anything else. */
+/**
+ * Sanitize text for drawing with an embedded TTF via pdf-lib/fontkit.
+ * Verified by byte test (2026-11-05): the embedded Noto Sans renders
+ * en/em dashes, curly quotes, ellipsis, bullets, arrows, accents, ©/®/™
+ * correctly — the old WinAnsi-only filter turned ALL of them into '?'.
+ * Only pictographs/emoji are dropped: no standard PDF font can draw color
+ * emoji, and leaving them in renders as a stray fallback glyph.
+ */
+const EMOJI_RE =
+  /[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0E\uFE0F\u200D\u200B]/gu;
+export function sanitizeDrawText(s: string): string {
+  return s
+    .replace(EMOJI_RE, '')
+    .replace(/\u00A0/g, ' ')
+    .replace(/[^\S\n ]+/g, ' ')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
+}
+
+/**
+ * Standard PDF fonts only speak Latin — sanitize anything else.
+ * Kept STRICT (WinAnsi only): several converters draw with StandardFonts
+ * (Helvetica/Times), where pdf-lib throws on characters outside WinAnsi.
+ * The editor's embedded-TTF paths use sanitizeDrawText instead, which
+ * keeps dashes/arrows/quotes and only drops emoji.
+ */
 export function safeWinAnsi(s: string): string {
   return s.replace(/[^\x00-\xFF]/g, '?');
 }
@@ -1626,7 +1840,18 @@ export async function renderEditedPdf(
     const pageW = copied.getWidth();
     for (const b of fp.blocks) {
       if (!b.edited) continue;
-      const layout = await layoutEditedBlock(b, pageW);
+      // Same-row neighbour limit: the next block on this baseline (if any)
+      // caps how far this block's cover/text may grow to the right.
+      let maxRight = pageW - 8;
+      for (const o of fp.blocks) {
+        if (o !== b && Math.abs(o.y - b.y) <= 2.5 && o.x > b.x) {
+          maxRight = Math.min(maxRight, o.x - 2);
+        }
+      }
+      const layout = await layoutEditedBlock(b, pageW, {
+        originalText: b.origText,
+        maxRight,
+      });
       const bgc = b.bgRgb ?? { r: 1, g: 1, b: 1 };
       const fgc = b.fgRgb ?? { r: 0, g: 0, b: 0 };
       copied.drawRectangle({
@@ -1637,16 +1862,26 @@ export async function renderEditedPdf(
         color: rgb(bgc.r, bgc.g, bgc.b),
         borderWidth: 0,
       });
-      const font = kitFontFor(kit, pickEditorFontKind(b));
+      // Draw per font run: "Insight:" stays bold, the body stays regular,
+      // so the redrawn line measures (and looks) like the original.
       layout.lines.forEach((ln, i) => {
         if (!ln) return;
-        copied.drawText(safeWinAnsi(ln), {
-          x: b.x,
-          y: b.y - i * layout.lineH,
-          size: b.fontSize,
-          font,
-          color: rgb(fgc.r, fgc.g, fgc.b),
-        });
+        const runs = layout.lineRuns?.[i] ?? [
+          { text: ln, kind: pickEditorFontKind(b) },
+        ];
+        let cx = b.x;
+        for (const r of runs) {
+          if (!r.text) continue;
+          const font = kitFontFor(kit, r.kind);
+          copied.drawText(cleanRunText(kit, r.kind, r.text), {
+            x: cx,
+            y: b.y - i * layout.lineH,
+            size: b.fontSize,
+            font,
+            color: rgb(fgc.r, fgc.g, fgc.b),
+          });
+          cx += widthOfRun(kit, r.kind, r.text, b.fontSize);
+        }
       });
     }
     // ---- user annotations (toolbar tools) ----

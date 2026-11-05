@@ -11,6 +11,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EditorBlock, EditorPageData, FinalPage, PageOverlay } from '@/lib/converters/pdf';
 
+/** Build marker for the live-bundle check (QA round 2, 2026-11-05). */
+const QA_BUILD = 'pdfqa-20261105-r2';
+
 /** Annotation toolbar tools (iLovePDF-style). */
 type AnnotTool = 'select' | 'edit-text' | 'add-text' | 'highlight' | 'underline' | 'strikeout' | 'draw' | 'shape' | 'image' | 'whiteout';
 type ShapeKind = 'rect' | 'ellipse' | 'line';
@@ -77,6 +80,43 @@ function fontStackForBlock(b: { fontName: string }): string {
   if (/times|georgia|garamond|palatino|bookman|serif/.test(n))
     return 'Georgia, "Times New Roman", Times, serif';
   return '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+}
+
+/**
+ * Split (possibly edited) text into bold/italic display runs, word by word
+ * from the block's original spans — the same rule as runsForText in pdf.ts.
+ * The old code rendered the whole line in one weight (bold if ANY word was
+ * bold) inside a box exactly the original width, so mixed lines wrapped and
+ * overlapped the line below (QA run 1: headings, footers).
+ */
+function displayRuns(
+  spans: BlockState['spans'],
+  text: string
+): Array<{ text: string; bold: boolean; italic: boolean; fontName: string }> {
+  if (!spans || spans.length === 0 || !text) {
+    return text ? [{ text, bold: false, italic: false, fontName: '' }] : [];
+  }
+  const orig: Array<{ bold: boolean; italic: boolean; fontName: string }> = [];
+  for (const sp of spans) {
+    for (const w of sp.text.split(/\s+/).filter(Boolean)) {
+      orig.push({ bold: sp.bold, italic: sp.italic, fontName: sp.fontName });
+    }
+  }
+  if (orig.length === 0) return [{ text, bold: false, italic: false, fontName: '' }];
+  const out: Array<{ text: string; bold: boolean; italic: boolean; fontName: string }> = [];
+  let wi = 0;
+  for (const tok of text.split(/(\s+)/)) {
+    if (!tok) continue;
+    const o = orig[Math.min(wi, orig.length - 1)];
+    const last = out[out.length - 1];
+    if (last && last.bold === o.bold && last.italic === o.italic && last.fontName === o.fontName) {
+      last.text += tok;
+    } else {
+      out.push({ text: tok, bold: o.bold, italic: o.italic, fontName: o.fontName });
+    }
+    if (!/^\s+$/.test(tok)) wi++;
+  }
+  return out;
 }
 
 type TextFam = 'serif' | 'sans' | 'mono';
@@ -229,6 +269,12 @@ export default function PdfEditor() {
     setSelBlock(null);
     setSelOverlay(null);
     setTool(t);
+    imgClickArmed.current = false;
+    if (t !== 'image') {
+      // Leaving the image tool abandons an armed-but-unplaced signature.
+      pendingSigBytes.current = null;
+      setSigArmed(false);
+    }
   }, []);
   /** Commit a new overlays array with undo history. */
   const commitOverlays = useCallback((next: PageOverlay[]) => {
@@ -271,17 +317,31 @@ export default function PdfEditor() {
   } | null>(null);
   const [gestureTick, setGestureTick] = useState(0); // re-render during gesture
   const imgInputRef = useRef<HTMLInputElement>(null);
+  /** Page click armed the file picker on pointerdown; the picker itself opens
+   * on the following click event (see onAnnotDown). */
+  const imgClickArmed = useRef(false);
   const imgUrlCache = useRef(new Map<string, string>());
   const pendingImgPos = useRef<{ x: number; y: number } | null>(null);
   /** Signature pad (draw with pen / finger / stylus / mouse). */
   const [sigPadOpen, setSigPadOpen] = useState(false);
   const [sigHasInk, setSigHasInk] = useState(false);
+  /** A signature is drawn and waiting for a page click to place it. */
+  const [sigArmed, setSigArmed] = useState(false);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const sigDrawing = useRef(false);
   const sigLast = useRef<{ x: number; y: number } | null>(null);
+  /** Stored pad strokes (CSS px) — reopening the pad must NOT lose them. */
+  const sigStrokes = useRef<Array<Array<{ x: number; y: number }>>>([]);
   const pendingSigBytes = useRef<{ buf: ArrayBuffer; mime: string } | null>(null);
   const docRef = useRef<{ getPage: (n: number) => Promise<unknown>; destroy?: () => void } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /** In-flight page render (cancelled when a newer render supersedes it). */
+  const renderTaskRef = useRef<{ cancel?: () => void } | null>(null);
+  /** "pageNum@zoom" of the canvas content — re-rendering the same page on
+   * every edit reset canvas.width (blanking it) and raced the download
+   * sampler. Edits are DOM overlays; the bitmap only re-renders on a real
+   * page/zoom change. */
+  const lastRenderKeyRef = useRef('');
   const thumbsDone = useRef(false);
 
   const page = pages[sel];
@@ -471,7 +531,10 @@ export default function PdfEditor() {
         im.src = url;
       });
       URL.revokeObjectURL(url);
-      const w = Math.min(220, page.width * 0.5);
+      // Natural size at screen density (96dpi → 72pt), capped: the old fixed
+      // 220pt made small images huge — a test image hid the footer, the
+      // ellipse and most of the added note (QA run 1).
+      const w = Math.max(48, Math.min(220, page.width * 0.5, (dims.w * 72) / 96));
       const h = (w * dims.h) / Math.max(1, dims.w);
       const ov: PageOverlay = {
         id: localOvId(),
@@ -502,14 +565,18 @@ export default function PdfEditor() {
         const p = toPdfPoint(e.clientX, e.clientY);
         if (!p) return;
         // A drawn signature waiting to be placed goes down directly (no
-        // file picker); otherwise open the picker for an image file.
+        // file picker); otherwise ARM the picker — it opens on the click
+        // event, not pointerdown: browsers ignore programmatic file-input
+        // clicks from pointerdown, which is why the page click did nothing
+        // in QA run 1 while the toolbar upload worked.
         const sig = pendingSigBytes.current;
         if (sig) {
           pendingSigBytes.current = null;
+          setSigArmed(false);
           void placeImageBytes(sig.buf, sig.mime, p);
         } else {
           pendingImgPos.current = p;
-          imgInputRef.current?.click();
+          imgClickArmed.current = true;
         }
         return;
       }
@@ -543,20 +610,31 @@ export default function PdfEditor() {
     if (g) commitGesture(g);
   }, [commitGesture]);
 
+  /** Click event on the capture layer: opens the image file picker when a
+   * page click armed it (pointerdown only records the position). */
+  const onAnnotClick = useCallback(() => {
+    if (tool !== 'image' || !imgClickArmed.current) return;
+    imgClickArmed.current = false;
+    if (pendingSigBytes.current) return; // signature places on pointerdown
+    imgInputRef.current?.click();
+  }, [tool]);
+
   /** Place image bytes (file pick or drawn signature) as an overlay at pos. */
   const onImagePicked = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const f = e.target.files?.[0];
       e.target.value = '';
-      const pos = pendingImgPos.current;
+      imgClickArmed.current = false;
+      const pos = pendingImgPos.current ?? (page ? { x: page.width / 2, y: page.height / 2 } : null);
       pendingImgPos.current = null;
       // A file pick discards any undrawn-placed signature.
       pendingSigBytes.current = null;
+      setSigArmed(false);
       if (!f || !pos) return;
       const buf = await f.arrayBuffer();
       await placeImageBytes(buf, f.type, pos);
     },
-    [placeImageBytes]
+    [placeImageBytes, page]
   );
 
   /** Size the signature canvas to its displayed box when the pad opens. */
@@ -572,8 +650,29 @@ export default function PdfEditor() {
     if (ctx) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, cw, 180);
+      // Redraw strokes from earlier in this session: reopening the pad used
+      // to wipe an unplaced drawing (QA run 1: first scribble lost).
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (const st of sigStrokes.current) {
+        if (st.length < 2) {
+          if (st[0]) {
+            ctx.beginPath();
+            ctx.arc(st[0].x, st[0].y, 1.6, 0, Math.PI * 2);
+            ctx.fillStyle = '#111111';
+            ctx.fill();
+          }
+          continue;
+        }
+        ctx.beginPath();
+        ctx.moveTo(st[0].x, st[0].y);
+        for (const p of st.slice(1)) ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+      }
     }
-    setSigHasInk(false);
+    setSigHasInk(sigStrokes.current.length > 0);
   }, [sigPadOpen]);
 
   /** Signature pad drawing (PointerEvents: pen / finger / stylus / mouse). */
@@ -590,6 +689,7 @@ export default function PdfEditor() {
     if (!p) return;
     sigDrawing.current = true;
     sigLast.current = p;
+    sigStrokes.current.push([p]);
     setSigHasInk(true);
     const ctx = sigCanvasRef.current?.getContext('2d');
     if (ctx) {
@@ -604,6 +704,7 @@ export default function PdfEditor() {
     const p = sigPos(e);
     const last = sigLast.current;
     if (!p || !last) return;
+    sigStrokes.current[sigStrokes.current.length - 1]?.push(p);
     const ctx = sigCanvasRef.current?.getContext('2d');
     if (!ctx) return;
     ctx.beginPath();
@@ -621,6 +722,7 @@ export default function PdfEditor() {
     sigLast.current = null;
   };
   const sigClear = () => {
+    sigStrokes.current = [];
     const c = sigCanvasRef.current;
     const ctx = c?.getContext('2d');
     if (c && ctx) {
@@ -639,6 +741,9 @@ export default function PdfEditor() {
       if (!blob) return;
       const buf = await blob.arrayBuffer();
       pendingSigBytes.current = { buf, mime: 'image/png' };
+      sigStrokes.current = [];
+      setSigHasInk(false);
+      setSigArmed(true);
       setSigPadOpen(false);
       pickTool('image');
     }, 'image/png');
@@ -813,6 +918,9 @@ export default function PdfEditor() {
     docRef.current = null;
     srcRef.current = null;
     thumbsDone.current = false;
+    renderTaskRef.current = null;
+    lastRenderKeyRef.current = '';
+    colorCache.current.clear(); // block ids repeat across files — never reuse another file's colors
     setPages([]);
     setSel(0);
     setView('page');
@@ -921,12 +1029,17 @@ export default function PdfEditor() {
   // ---- render selected page canvas ----
   useEffect(() => {
     if (phase !== 'ready' || !page || !canvasRef.current || !docRef.current) return;
+    // Same page + zoom already on the canvas: edits are DOM overlays, the
+    // bitmap does not change — skipping avoids the width-reset blank flash
+    // (and the race that fed blank pixels to the download sampler).
+    const key = `${page.pageNum}@${zoom}`;
+    if (lastRenderKeyRef.current === key) return;
     let cancelled = false;
     (async () => {
       try {
         const pg = (await docRef.current!.getPage(page.pageNum)) as {
           getViewport: (o: { scale: number }) => { width: number; height: number };
-          render: (o: { canvasContext: CanvasRenderingContext2D; viewport: unknown }) => { promise: Promise<void> };
+          render: (o: { canvasContext: CanvasRenderingContext2D; viewport: unknown }) => { promise: Promise<void>; cancel?: () => void };
           cleanup: () => void;
         };
         const vp = pg.getViewport({ scale: 2 * zoom });
@@ -934,14 +1047,25 @@ export default function PdfEditor() {
         canvas.width = Math.floor(vp.width);
         canvas.height = Math.floor(vp.height);
         const ctx = canvas.getContext('2d')!;
-        await pg.render({ canvasContext: ctx, viewport: vp }).promise;
+        const task = pg.render({ canvasContext: ctx, viewport: vp });
+        renderTaskRef.current = task;
+        await task.promise;
         pg.cleanup();
+        if (!cancelled) lastRenderKeyRef.current = key;
       } catch {
         if (!cancelled) setError('Could not render that page. Try another file.');
       }
     })();
     return () => {
+      // Cancel the in-flight render so a superseded task can never paint
+      // into the (possibly resized) canvas after this effect re-runs.
       cancelled = true;
+      try {
+        renderTaskRef.current?.cancel?.();
+      } catch {
+        /* already finished */
+      }
+      renderTaskRef.current = null;
     };
   }, [phase, page, sel, zoom]);
 
@@ -1193,6 +1317,14 @@ export default function PdfEditor() {
    * Build FinalPages with sampled design colors for edited blocks.
    * Takes the effective pages array (draft already applied) — pure except
    * for the async sampling renders.
+   *
+   * Colors come FIRST from the load-time sample stored on each block (taken
+   * from a fully awaited offscreen render). The old code re-sampled at
+   * download time from the LIVE display canvas — which can be blank
+   * mid-render (its width was just reset) — and a blank canvas samples as
+   * black-bg/white-fg, which is exactly the white-on-black page 2 of QA
+   * run 1. The live canvas is never read here now; the fallback for blocks
+   * without a load-time sample is a fresh awaited offscreen render.
    */
   const buildFinalPagesWithColors = useCallback(
     async (effective: PageState[]): Promise<FinalPage[]> => {
@@ -1201,44 +1333,47 @@ export default function PdfEditor() {
       for (const p of effective) {
         const edited = p.blocks.filter((b) => b.editedText != null && b.editedText !== b.text);
         const colors = new Map<string, { bg: [number, number, number]; fg: [number, number, number] }>();
-        if (edited.length > 0) {
-          let canvas: HTMLCanvasElement | null = null;
-          if (p.pageNum === page?.pageNum && canvasRef.current && canvasRef.current.width > 0) {
-            canvas = canvasRef.current; // selected page: reuse the original render
-          } else {
-            canvas = await renderPageOffscreen(p.pageNum, 1.5);
+        for (const b of edited) {
+          if (b.fgRgb && b.bgRgb) {
+            colors.set(b.id, {
+              bg: [b.bgRgb.r, b.bgRgb.g, b.bgRgb.b],
+              fg: [b.fgRgb.r, b.fgRgb.g, b.fgRgb.b],
+            });
           }
+        }
+        const missing = edited.filter((b) => !colors.has(b.id));
+        if (missing.length > 0) {
+          const canvas = await renderPageOffscreen(p.pageNum, 1.5);
           const ctx = canvas?.getContext('2d', { willReadFrequently: true }) ?? null;
-          if (canvas && ctx) {
-            let img: ImageData | null = null;
-            try {
-              img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            } catch {
-              img = null;
-            }
-            if (img) {
-              for (const b of edited) {
-                const key = `${p.pageNum}:${b.id}`;
-                let c = colorCache.current.get(key);
-                if (!c) {
-                  const layout = await mod.layoutEditedBlock(
-                    { ...b, text: b.editedText ?? b.text },
-                    p.width
-                  );
-                  const s = mod.sampleBlockColors(
-                    { data: img.data, width: img.width, height: img.height },
-                    p.width,
-                    p.height,
-                    layout
-                  );
-                  c = {
-                    bg: [s.bg.r, s.bg.g, s.bg.b],
-                    fg: [s.fg.r, s.fg.g, s.fg.b],
-                  };
-                  colorCache.current.set(key, c);
-                }
-                colors.set(b.id, c);
+          let img: ImageData | null = null;
+          try {
+            img = canvas && ctx ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
+          } catch {
+            img = null;
+          }
+          if (img) {
+            for (const b of missing) {
+              const key = `${p.pageNum}:${b.id}`;
+              let c = colorCache.current.get(key);
+              if (!c) {
+                const layout = await mod.layoutEditedBlock(
+                  { ...b, text: b.editedText ?? b.text },
+                  p.width,
+                  { originalText: b.text }
+                );
+                const s = mod.sampleBlockColors(
+                  { data: img.data, width: img.width, height: img.height },
+                  p.width,
+                  p.height,
+                  layout
+                );
+                c = {
+                  bg: [s.bg.r, s.bg.g, s.bg.b],
+                  fg: [s.fg.r, s.fg.g, s.fg.b],
+                };
+                colorCache.current.set(key, c);
               }
+              colors.set(b.id, c);
             }
           }
         }
@@ -1253,6 +1388,7 @@ export default function PdfEditor() {
               ...b,
               text: fin,
               edited: isEdited,
+              origText: isEdited ? b.text : undefined,
               bgRgb: c ? { r: c.bg[0], g: c.bg[1], b: c.bg[2] } : undefined,
               fgRgb: c ? { r: c.fg[0], g: c.fg[1], b: c.fg[2] } : undefined,
             };
@@ -1261,7 +1397,7 @@ export default function PdfEditor() {
       }
       return out;
     },
-    [page?.pageNum, renderPageOffscreen, overlays]
+    [renderPageOffscreen, overlays]
   );
 
   const pushOutput = useCallback((blob: Blob, filename: string, label: string) => {
@@ -1639,8 +1775,20 @@ export default function PdfEditor() {
                   <button
                     type="button"
                     className={`annot-btn${tool === 'image' ? ' on' : ''}`}
-                    onClick={() => pickTool('image')}
-                    title="Click to place an image"
+                    onClick={() => {
+                      // Second click while already active opens the picker
+                      // (places at page centre) — a fallback when a page
+                      // click cannot open it.
+                      if (tool === 'image' && !pendingSigBytes.current) {
+                        pendingImgPos.current = page
+                          ? { x: page.width / 2, y: page.height / 2 }
+                          : null;
+                        imgInputRef.current?.click();
+                      } else {
+                        pickTool('image');
+                      }
+                    }}
+                    title={sigArmed ? 'Click the page to place your signature' : 'Click to place an image'}
                   >
                     <span aria-hidden="true">🖼</span> Image
                   </button>
@@ -1783,7 +1931,7 @@ export default function PdfEditor() {
             {view === 'page' ? (
               <>
               <div className="edit-zoom-scroll">
-                <div className="edit-canvas-wrap" ref={wrapRef} style={{ width: `${zoom * 100}%` }}>
+                <div className="edit-canvas-wrap" ref={wrapRef} data-build={QA_BUILD} style={{ width: `${zoom * 100}%` }}>
                   <canvas ref={canvasRef} className="edit-canvas" aria-label={`Page ${page.pageNum} preview`} />
                 <div className="edit-overlay" aria-hidden={editingId != null}>
                   {page.blocks.map((b) => {
@@ -1809,15 +1957,23 @@ export default function PdfEditor() {
                     const editStyle = {
                       left: `${(b.x / page.width) * 100}%`,
                       top: `${((page.height - editTop) / page.height) * 100}%`,
-                      width: `${(b.width / page.width) * 100}%`,
+                      // Width hugs the text (max-content) up to the page edge,
+                      // like the download's cover: the old fixed original-width
+                      // box made wider redrawn text wrap and overlap the line
+                      // below. Height stays generous so descenders stay covered.
+                      width: 'max-content',
+                      maxWidth: `${((page.width - b.x - 8) / page.width) * 100}%`,
                       height: `${((editTop - editBottom) / page.height) * 100}%`,
                       // Match the PDF's own text size/family so the edit box
                       // doesn't look like a foreign layer pasted on top.
                       // cqw = % of the page wrap width → auto-scales with zoom.
                       fontSize: `${(b.fontSize / page.width) * 100}cqw`,
                       fontFamily: fontStackForBlock(b),
-                      fontWeight: b.bold ? 700 : 400,
                       lineHeight: 1.25,
+                      // Background from the sampled page color: the stylesheet
+                      // forces #fff here, which made white-on-dark text
+                      // invisible while editing. Inline style wins over it.
+                      background: b.bgRgb ? rgbToCss(b.bgRgb) : '#ffffff',
                       // Auto-match the block's sampled glyph color while editing.
                       ...(b.fgRgb ? { color: rgbToCss(b.fgRgb) } : null),
                     } as React.CSSProperties;
@@ -1859,7 +2015,18 @@ export default function PdfEditor() {
                           }}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {b.editedText ?? b.text}
+                          {displayRuns(b.spans, b.editedText ?? b.text).map((r, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                fontWeight: r.bold ? 700 : 400,
+                                fontStyle: r.italic ? 'italic' : 'normal',
+                                fontFamily: fontStackForBlock({ fontName: r.fontName }),
+                              }}
+                            >
+                              {r.text}
+                            </span>
+                          ))}
                         </div>
                       );
                     }
@@ -1895,7 +2062,20 @@ export default function PdfEditor() {
                           if (tool === 'select') setEditingId(b.id);
                         }}
                       >
-                        {isEdited ? b.editedText : null}
+                        {isEdited
+                          ? displayRuns(b.spans, b.editedText ?? b.text).map((r, i) => (
+                              <span
+                                key={i}
+                                style={{
+                                  fontWeight: r.bold ? 700 : 400,
+                                  fontStyle: r.italic ? 'italic' : 'normal',
+                                  fontFamily: fontStackForBlock({ fontName: r.fontName }),
+                                }}
+                              >
+                                {r.text}
+                              </span>
+                            ))
+                          : null}
                       </div>
                     );
                   })}
@@ -2160,10 +2340,12 @@ export default function PdfEditor() {
                     onPointerMove={onAnnotMove}
                     onPointerUp={onAnnotUp}
                     onPointerCancel={onAnnotUp}
+                    onClick={onAnnotClick}
                     title={
                       tool === 'add-text' ? 'Click to place text'
-                      : tool === 'image' ? 'Click to place an image'
-                      : 'Drag to annotate'
+                      : tool === 'image'
+                        ? sigArmed ? 'Click the page to place your signature' : 'Click to place an image'
+                        : 'Drag to annotate'
                     }
                   />
                 )}
