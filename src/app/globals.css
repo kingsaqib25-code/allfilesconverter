@@ -761,7 +761,7 @@ a.card:hover { text-decoration: none; border-color: var(--brand); box-shadow: va
   background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
   padding: 0.5rem 0.75rem; margin-bottom: 0.75rem;
 }
-.annot-group { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0 0.5rem; border-right: 1px solid var(--line); }
+.annot-group { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0 0.5rem; border-right: 1px solid var(--line); flex-wrap: wrap; }
 .annot-group:last-child { border-right: none; }
 .annot-btn {
   display: inline-flex; align-items: center; gap: 0.35rem;
