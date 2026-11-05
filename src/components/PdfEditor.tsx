@@ -117,6 +117,34 @@ function nearestBlock<T extends { x: number; y: number; width: number; height: n
   return best;
 }
 
+/**
+ * Snap a highlight's vertical band to the text line the drag is on. A free
+ * drag follows the mouse, so dragging along the BOTTOM of a line used to
+ * land the rect a whole line below the phrase. Snapping to the nearest
+ * block's glyph band (baseline + 0.3×fontSize, height 1.4×fontSize) makes
+ * any drag on the line land ON the line. Falls back to the raw drag line
+ * (min one line height) when no block is near.
+ */
+function snapHighlightY(
+  blocks: { y: number; fontSize: number }[],
+  midY: number
+): { cy: number; h: number } {
+  let best: { y: number; fontSize: number } | null = null;
+  let bestD = Infinity;
+  for (const b of blocks) {
+    const cy = b.y + b.fontSize * 0.3;
+    const d = Math.abs(midY - cy);
+    if (d < bestD) {
+      bestD = d;
+      best = b;
+    }
+  }
+  if (best && bestD < best.fontSize * 1.2) {
+    return { cy: best.y + best.fontSize * 0.3, h: Math.max(12, best.fontSize * 1.4) };
+  }
+  return { cy: midY, h: 12 };
+}
+
 type Phase = 'idle' | 'loading' | 'ready';
 
 export default function PdfEditor() {
@@ -288,17 +316,17 @@ export default function PdfEditor() {
         // A natural highlight drag runs ALONG the text line, so its raw
         // height is ~0 — and a zero-height rect fills nothing anywhere
         // (editor, preview, download), even though the overlay commits and
-        // counts as an edit. Force at least one line height, centred on the
-        // drag line. (Underline/strikeout already had this guard.)
+        // counts as an edit. Snap the band to the text line the drag is on
+        // (a low drag on a line must not land a line below the phrase).
         const midY = (y0 + y1) / 2;
-        const hh = Math.max(y1 - y0, 12);
+        const snap = snapHighlightY(pages[sel]?.blocks ?? [], midY);
         commitOverlays([
           ...overlaysRef.current,
           {
             id: localOvId(),
             kind: 'highlight',
             pageNum: pages[sel]?.pageNum ?? 1,
-            x: x0, y: midY - hh / 2, w: x1 - x0, h: hh,
+            x: x0, y: snap.cy - snap.h / 2, w: x1 - x0, h: snap.h,
             fill: { r: 1, g: 0.92, b: 0.35 },
             opacity: 0.35,
           },
@@ -344,6 +372,20 @@ export default function PdfEditor() {
       const near = nearestBlock(pg.blocks, p.x, p.y, 150);
       const fs = near ? near.fontSize : textSize;
       const fam: TextFam = near ? fontFamForBlock(near) : textFont === 'auto' ? 'sans' : textFont;
+      let color = near?.fgRgb ?? hexToRgb(penHex);
+      // White-on-white guard: a white-on-dark block's white text (e.g. the
+      // banner) must not be inherited for a click on a LIGHT strip outside
+      // that block — the added text would be invisible. Fall back to dark.
+      if (near?.fgRgb && near.bgRgb) {
+        const lum = (c: { r: number; g: number; b: number }) =>
+          0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+        const inBlock =
+          p.x >= near.x && p.x <= near.x + near.width &&
+          p.y >= near.y - near.height * 0.3 && p.y <= near.y + near.height;
+        if (lum(near.fgRgb) > 0.8 && lum(near.bgRgb) < 0.35 && !inBlock) {
+          color = { r: 0.1, g: 0.1, b: 0.1 };
+        }
+      }
       const ov: PageOverlay = {
         id,
         kind: 'text',
@@ -357,7 +399,7 @@ export default function PdfEditor() {
         fontFamily: fam,
         bold: near ? near.bold : textBold,
         italic: near ? false : textItalic,
-        color: near?.fgRgb ?? hexToRgb(penHex),
+        color,
       };
       commitOverlays([...overlaysRef.current, ov]);
       setSelOverlay(id);
@@ -534,7 +576,11 @@ export default function PdfEditor() {
       } else if (t !== ov.text) {
         commitOverlays(overlaysRef.current.map((o) => (o.id === id ? { ...o, text: t } : o)));
       }
-      setSelOverlay(null);
+      // NOTE: blur does NOT deselect here. Clearing the selection on blur
+      // used to re-render the toolbar between mousedown and click, so a
+      // colour/bold/font click on a selected text box saw an empty selection
+      // and did nothing (only the pen default changed). The box stays
+      // selected after editing; clicking empty page space deselects it.
     },
     [commitOverlays]
   );
@@ -1429,6 +1475,7 @@ export default function PdfEditor() {
                     <button
                       type="button"
                       className={`annot-btn annot-btn-sm${(selTextOv ? !!selTextOv.bold : textBold) ? ' on' : ''}`}
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => toggleTextStyle('bold')}
                       title={selTextOv ? 'Bold' : 'Bold for new text'}
                     >
@@ -1437,6 +1484,7 @@ export default function PdfEditor() {
                     <button
                       type="button"
                       className={`annot-btn annot-btn-sm${(selTextOv ? !!selTextOv.italic : textItalic) ? ' on' : ''}`}
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => toggleTextStyle('italic')}
                       title={selTextOv ? 'Italic' : 'Italic for new text'}
                     >
@@ -1482,6 +1530,10 @@ export default function PdfEditor() {
                         type="button"
                         className={`annot-swatch${shown.toLowerCase() === c ? ' on' : ''}`}
                         style={{ background: c }}
+                        // Keep focus in the text box: without this, mousedown
+                        // blurs the editor, the blur clears the selection, and
+                        // the click then sees no selected text to recolour.
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => setTextColor(c)}
                         aria-label={`Color ${c}`}
                         title={selTextOv ? `Color ${c} (selected text)` : c}
@@ -1742,11 +1794,17 @@ export default function PdfEditor() {
                       const x1 = Math.max(g.startX, last.x);
                       const y0 = Math.min(g.startY, last.y);
                       const y1 = Math.max(g.startY, last.y);
-                      if (g.kind === 'highlight')
+                      if (g.kind === 'highlight') {
+                        // Preview uses the same snapped band as the commit, so
+                        // the yellow the user sees while dragging is the yellow
+                        // that lands (a raw drag rect is ~0 high = invisible).
+                        const midY = (y0 + y1) / 2;
+                        const snap = snapHighlightY(page.blocks, midY);
                         return (
-                          <rect x={x0} y={fy(y1)} width={x1 - x0} height={y1 - y0}
+                          <rect x={x0} y={fy(snap.cy + snap.h / 2)} width={x1 - x0} height={snap.h}
                             fill="rgba(255, 224, 102, 0.45)" stroke="none" />
                         );
+                      }
                       if (g.kind === 'underline' || g.kind === 'strikeout') {
                         const ly = g.kind === 'underline' ? y0 + 2 : (y0 + y1) / 2;
                         return <line x1={x0} y1={fy(ly)} x2={x1} y2={fy(ly)} stroke={col} strokeWidth={1.5} strokeLinecap="round" />;
@@ -1814,7 +1872,11 @@ export default function PdfEditor() {
                           key={o.id}
                           data-ov-id={o.id}
                           className={`annot annot-text${sel ? ' selected' : ''}`}
-                          style={{ ...boxStyle, pointerEvents: 'auto' }}
+                          // Height hugs the wrapped text: a fixed single-line
+                          // box height let 3 wrapped lines spill outside the
+                          // dashed outline (and below the page edge in the
+                          // editor). minHeight keeps a 1-line box unchanged.
+                          style={{ ...boxStyle, height: 'auto', minHeight: boxStyle.height, pointerEvents: 'auto' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelOverlay(o.id);
