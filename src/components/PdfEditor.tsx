@@ -1195,12 +1195,6 @@ export default function PdfEditor() {
 
       {phase === 'ready' && page && (
         <div className="edit-grid">
-          {/* TEMP DEBUG: color sampling status — remove after diagnosis */}
-          <div style={{ gridColumn: '1 / -1', fontSize: 12, background: '#fff8e1', padding: '6px 10px', border: '1px solid #f0c040' }}>
-            DEBUG sampling: {page.blocks.filter((b) => b.fgRgb).length}/{page.blocks.length} blocks have fgRgb
-            {' | '}first 3: {page.blocks.slice(0, 3).map((b) => `${b.id}=${b.fgRgb ? `${Math.round(b.fgRgb.r * 255)},${Math.round(b.fgRgb.g * 255)},${Math.round(b.fgRgb.b * 255)}` : 'none'}`).join(' ; ')}
-            {' | '}teal block: {(() => { const t = page.blocks.find((b) => b.text.includes('Actionable Suggestion')); return t ? `${t.id}=${t.fgRgb ? `${Math.round(t.fgRgb.r * 255)},${Math.round(t.fgRgb.g * 255)},${Math.round(t.fgRgb.b * 255)}` : 'none'}` : 'not-found'; })()}
-          </div>
           {/* thumbnails */}
           <div className="edit-thumbs" aria-label="Pages">
             {pages.map((p, i) => (
