@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EditorBlock, EditorPageData, FinalPage, PageOverlay } from '@/lib/converters/pdf';
 
 /** Build marker for the live-bundle check (QA round 2, 2026-11-05). */
-const QA_BUILD = 'pdfqa-20261105-r3';
+const QA_BUILD = 'pdfqa-20261105-r4';
 
 /** Annotation toolbar tools (iLovePDF-style). */
 type AnnotTool = 'select' | 'edit-text' | 'add-text' | 'highlight' | 'underline' | 'strikeout' | 'draw' | 'shape' | 'image' | 'whiteout';
@@ -315,11 +315,27 @@ export default function PdfEditor() {
     startY: number;
     pts: Array<{ x: number; y: number }>;
   } | null>(null);
+  /** Drag-to-move for a placed box overlay (image/highlight/whiteout) in
+   * Select mode — a placed image that cannot be repositioned is stuck
+   * wherever it first landed (QA round 2). */
+  const dragRef = useRef<{
+    id: string;
+    startX: number;
+    startY: number;
+    origX: number;
+    origY: number;
+    moved: boolean;
+    startOverlays: PageOverlay[];
+  } | null>(null);
   const [gestureTick, setGestureTick] = useState(0); // re-render during gesture
   const imgInputRef = useRef<HTMLInputElement>(null);
   /** Page click armed the file picker on pointerdown; the picker itself opens
    * on the following click event (see onAnnotDown). */
   const imgClickArmed = useRef(false);
+  /** Escape-cancel flag for the block editor: a ref, not a dataset flag on
+   * the (unmounting) element — the blur that follows the unmount must see
+   * it and skip the save. */
+  const editCancelRef = useRef(false);
   const imgUrlCache = useRef(new Map<string, string>());
   const pendingImgPos = useRef<{ x: number; y: number } | null>(null);
   /** Signature pad (draw with pen / finger / stylus / mouse). */
@@ -609,6 +625,63 @@ export default function PdfEditor() {
     setGestureTick((t) => t + 1);
     if (g) commitGesture(g);
   }, [commitGesture]);
+
+  /** Drag a placed box overlay (image/highlight/whiteout) in Select mode.
+   * Pointer capture keeps the drag on the overlay even over text blocks
+   * (the capture layer is not rendered in Select mode, and the overlay's
+   * own pointerEvents:auto puts it above the block layer). Moves update
+   * live without history spam; the pre-drag array is pushed as the single
+   * undo step on release. A <2pt wiggle is a click, not a drag. */
+  const onOvDown = useCallback(
+    (e: React.PointerEvent, o: PageOverlay) => {
+      if (tool !== 'select') return;
+      const p = toPdfPoint(e.clientX, e.clientY);
+      if (!p) return;
+      dragRef.current = {
+        id: o.id,
+        startX: p.x,
+        startY: p.y,
+        origX: o.x,
+        origY: o.y,
+        moved: false,
+        startOverlays: overlaysRef.current,
+      };
+      setSelOverlay(o.id);
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      e.stopPropagation();
+    },
+    [tool, toPdfPoint]
+  );
+  const onOvMove = useCallback(
+    (e: React.PointerEvent) => {
+      const d = dragRef.current;
+      if (!d) return;
+      const p = toPdfPoint(e.clientX, e.clientY);
+      if (!p || !page) return;
+      const dx = p.x - d.startX;
+      const dy = p.y - d.startY;
+      if (Math.abs(dx) + Math.abs(dy) > 2) d.moved = true;
+      if (!d.moved) return;
+      const next = overlaysRef.current.map((ov) =>
+        ov.id === d.id
+          ? {
+              ...ov,
+              x: Math.max(0, Math.min(page.width - ov.w, d.origX + dx)),
+              y: Math.max(0, Math.min(page.height - ov.h, d.origY + dy)),
+            }
+          : ov
+      );
+      setOverlays(next);
+    },
+    [toPdfPoint, page]
+  );
+  const onOvUp = useCallback(() => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    if (!d || !d.moved) return;
+    setHistPast((h) => [...h.slice(-49), d.startOverlays]);
+    setHistFuture([]);
+  }, []);
 
   /** Click event on the capture layer: opens the image file picker when a
    * page click armed it (pointerdown only records the position). */
@@ -1778,11 +1851,15 @@ export default function PdfEditor() {
                     onClick={() => {
                       // Second click while already active opens the picker
                       // (places at page centre) — a fallback when a page
-                      // click cannot open it.
+                      // click cannot open it. Never overwrite a position
+                      // the user already armed with a page click: that
+                      // silently moved the image to the page centre
+                      // (QA round 2 — image landed mid-page over Topic 2
+                      // instead of where it was clicked).
                       if (tool === 'image' && !pendingSigBytes.current) {
-                        pendingImgPos.current = page
-                          ? { x: page.width / 2, y: page.height / 2 }
-                          : null;
+                        pendingImgPos.current =
+                          pendingImgPos.current ??
+                          (page ? { x: page.width / 2, y: page.height / 2 } : null);
                         imgInputRef.current?.click();
                       } else {
                         pickTool('image');
@@ -2009,8 +2086,9 @@ export default function PdfEditor() {
                             }
                           }}
                           onBlur={(e) => {
-                            if ((e.currentTarget as HTMLElement).dataset.cancel === '1') {
-                              delete (e.currentTarget as HTMLElement).dataset.cancel;
+                            if (editCancelRef.current) {
+                              // Escape-cancel: discard, never save.
+                              editCancelRef.current = false;
                               setEditingId(null);
                               return;
                             }
@@ -2018,8 +2096,15 @@ export default function PdfEditor() {
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Escape') {
-                              (e.currentTarget as HTMLElement).dataset.cancel = '1';
-                              e.currentTarget.blur();
+                              // Cancel directly and close: the old path set
+                              // a dataset flag on the element and called
+                              // blur(), which crashed the app with a
+                              // client-side exception in QA round 2 (edit
+                              // lost, reload needed). Closing here lets the
+                              // unmount blur hit the ref flag above instead.
+                              e.preventDefault();
+                              editCancelRef.current = true;
+                              setEditingId(null);
                             }
                             e.stopPropagation();
                           }}
@@ -2247,6 +2332,10 @@ export default function PdfEditor() {
                               e.stopPropagation();
                               setSelOverlay(o.id);
                             }}
+                            onPointerDown={(e) => onOvDown(e, o)}
+                            onPointerMove={onOvMove}
+                            onPointerUp={onOvUp}
+                            onPointerCancel={onOvUp}
                           >
                             {sel && (
                               <button type="button" className="annot-del" aria-label="Delete highlight"
@@ -2266,6 +2355,10 @@ export default function PdfEditor() {
                               e.stopPropagation();
                               setSelOverlay(o.id);
                             }}
+                            onPointerDown={(e) => onOvDown(e, o)}
+                            onPointerMove={onOvMove}
+                            onPointerUp={onOvUp}
+                            onPointerCancel={onOvUp}
                           >
                             {sel && (
                               <button type="button" className="annot-del" aria-label="Delete whiteout"
@@ -2286,6 +2379,10 @@ export default function PdfEditor() {
                               e.stopPropagation();
                               setSelOverlay(o.id);
                             }}
+                            onPointerDown={(e) => onOvDown(e, o)}
+                            onPointerMove={onOvMove}
+                            onPointerUp={onOvUp}
+                            onPointerCancel={onOvUp}
                           >
                             {url ? <img src={url} alt="Placed image" draggable={false} /> : null}
                             {sel && (
