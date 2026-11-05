@@ -745,6 +745,8 @@ export interface PageOverlay {
   italic?: boolean;
   /** text font family: serif (Times), sans (Helvetica), mono (Courier). Default sans. */
   fontFamily?: 'serif' | 'sans' | 'mono';
+  /** original PDF font name (lowercased) of the nearest block, for Calibri/Cambria mapping. */
+  fontName?: string;
   /** text alignment inside the overlay box. Default left. */
   align?: 'left' | 'center' | 'right';
   /** underline the added text. Default false. */
@@ -1149,9 +1151,29 @@ export function sampleBlockColors(
 // ---------------------------------------------------------------------------
 
 /** Cached TTF bytes for the editor's matched fonts (fail-soft -> Helvetica). */
-const editorFontBytes: { regular: Uint8Array | null; bold: Uint8Array | null; tried: boolean } = {
+const editorFontBytes: {
+  regular: Uint8Array | null;
+  bold: Uint8Array | null;
+  carlito: Uint8Array | null;
+  carlitoB: Uint8Array | null;
+  carlitoI: Uint8Array | null;
+  carlitoBI: Uint8Array | null;
+  caladea: Uint8Array | null;
+  caladeaB: Uint8Array | null;
+  caladeaI: Uint8Array | null;
+  caladeaBI: Uint8Array | null;
+  tried: boolean;
+} = {
   regular: null,
   bold: null,
+  carlito: null,
+  carlitoB: null,
+  carlitoI: null,
+  carlitoBI: null,
+  caladea: null,
+  caladeaB: null,
+  caladeaI: null,
+  caladeaBI: null,
   tried: false,
 };
 
@@ -1168,25 +1190,69 @@ async function fetchEditorFontBytes(): Promise<void> {
       return null;
     }
   };
-  const [reg, bold] = await Promise.all([
-    get('/fonts/NotoSans-Regular.ttf'),
-    get('/fonts/NotoSans-Bold.ttf'),
-  ]);
+  const [reg, bold, carlito, carlitoB, carlitoI, carlitoBI, caladea, caladeaB, caladeaI, caladeaBI] =
+    await Promise.all([
+      get('/fonts/NotoSans-Regular.ttf'),
+      get('/fonts/NotoSans-Bold.ttf'),
+      get('/fonts/Carlito-Regular.ttf'),
+      get('/fonts/Carlito-Bold.ttf'),
+      get('/fonts/Carlito-Italic.ttf'),
+      get('/fonts/Carlito-BoldItalic.ttf'),
+      get('/fonts/Caladea-Regular.ttf'),
+      get('/fonts/Caladea-Bold.ttf'),
+      get('/fonts/Caladea-Italic.ttf'),
+      get('/fonts/Caladea-BoldItalic.ttf'),
+    ]);
   editorFontBytes.regular = reg;
   editorFontBytes.bold = bold;
+  editorFontBytes.carlito = carlito;
+  editorFontBytes.carlitoB = carlitoB;
+  editorFontBytes.carlitoI = carlitoI;
+  editorFontBytes.carlitoBI = carlitoBI;
+  editorFontBytes.caladea = caladea;
+  editorFontBytes.caladeaB = caladeaB;
+  editorFontBytes.caladeaI = caladeaI;
+  editorFontBytes.caladeaBI = caladeaBI;
 }
 
-type EditorFontKind = 'noto' | 'notoB' | 'helv' | 'helvB';
+type EditorFontKind =
+  | 'noto'
+  | 'notoB'
+  | 'helv'
+  | 'helvB'
+  | 'carlito'
+  | 'carlitoB'
+  | 'carlitoI'
+  | 'carlitoBI'
+  | 'caladea'
+  | 'caladeaB'
+  | 'caladeaI'
+  | 'caladeaBI';
 
 /**
  * Match the original font name to an available font.
  * 'noto' in name -> embedded Noto Sans (measured from the owner's files:
- * Noto-Sans-Bold headers etc.); helvetica/arial -> standard Helvetica;
+ * Noto-Sans-Bold headers etc.); Calibri/Cambria -> their metric-identical
+ * open twins Carlito/Caladea (real Calibri/Cambria are Microsoft-proprietary
+ * and cannot be legally bundled); helvetica/arial -> standard Helvetica;
  * anything else -> Helvetica fallback. Exported for tests.
  */
 export function pickEditorFontKind(block: { fontName: string; bold: boolean }): EditorFontKind {
   const name = (block.fontName || '').toLowerCase();
   const isBold = block.bold || /bold|black|heavy|demi/.test(name);
+  const isItalic = /italic|oblique/.test(name);
+  if (/calibri|carlito/.test(name)) {
+    if (isBold && isItalic) return 'carlitoBI';
+    if (isBold) return 'carlitoB';
+    if (isItalic) return 'carlitoI';
+    return 'carlito';
+  }
+  if (/cambria|caladea/.test(name)) {
+    if (isBold && isItalic) return 'caladeaBI';
+    if (isBold) return 'caladeaB';
+    if (isItalic) return 'caladeaI';
+    return 'caladea';
+  }
   if (name.includes('noto')) return isBold ? 'notoB' : 'noto';
   return isBold ? 'helvB' : 'helv';
 }
@@ -1194,6 +1260,14 @@ export function pickEditorFontKind(block: { fontName: string; bold: boolean }): 
 interface EditorFontKit {
   noto: unknown | null;
   notoB: unknown | null;
+  carlito: unknown | null;
+  carlitoB: unknown | null;
+  carlitoI: unknown | null;
+  carlitoBI: unknown | null;
+  caladea: unknown | null;
+  caladeaB: unknown | null;
+  caladeaI: unknown | null;
+  caladeaBI: unknown | null;
   helv: unknown;
   helvB: unknown;
   helvI: unknown;
@@ -1251,9 +1325,33 @@ async function embedEditorFonts(
   } catch {
     notoB = null;
   }
+  // Carlito / Caladea (metric twins of Calibri / Cambria), fail-soft to null.
+  const embedOpt = async (bytes: Uint8Array | null): Promise<unknown | null> => {
+    try {
+      return bytes ? await doc.embedFont(bytes) : null;
+    } catch {
+      return null;
+    }
+  };
+  const carlito = await embedOpt(editorFontBytes.carlito);
+  const carlitoB = await embedOpt(editorFontBytes.carlitoB);
+  const carlitoI = await embedOpt(editorFontBytes.carlitoI);
+  const carlitoBI = await embedOpt(editorFontBytes.carlitoBI);
+  const caladea = await embedOpt(editorFontBytes.caladea);
+  const caladeaB = await embedOpt(editorFontBytes.caladeaB);
+  const caladeaI = await embedOpt(editorFontBytes.caladeaI);
+  const caladeaBI = await embedOpt(editorFontBytes.caladeaBI);
   return {
     noto,
     notoB,
+    carlito,
+    carlitoB,
+    carlitoI,
+    carlitoBI,
+    caladea,
+    caladeaB,
+    caladeaI,
+    caladeaBI,
     helv: await doc.embedFont(StandardFonts.Helvetica),
     helvB: await doc.embedFont(StandardFonts.HelveticaBold),
     helvI: await doc.embedFont(StandardFonts.HelveticaOblique),
@@ -1276,6 +1374,14 @@ function kitFontFor(
 ): any {
   if (kind === 'noto') return kit.noto ?? kit.helv;
   if (kind === 'notoB') return kit.notoB ?? kit.helvB;
+  if (kind === 'carlito') return kit.carlito ?? kit.helv;
+  if (kind === 'carlitoB') return kit.carlitoB ?? kit.helvB;
+  if (kind === 'carlitoI') return kit.carlitoI ?? kit.helvI;
+  if (kind === 'carlitoBI') return kit.carlitoBI ?? kit.helvBI;
+  if (kind === 'caladea') return kit.caladea ?? kit.times;
+  if (kind === 'caladeaB') return kit.caladeaB ?? kit.timesB;
+  if (kind === 'caladeaI') return kit.caladeaI ?? kit.timesI;
+  if (kind === 'caladeaBI') return kit.caladeaBI ?? kit.timesBI;
   if (kind === 'helvB') return kit.helvB;
   return kit.helv;
 }
@@ -1581,10 +1687,16 @@ export async function renderEditedPdf(
         });
       } else if (o.kind === 'text' && o.text) {
         // Pick the embedded font matching the overlay's family + bold/italic.
+        // A Calibri/Cambria nearest block maps to its metric twin first.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const font: any = (() => {
           const fam = o.fontFamily ?? 'sans';
           const b = !!o.bold, i = !!o.italic;
+          const fn = (o.fontName || '').toLowerCase();
+          if (/calibri|carlito/.test(fn))
+            return b && i ? kit.carlitoBI ?? kit.helvBI : b ? kit.carlitoB ?? kit.helvB : i ? kit.carlitoI ?? kit.helvI : kit.carlito ?? kit.helv;
+          if (/cambria|caladea/.test(fn))
+            return b && i ? kit.caladeaBI ?? kit.timesBI : b ? kit.caladeaB ?? kit.timesB : i ? kit.caladeaI ?? kit.timesI : kit.caladea ?? kit.times;
           if (fam === 'serif') return b && i ? kit.timesBI : b ? kit.timesB : i ? kit.timesI : kit.times;
           if (fam === 'mono') return b && i ? kit.courBO : b ? kit.courB : i ? kit.courO : kit.cour;
           return b && i ? kit.helvBI : b ? kit.helvB : i ? kit.helvI : kit.helv;

@@ -70,6 +70,10 @@ function fontStackForBlock(b: { fontName: string }): string {
   const n = (b.fontName || '').toLowerCase();
   if (/mono|courier|consol|typewriter/.test(n))
     return 'ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace';
+  if (/calibri|carlito/.test(n))
+    return '"Carlito", Calibri, "Segoe UI", Arial, sans-serif';
+  if (/cambria|caladea/.test(n))
+    return '"Caladea", Cambria, Georgia, serif';
   if (/times|georgia|garamond|palatino|bookman|serif/.test(n))
     return 'Georgia, "Times New Roman", Times, serif';
   return '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -89,6 +93,14 @@ function cssStackForFam(fam: TextFam): string {
   if (fam === 'mono') return 'ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace';
   if (fam === 'serif') return 'Georgia, "Times New Roman", Times, serif';
   return '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+}
+
+/** Display stack for an added-text overlay: its real font name wins over the coarse family. */
+function cssStackForOverlay(o: { fontName?: string; fontFamily?: TextFam }): string {
+  const n = (o.fontName || '').toLowerCase();
+  if (/calibri|carlito/.test(n)) return '"Carlito", Calibri, "Segoe UI", Arial, sans-serif';
+  if (/cambria|caladea/.test(n)) return '"Caladea", Cambria, Georgia, serif';
+  return cssStackForFam(o.fontFamily ?? 'sans');
 }
 
 /** Nearest text block to a PDF-unit point (for style auto-pickup), or null. */
@@ -427,6 +439,9 @@ export default function PdfEditor() {
         text: 'Your text here',
         fontSize: fs,
         fontFamily: fam,
+        // Keep the nearest block's real font name so the download can map
+        // Calibri/Cambria to their metric twins (Carlito/Caladea).
+        fontName: near?.fontName,
         bold: near ? near.bold : textBold,
         italic: near ? false : textItalic,
         underline: textUnderline,
@@ -2113,7 +2128,7 @@ export default function PdfEditor() {
                             style={{
                               fontSize: `${(((o.fontSize ?? 14) / page.width) * 100).toFixed(3)}cqw`,
                               color: rgbToCss(o.color ?? { r: 0, g: 0, b: 0 }),
-                              fontFamily: cssStackForFam(o.fontFamily ?? 'sans'),
+                              fontFamily: cssStackForOverlay(o),
                               fontWeight: o.bold ? 700 : 400,
                               fontStyle: o.italic ? 'italic' : 'normal',
                               textAlign: o.align ?? 'left',
