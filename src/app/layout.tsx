@@ -27,11 +27,14 @@ export const metadata: Metadata = {
   },
   openGraph: {
     siteName: BRAND,
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: BRAND }],
+    // ?v=2 cache-buster: WhatsApp/Facebook cache the share preview by
+    // image URL, so the pre-Nov-3 bolt logo kept showing after the logo
+    // changed. A new URL forces every platform to fetch the new banner.
+    images: [{ url: '/og-image.png?v=2', width: 1200, height: 630, alt: BRAND }],
   },
   twitter: {
     card: 'summary_large_image',
-    images: ['/og-image.png'],
+    images: ['/og-image.png?v=2'],
   },
 };
 
