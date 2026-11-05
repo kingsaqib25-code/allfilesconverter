@@ -33,6 +33,8 @@ interface BlockState extends EditorBlock {
   editedText: string | null;
   /** Sampled foreground (glyph) color 0..1, for auto-matching edit/add-text styling. */
   fgRgb?: { r: number; g: number; b: number };
+  /** Sampled page background behind the block, for masking original glyphs under edited text. */
+  bgRgb?: { r: number; g: number; b: number };
 }
 
 interface PageState extends EditorPageData {
@@ -283,13 +285,20 @@ export default function PdfEditor() {
       const y1 = Math.max(g.startY, last.y);
       if (x1 - x0 < 4 && y1 - y0 < 4) return; // accidental click, not a drag
       if (g.kind === 'highlight') {
+        // A natural highlight drag runs ALONG the text line, so its raw
+        // height is ~0 — and a zero-height rect fills nothing anywhere
+        // (editor, preview, download), even though the overlay commits and
+        // counts as an edit. Force at least one line height, centred on the
+        // drag line. (Underline/strikeout already had this guard.)
+        const midY = (y0 + y1) / 2;
+        const hh = Math.max(y1 - y0, 12);
         commitOverlays([
           ...overlaysRef.current,
           {
             id: localOvId(),
             kind: 'highlight',
             pageNum: pages[sel]?.pageNum ?? 1,
-            x: x0, y: y0, w: x1 - x0, h: y1 - y0,
+            x: x0, y: midY - hh / 2, w: x1 - x0, h: hh,
             fill: { r: 1, g: 0.92, b: 0.35 },
             opacity: 0.35,
           },
@@ -614,6 +623,7 @@ export default function PdfEditor() {
         // render) so text edits and added text can auto-match the color of
         // the surrounding text. The editor works fine without it.
         const fgById = new Map<string, { r: number; g: number; b: number }>();
+        const bgById = new Map<string, { r: number; g: number; b: number }>();
         for (const p of extracted) {
           try {
             const pg = (await doc.getPage(p.pageNum)) as unknown as {
@@ -639,6 +649,7 @@ export default function PdfEditor() {
                   { x: b.x, y: b.y - b.height * 0.25, w: b.width, h: b.height * 1.15 }
                 );
                 fgById.set(b.id, { r: s.fg.r, g: s.fg.g, b: s.fg.b });
+                bgById.set(b.id, { r: s.bg.r, g: s.bg.g, b: s.bg.b });
               } catch {
                 /* leave this block uncolored */
               }
@@ -650,7 +661,7 @@ export default function PdfEditor() {
         setPages(
           extracted.map((p) => ({
             ...p,
-            blocks: p.blocks.map((b) => ({ ...b, editedText: null, fgRgb: fgById.get(b.id) })),
+            blocks: p.blocks.map((b) => ({ ...b, editedText: null, fgRgb: fgById.get(b.id), bgRgb: bgById.get(b.id) })),
             tvTouched: [] as string[],
             thumb: null,
           }))
@@ -1589,11 +1600,25 @@ export default function PdfEditor() {
                         </div>
                       );
                     }
+                    // Edited blocks show their NEW text on the page (not just
+                    // a wash over the bitmap's old glyphs): the div masks the
+                    // original line with the sampled background and draws the
+                    // edited words in the block's own font/color/size — the
+                    // same cover-and-redraw the download does. Unedited blocks
+                    // stay empty so the bitmap shows through untouched.
+                    const displayStyle = isEdited
+                      ? {
+                          ...editStyle,
+                          background: b.bgRgb ? rgbToCss(b.bgRgb) : '#ffffff',
+                          whiteSpace: 'pre-wrap' as const,
+                          overflow: 'visible' as const,
+                        }
+                      : style;
                     return (
                       <div
                         key={b.id}
                         className={`edit-block${isEdited ? ' edited' : ''}${showOutlines ? ' outlined' : ''}${tool === 'select' && selBlock === b.id ? ' selected' : ''}`}
-                        style={style}
+                        style={displayStyle}
                         title={tool === 'select' ? 'Click to select, double-click to edit' : 'Click to edit'}
                         onClick={() => {
                           if (tool === 'select') {
@@ -1606,7 +1631,9 @@ export default function PdfEditor() {
                         onDoubleClick={() => {
                           if (tool === 'select') setEditingId(b.id);
                         }}
-                      />
+                      >
+                        {isEdited ? b.editedText : null}
+                      </div>
                     );
                   })}
                 </div>

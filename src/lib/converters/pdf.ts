@@ -1573,10 +1573,10 @@ export async function renderEditedPdf(
           return b && i ? kit.helvBI : b ? kit.helvB : i ? kit.helvI : kit.helv;
         })();
         const size = o.fontSize ?? 12;
-        // Wrap added text inside the page (36pt right margin) so a long line
-        // never runs off the right edge clipped — the fidelity test caught
-        // exactly that ("This sentence was added with th").
-        const maxW = Math.max(40, copied.getWidth() - o.x - 36);
+        // Wrap added text at the overlay's own box width (what the editor
+        // shows), not the full page width — a page-width line collides with
+        // other content and looks nothing like the editor's box.
+        const maxW = Math.max(40, o.w > 0 ? o.w : copied.getWidth() - o.x - 36);
         const lines: string[] = [];
         for (const raw of o.text.split('\n')) {
           let cur = '';
