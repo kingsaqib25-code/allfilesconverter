@@ -47,6 +47,14 @@ const FAQS = [
     a: 'Three levers, biggest first: (1) smaller dimensions — 320px instead of 640px roughly quarters the size; (2) lower frame rate — 10 fps instead of 20 halves it; (3) fewer colors — 128 instead of 256 in the Optimize GIF tab. The tab shows you the before/after size so you can see exactly what you saved.',
   },
   {
+    q: 'What frame rate (fps) should I use?',
+    a: '10 fps for small files and easy sharing — that is what the 💬 Discord preset uses, and it is plenty for reactions and stickers on Discord and WhatsApp. 12–15 fps is the smooth everyday choice (⚖ Balanced is 12 fps, 🎞 HD is 15). The studio goes up to 20 fps, but beyond that the file grows fast for very little visible gain. Rule of thumb: lower fps means a smaller file, so drop the frame rate before you drop the quality.',
+  },
+  {
+    q: 'GIF or WebP — which is better for sharing?',
+    a: 'GIF, when it has to animate everywhere. GIFs play in Discord, WhatsApp, email, and every browser — nothing needs to support anything special. WebP files are smaller, but many chat apps show them as still images or do not animate them at all. So use GIF when it must animate everywhere, and WebP when size matters and you know the platform supports it.',
+  },
+  {
     q: 'Can I stop my GIF from looping forever?',
     a: 'Yes. GIFs loop forever by default, but the Loop control lets you set 2 plays or 3 plays instead — handy for reaction GIFs that should land once and stop, or presentations where a looping animation would distract.',
   },
@@ -175,10 +183,23 @@ export default function GifMakerPage() {
         <h2>Video to GIF for Discord</h2>
         <p>
           Discord is where most video-to-GIF conversions end up — custom emojis, stickers,
-          and animated avatars. The catch is file size: oversized GIFs get rejected or
-          compressed into mush. The workflow that works: keep the clip to 2–4 seconds, hit
+          and animated avatars. The catch is file size: free accounts can only upload files
+          up to 8 MB, so oversized GIFs get rejected or compressed into mush. The workflow
+          that works: keep the clip under 6 seconds — 2–4 seconds is the sweet spot — hit
           the 💬 Discord preset, and if it is still too big, run it through the Optimize
           tab at 128 colors. You will land a crisp GIF that uploads first try, every try.
+        </p>
+
+        <h2>Video to GIF for WhatsApp</h2>
+        <p>
+          WhatsApp compresses every video it sends and strips quality along the way, so a
+          long clip arrives soft and washed out — and a big file takes ages to send on a
+          slow connection. A short, small GIF dodges both problems: it sends fast and
+          stays sharp. The workflow that works: keep the clip to 2–4 seconds, use the 💬
+          Discord or 📦 Tiny preset for a small file, and if it is still big, run it
+          through the Optimize tab at 128 colors. Perfect for status updates and quick
+          chat replies — a reaction that lands in a second instead of a video that needs
+          downloading first.
         </p>
 
         <h2>Make your GIFs smaller</h2>

@@ -395,6 +395,7 @@ const PAIRS: PairSpec[] = [
       'Emailing screenshots without hitting attachment size limits',
       'Converting PNG graphics for upload forms that only accept JPG',
       'Shrinking website images for faster page loads',
+      'Converting a batch of PNG screenshots to JPG at once — up to 20 per batch, with one ZIP download',
     ],
     tip: 'PNG transparency becomes a white background in JPG. If your image has a transparent background you need to keep, convert to WebP instead.',
     extraFaqs: [
@@ -413,6 +414,18 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Does it work for photos too?',
         a: 'Absolutely — though photos usually start as JPG already. This converter shines on PNG screenshots, logos and graphics.',
+      },
+      {
+        q: 'Will transparency survive the conversion?',
+        a: 'No — JPG has no transparency channel at all, so transparent areas become a white background in the JPG. If you need to keep the transparency, convert to WebP instead — it keeps transparency and still shrinks the file.',
+      },
+      {
+        q: 'PNG vs JPG — when should I use which?',
+        a: 'PNG for screenshots, logos and anything with sharp text or transparency — it is lossless, so nothing degrades. JPG for photos and anything where file size matters — it squeezes images to a fraction of the size with only a tiny, usually invisible quality change. Rule of thumb: text and graphics stay PNG; photos and uploads go JPG.',
+      },
+      {
+        q: 'Why does my transparent PNG turn white in JPG?',
+        a: 'JPG simply cannot store transparency — there is no transparent pixel in the format. Every converter has to fill those areas with something, and this one fills them with white. Some tools fill black instead, which is where the "black background" surprise comes from. If the white fill looks wrong on your image, convert to WebP — it keeps the transparency.',
       },
     ],
     flagship: true,
@@ -868,6 +881,8 @@ const PAIRS: PairSpec[] = [
       'Uploading to websites and forms that reject HEIC files',
       'Sharing in WhatsApp or Telegram without compatibility warnings',
       'Saving photos in a format every device will still open in ten years',
+      'Converting iPhone photos without uploading them anywhere — private by design',
+      'Converting a batch of up to 20 iPhone photos at once',
     ],
     extraFaqs: [
       {
@@ -880,7 +895,7 @@ const PAIRS: PairSpec[] = [
       },
       {
         q: 'Can I convert several HEIC photos at once?',
-        a: 'Right now each conversion handles one file at a time — drop a photo, convert, download, repeat. It takes a few seconds per photo.',
+        a: 'Yes — drop up to 20 photos at once, convert them all, and download everything as one ZIP. Each photo takes a few seconds, and your original HEIC files are never modified.',
       },
       {
         q: 'How do I stop my iPhone saving HEIC in the future?',
@@ -889,6 +904,14 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Does this work for HEIC files from cameras or drones, not just iPhones?',
         a: 'Yes — any valid HEIC or HEIF file converts the same way, no matter which device created it.',
+      },
+      {
+        q: 'What about HEIF files?',
+        a: 'HEIF is the same family — HEIC is HEIF using HEVC compression, which is what iPhones actually produce. Both convert here the same way, and there is also a dedicated HEIF to JPG converter on this site.',
+      },
+      {
+        q: 'How do I convert HEIC to JPG on iPhone?',
+        a: 'Open this page in Safari on your iPhone, drop the photo, and download the JPG — no app to install, and the photo never leaves your phone. To stop future photos saving as HEIC, go to Settings → Camera → Formats and choose "Most Compatible".',
       },
     ],
   },
@@ -1513,6 +1536,7 @@ const PAIRS: PairSpec[] = [
       'Saving podcast audio from a video file',
       'Extracting lecture audio for offline listening',
       'Ripping audio from screen recordings for editing',
+      'Converting a whole batch of videos to MP3 at once — up to 20 per batch, with one ZIP download',
     ],
     tip: 'We encode at 192 kbps — transparent quality for music and voice, at roughly 1.4 MB per minute.',
     extraFaqs: [
@@ -1531,6 +1555,18 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Does it keep the video too?',
         a: 'No — the video track is discarded and only the audio is kept. That’s exactly what makes the file so much smaller.',
+      },
+      {
+        q: 'Can I convert 50 files at once?',
+        a: 'Up to 20 files per batch — drop them all in, convert, and download everything as one ZIP. For 50 files, do two or three batches; each batch takes seconds and there is no daily limit.',
+      },
+      {
+        q: 'Which bitrate should I pick — 128, 192 or 320 kbps?',
+        a: '192 kbps is the balanced default and sounds transparent for music and voice for most listeners. Pick 128 kbps when file size matters most (voice recordings, lectures). Pick 320 kbps for music you plan to keep and listen to closely — bigger files, best quality. Set it with the Bitrate control above the Convert button; it applies to every file in the batch.',
+      },
+      {
+        q: 'How do I extract audio from a video on iPhone?',
+        a: 'Open this page in Safari, drop the video, and download the MP3 — no app to install. It works in the browser; for very large videos a desktop browser is faster, because the first use downloads a ~30 MB converter engine.',
       },
     ],
     flagship: true,

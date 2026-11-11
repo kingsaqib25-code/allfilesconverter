@@ -86,6 +86,14 @@ const USE_CASES = [
     t: 'Prep assets for developers',
     d: 'Codebases hate spaces and special characters in asset names. One pass with "spaces to dashes" plus "strip special characters" makes every asset build-safe.',
   },
+  {
+    t: 'Rename photos in bulk',
+    d: 'Camera names like "IMG_0001.jpg" and "DSC_0042.jpg" say nothing about the moment. Turn a whole trip or event into "greece-trip-001.jpg", "greece-trip-002.jpg" with find & replace plus sequential numbering — meaningful names that clients, galleries and future-you can actually search for.',
+  },
+  {
+    t: 'Rename PDF files in bulk',
+    d: 'Contracts, invoices, ebooks and payslips pile up with names like "document(3).pdf". Give them clean dated, numbered names — "invoice-2026-11-001.pdf", "invoice-2026-11-002.pdf" — in one batch, so the newest file is always easy to find. The extension is always preserved, so a PDF stays a PDF.',
+  },
 ];
 
 const PAGE_URL = `${SITE_URL}/tools/bulk-rename/`;

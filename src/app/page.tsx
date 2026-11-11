@@ -4,6 +4,7 @@ import HeroPills from '@/components/HeroPills';
 import AiSummarize from '@/components/AiSummarize';
 import ToolsGrid from '@/components/ToolsGrid';
 import { ToolCard } from '@/components/ToolCard';
+import { ToolIcon } from '@/components/ToolIcons';
 import { BRAND, CONVERTERS } from '@/lib/converters/registry';
 import { FULL_SITE_SUMMARY } from '@/lib/site-summary.generated';
 import { SITE_URL } from '@/lib/site';
@@ -59,6 +60,13 @@ export default function Home() {
               entry={{ id: c.id, title: c.title, description: c.description, category: c.category }}
             />
           ))}
+          <Link href="/tools/bulk-rename/" className="tool-card" data-slot="tool-card">
+            <ToolIcon id="bulk-rename" title="Bulk File Renamer" />
+            <span className="tool-card-body">
+              <span className="tool-card-t">Bulk File Renamer</span>
+              <span className="tool-card-d">Rename up to 500 files at once: find &amp; replace, prefix/suffix, sequential numbering, case fixes — live preview, ZIP download, 100% in your browser.</span>
+            </span>
+          </Link>
         </div>
 
         <div className="cta-band">

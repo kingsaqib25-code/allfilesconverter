@@ -1068,6 +1068,7 @@ Use cases:
 - Emailing screenshots without hitting attachment size limits
 - Converting PNG graphics for upload forms that only accept JPG
 - Shrinking website images for faster page loads
+- Converting a batch of PNG screenshots to JPG at once — up to 20 per batch, with one ZIP download
 
 Tip: PNG transparency becomes a white background in JPG. If your image has a transparent background you need to keep, convert to WebP instead.
 
@@ -1086,6 +1087,9 @@ A: Email providers cap attachment sizes — a 5 MB PNG often becomes a 700 KB JP
 
 Q: Does it work for photos too?
 A: Absolutely — though photos usually start as JPG already. This converter shines on PNG screenshots, logos and graphics.
+
+Q: Will transparency survive the conversion?
+A: No — JPG has no transparency channel at all, so transparent areas become a white background in the JPG. If you need to keep the transparency, convert to WebP instead — it keeps transparency and still shrinks the file.
 
 ### PNG to WebP Converter
 
@@ -1597,6 +1601,8 @@ Use cases:
 - Uploading to websites and forms that reject HEIC files
 - Sharing in WhatsApp or Telegram without compatibility warnings
 - Saving photos in a format every device will still open in ten years
+- Converting iPhone photos without uploading them anywhere — private by design
+- Converting a batch of up to 20 iPhone photos at once
 
 Tip: Converting at high quality keeps the photo visually identical — and your original HEIC file is never modified.
 
@@ -1611,7 +1617,7 @@ Q: Will converting HEIC to JPG lose quality?
 A: Barely. We convert at high quality (92%), so any difference is invisible in normal viewing. Your original HEIC file is never touched — the JPG is a new download.
 
 Q: Can I convert several HEIC photos at once?
-A: Right now each conversion handles one file at a time — drop a photo, convert, download, repeat. It takes a few seconds per photo.
+A: Yes — drop up to 20 photos at once, convert them all, and download everything as one ZIP. Each photo takes a few seconds, and your original HEIC files are never modified.
 
 Q: How do I stop my iPhone saving HEIC in the future?
 A: On your iPhone go to Settings → Camera → Formats and choose "Most Compatible". New photos will save as JPG — but this won’t change photos you already took.
@@ -2844,6 +2850,7 @@ Use cases:
 - Saving podcast audio from a video file
 - Extracting lecture audio for offline listening
 - Ripping audio from screen recordings for editing
+- Converting a whole batch of videos to MP3 at once — up to 20 per batch, with one ZIP download
 
 Tip: We encode at 192 kbps — transparent quality for music and voice, at roughly 1.4 MB per minute.
 
@@ -2862,6 +2869,9 @@ A: Yes, as long as the file stays under ~500 MB — beyond that browsers tend to
 
 Q: Does it keep the video too?
 A: No — the video track is discarded and only the audio is kept. That’s exactly what makes the file so much smaller.
+
+Q: Can I convert 50 files at once?
+A: Up to 20 files per batch — drop them all in, convert, and download everything as one ZIP. For 50 files, do two or three batches; each batch takes seconds and there is no daily limit.
 
 ### MOV to MP4 Converter
 
