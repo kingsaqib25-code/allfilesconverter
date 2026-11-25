@@ -78,6 +78,21 @@ export default async function ConvertPage({
           text: 'Hit "Download PDF" to get your file back with the edits baked in — or grab a clean rebuild or a Word file instead.',
         },
       ]
+    : entry.widget === 'text-editor'
+      ? [
+          {
+            name: 'Type or paste your text',
+            text: 'Write directly in the editor on the left — or upload a .txt file and edit it there first.',
+          },
+          {
+            name: 'Style it and check the live preview',
+            text: 'Pick a font, text size, line spacing, alignment, margins and page size (A4 or US Letter) from the toolbar. The preview on the right shows exactly what the PDF will look like, page by page.',
+          },
+          {
+            name: 'Download the PDF in one click',
+            text: 'Hit "Download PDF" and the file is yours instantly. Everything runs in your browser — your text is never uploaded.',
+          },
+        ]
     : [
         {
           name: 'Drop your file',
@@ -163,6 +178,12 @@ export default async function ConvertPage({
             <strong>TL;DR:</strong> Drop a PDF, click any text, and type your changes right on
             the page. Download the updated PDF in seconds. Free forever, no sign-up — and your
             file never leaves your device because the editing runs in your browser.
+          </>
+        ) : entry.widget === 'text-editor' ? (
+          <>
+            <strong>TL;DR:</strong> Type or paste your text, style it with the toolbar, check
+            the live A4 preview, and download the PDF in one click. Free forever, no sign-up —
+            and your text never leaves your device because everything runs in your browser.
           </>
         ) : (
           <>
