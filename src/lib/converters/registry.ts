@@ -2400,7 +2400,7 @@ const PAIRS: PairSpec[] = [
       'Converting a .txt log file or report for printing — upload it, edit it, download it',
       'Making a plain-text draft look presentable for submission',
     ],
-    tip: 'Use **bold** and *italic* markers in your text — they render in the preview and in the PDF. Long documents paginate automatically, so a 50-page text file becomes a 50-page PDF with no extra work.',
+    tip: 'Select any text and use the B, I and U buttons — or make headings and lists from the toolbar. Pasted text keeps # headings, - bullets, 1. lists, **bold** and *italic* too. Long documents paginate automatically, so a 50-page text file becomes a 50-page PDF with no extra work.',
     extraFaqs: [
       {
         q: 'Does the live preview match the downloaded PDF?',
@@ -2409,6 +2409,10 @@ const PAIRS: PairSpec[] = [
       {
         q: 'Can I change the font, size and margins?',
         a: 'Yes. Choose Helvetica, Times or Courier; text sizes from 10 to 18 pt; single, 1.5 or double line spacing; left, center, right or justified alignment; narrow, normal or wide margins; and A4 or US Letter page size.',
+      },
+      {
+        q: 'Can I format text like in a Word editor?',
+        a: 'Yes — select any words and use the B (bold), I (italic) and U (underline) buttons, or turn a line into a Heading 1, Heading 2, bulleted or numbered list. Font, size, line spacing, alignment, margins, text colour, page size and portrait/landscape are all in the toolbar, and every option changes the PDF itself — nothing is decorative.',
       },
       {
         q: 'Does it preserve my line breaks?',

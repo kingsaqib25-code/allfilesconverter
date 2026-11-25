@@ -2201,7 +2201,7 @@ Use cases:
 - Converting a .txt log file or report for printing — upload it, edit it, download it
 - Making a plain-text draft look presentable for submission
 
-Tip: Use **bold** and *italic* markers in your text — they render in the preview and in the PDF. Long documents paginate automatically, so a 50-page text file becomes a 50-page PDF with no extra work.
+Tip: Select any text and use the B, I and U buttons — or make headings and lists from the toolbar. Pasted text keeps # headings, - bullets, 1. lists, **bold** and *italic* too. Long documents paginate automatically, so a 50-page text file becomes a 50-page PDF with no extra work.
 
 FAQs:
 Q: How do I turn text into a PDF?
@@ -2213,14 +2213,14 @@ A: Yes — the preview and the PDF run the exact same layout engine with real fo
 Q: Can I change the font, size and margins?
 A: Yes. Choose Helvetica, Times or Courier; text sizes from 10 to 18 pt; single, 1.5 or double line spacing; left, center, right or justified alignment; narrow, normal or wide margins; and A4 or US Letter page size.
 
+Q: Can I format text like in a Word editor?
+A: Yes — select any words and use the B (bold), I (italic) and U (underline) buttons, or turn a line into a Heading 1, Heading 2, bulleted or numbered list. Font, size, line spacing, alignment, margins, text colour, page size and portrait/landscape are all in the toolbar, and every option changes the PDF itself — nothing is decorative.
+
 Q: Does it preserve my line breaks?
 A: Yes — your paragraphs and line breaks are kept, and long lines wrap neatly within the page margins.
 
 Q: Can I add a title and page numbers?
 A: Yes — type a document title in the toolbar and it appears large and centered at the top of page 1. Page numbers are on by default for multi-page documents and can be switched off.
-
-Q: What page size is used?
-A: A4 by default, with US Letter as a one-click option — both print perfectly.
 
 ### Markdown to PDF Converter
 
