@@ -2187,33 +2187,40 @@ A: Markdown renders with formatting on GitHub, in note apps and docs sites — p
 URL: https://allinoneconverter.vercel.app/convert/txt-to-pdf/
 
 What it does:
-Turn a plain text file into a clean, paginated PDF document. Perfect for notes, logs and drafts that need to look like a real document.
+Type or paste text into a proper document editor — pick your font, size, alignment and margins, watch the A4 pages preview live, then download a clean, paginated PDF in one click. Or upload a .txt file and edit it first. Free forever, no sign-up, nothing uploaded.
 
 About the source format (TXT):
-Plain text is where writing starts — notes, logs, drafts. But a .txt file looks unfinished when you need to share or print it.
+Plain text is where writing starts — notes, logs, drafts, letters. But a .txt file looks unfinished when you need to share, print or submit it.
 
 About the target format (PDF):
-PDF gives your text the document treatment: paginated A4 pages, proper margins, ready to email, print or archive.
+PDF gives your text the document treatment: paginated A4 or Letter pages, proper margins, a title and page numbers — ready to email, print or archive.
 
 Use cases:
-- Turning meeting notes into a shareable PDF
-- Converting log files or reports for printing
+- Typing a letter, application or cover note and downloading it as a proper PDF
+- Turning meeting notes into a shareable, printable PDF document
+- Converting a .txt log file or report for printing — upload it, edit it, download it
 - Making a plain-text draft look presentable for submission
 
-Tip: Long files paginate automatically — a 50-page text file becomes a 50-page PDF with no extra work.
+Tip: Use **bold** and *italic* markers in your text — they render in the preview and in the PDF. Long documents paginate automatically, so a 50-page text file becomes a 50-page PDF with no extra work.
 
 FAQs:
-Q: What does the PDF look like?
-A: Clean A4 pages with comfortable margins and readable type — your text flows across pages automatically. Simple, professional, printable.
+Q: How do I turn text into a PDF?
+A: Type or paste your text into the editor on the left. Pick a font, text size, line spacing, alignment and page size (A4 or US Letter) from the toolbar, watch the live preview on the right, then hit "Download PDF". The PDF is built in your browser in one click — no sign-up, no upload.
+
+Q: Does the live preview match the downloaded PDF?
+A: Yes — the preview and the PDF run the exact same layout engine with real font measurements, so the pages you see on screen are the pages you get in the file.
+
+Q: Can I change the font, size and margins?
+A: Yes. Choose Helvetica, Times or Courier; text sizes from 10 to 18 pt; single, 1.5 or double line spacing; left, center, right or justified alignment; narrow, normal or wide margins; and A4 or US Letter page size.
 
 Q: Does it preserve my line breaks?
 A: Yes — your paragraphs and line breaks are kept, and long lines wrap neatly within the page margins.
 
-Q: What page size is used?
-A: A4 with comfortable margins — the standard for documents worldwide, and it prints perfectly.
+Q: Can I add a title and page numbers?
+A: Yes — type a document title in the toolbar and it appears large and centered at the top of page 1. Page numbers are on by default for multi-page documents and can be switched off.
 
-Q: Can I convert a huge text file?
-A: Yes — pagination is automatic, so even very long files convert into a proper multi-page PDF.
+Q: What page size is used?
+A: A4 by default, with US Letter as a one-click option — both print perfectly.
 
 ### Markdown to PDF Converter
 

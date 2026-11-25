@@ -165,7 +165,7 @@ export interface ConverterEntry {
   /** Declarative option controls rendered by the widget (quality slider etc.). */
   options?: OptionDef[];
   /** Which widget renders this entry: default single-file, pdf (custom PDF UI), merge (multi-file). */
-  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode' | 'qr';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode' | 'qr' | 'text-editor';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   /** Shown while a heavy engine (ffmpeg.wasm) initializes. */
@@ -273,7 +273,7 @@ interface PairSpec {
   faqA: string;
   convert?: (file: File, opts?: ConvertOptions) => Promise<ConvertResult>;
   options?: OptionDef[];
-  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode' | 'qr';
+  widget?: 'default' | 'pdf' | 'merge' | 'edit' | 'sign' | 'html' | 'compare' | 'translate' | 'compress-image' | 'barcode' | 'qr' | 'text-editor';
   /** Extra categories this converter is listed under (one page, linked from each). */
   alsoIn?: Category[];
   loadingNote?: string;
@@ -2386,31 +2386,49 @@ const PAIRS: PairSpec[] = [
   },
   {
     id: 'txt-to-pdf', from: 'TXT', to: 'PDF', fromExts: ['txt'], toExt: 'pdf', category: 'text',
-    widget: 'pdf',
+    widget: 'text-editor',
     alsoIn: ['pdf'],
-    blurb: 'Turn a plain text file into a clean, paginated PDF document. Perfect for notes, logs and drafts that need to look like a real document.',
-    faqQ: 'What does the PDF look like?',
-    faqA: 'Clean A4 pages with comfortable margins and readable type — your text flows across pages automatically. Simple, professional, printable.',
-    aboutFrom: 'Plain text is where writing starts — notes, logs, drafts. But a .txt file looks unfinished when you need to share or print it.',
-    aboutTo: 'PDF gives your text the document treatment: paginated A4 pages, proper margins, ready to email, print or archive.',
+    flagship: true,
+    blurb: 'Type or paste text into a proper document editor — pick your font, size, alignment and margins, watch the A4 pages preview live, then download a clean, paginated PDF in one click. Or upload a .txt file and edit it first. Free forever, no sign-up, nothing uploaded.',
+    faqQ: 'How do I turn text into a PDF?',
+    faqA: 'Type or paste your text into the editor on the left. Pick a font, text size, line spacing, alignment and page size (A4 or US Letter) from the toolbar, watch the live preview on the right, then hit "Download PDF". The PDF is built in your browser in one click — no sign-up, no upload.',
+    aboutFrom: 'Plain text is where writing starts — notes, logs, drafts, letters. But a .txt file looks unfinished when you need to share, print or submit it.',
+    aboutTo: 'PDF gives your text the document treatment: paginated A4 or Letter pages, proper margins, a title and page numbers — ready to email, print or archive.',
     useCases: [
-      'Turning meeting notes into a shareable PDF',
-      'Converting log files or reports for printing',
+      'Typing a letter, application or cover note and downloading it as a proper PDF',
+      'Turning meeting notes into a shareable, printable PDF document',
+      'Converting a .txt log file or report for printing — upload it, edit it, download it',
       'Making a plain-text draft look presentable for submission',
     ],
-    tip: 'Long files paginate automatically — a 50-page text file becomes a 50-page PDF with no extra work.',
+    tip: 'Use **bold** and *italic* markers in your text — they render in the preview and in the PDF. Long documents paginate automatically, so a 50-page text file becomes a 50-page PDF with no extra work.',
     extraFaqs: [
+      {
+        q: 'Does the live preview match the downloaded PDF?',
+        a: 'Yes — the preview and the PDF run the exact same layout engine with real font measurements, so the pages you see on screen are the pages you get in the file.',
+      },
+      {
+        q: 'Can I change the font, size and margins?',
+        a: 'Yes. Choose Helvetica, Times or Courier; text sizes from 10 to 18 pt; single, 1.5 or double line spacing; left, center, right or justified alignment; narrow, normal or wide margins; and A4 or US Letter page size.',
+      },
       {
         q: 'Does it preserve my line breaks?',
         a: 'Yes — your paragraphs and line breaks are kept, and long lines wrap neatly within the page margins.',
       },
       {
+        q: 'Can I add a title and page numbers?',
+        a: 'Yes — type a document title in the toolbar and it appears large and centered at the top of page 1. Page numbers are on by default for multi-page documents and can be switched off.',
+      },
+      {
         q: 'What page size is used?',
-        a: 'A4 with comfortable margins — the standard for documents worldwide, and it prints perfectly.',
+        a: 'A4 by default, with US Letter as a one-click option — both print perfectly.',
       },
       {
         q: 'Can I convert a huge text file?',
-        a: 'Yes — pagination is automatic, so even very long files convert into a proper multi-page PDF.',
+        a: 'Yes — upload a .txt file and it loads straight into the editor, then pagination is automatic, so even very long files convert into a proper multi-page PDF.',
+      },
+      {
+        q: 'Is my text uploaded anywhere?',
+        a: 'No. The editor and the PDF builder run entirely in your browser on your own device. Your text never leaves your device.',
       },
     ],
   },

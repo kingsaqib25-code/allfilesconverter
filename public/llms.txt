@@ -22,6 +22,7 @@ Quick Files Converter (https://allinoneconverter.vercel.app/) is a free file-con
 - https://allinoneconverter.vercel.app/convert/mp4-to-mp3/ — MP4 to MP3 Converter: Extract the audio from any MP4 video as a high-quality MP3.
 - https://allinoneconverter.vercel.app/convert/pdf-to-jpg/ — PDF to JPG Converter: Convert every page of a PDF into crisp JPG images — download pages individually or all at once as a ZIP.
 - https://allinoneconverter.vercel.app/convert/jpg-to-pdf/ — JPG to PDF Converter: Turn JPG photos and scans into a single PDF document — one image per page, in the order you choose.
+- https://allinoneconverter.vercel.app/convert/txt-to-pdf/ — TXT to PDF Converter: Type or paste text into a proper document editor — pick your font, size, alignment and margins, watch the A4 pages preview live, then download a clean, paginated PDF in one click.
 - https://allinoneconverter.vercel.app/convert/merge-pdf/ — Merge PDF: Combine multiple PDF files into one document — arrange pages in any order with up/down controls.
 - https://allinoneconverter.vercel.app/convert/pdf-to-word/ — PDF to Word Converter: Extract your PDF’s text into an editable Word (.docx) document — free, in your browser.
 - https://allinoneconverter.vercel.app/convert/pdf-to-excel/ — PDF to Excel Converter: Turn PDF tables into editable Excel spreadsheets — right in your browser.
@@ -108,7 +109,7 @@ Free online text converters. Convert Markdown to a styled HTML page, extract cle
 - https://allinoneconverter.vercel.app/convert/md-to-html/ — Markdown to HTML Converter: Turn a Markdown file into a clean, styled HTML page you can open in any browser or paste into a CMS.
 - https://allinoneconverter.vercel.app/convert/html-to-txt/ — HTML to TXT Converter: Strip an HTML page down to clean plain text.
 - https://allinoneconverter.vercel.app/convert/txt-to-md/ — TXT to Markdown Converter: Convert plain text to Markdown format in one click.
-- https://allinoneconverter.vercel.app/convert/txt-to-pdf/ — TXT to PDF Converter: Turn a plain text file into a clean, paginated PDF document.
+- https://allinoneconverter.vercel.app/convert/txt-to-pdf/ — TXT to PDF Converter: Type or paste text into a proper document editor — pick your font, size, alignment and margins, watch the A4 pages preview live, then download a clean, paginated PDF in one click.
 - https://allinoneconverter.vercel.app/convert/md-to-pdf/ — Markdown to PDF Converter: Convert Markdown into a styled PDF — headings, lists, bold, italic and code blocks all render properly.
 
 ## Data Converters (7)

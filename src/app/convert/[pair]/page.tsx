@@ -12,6 +12,7 @@ import BarcodeWidget from '@/components/BarcodeWidget';
 import QrWidget from '@/components/QrWidget';
 import MergeWidget from '@/components/MergeWidget';
 import PdfEditor from '@/components/PdfEditor';
+import TextToPdfWidget from '@/components/TextToPdfWidget';
 import AiSummarize from '@/components/AiSummarize';
 import { buildConverterSummaryText } from '@/lib/ai';
 import {
@@ -116,6 +117,8 @@ export default async function ConvertPage({
 
       {entry.widget === 'pdf' ? (
         <PdfWidget entryId={entry.id} />
+      ) : entry.widget === 'text-editor' ? (
+        <TextToPdfWidget entry={entry} />
       ) : entry.widget === 'sign' ? (
         <SignWidget entry={entry} />
       ) : entry.widget === 'html' ? (
