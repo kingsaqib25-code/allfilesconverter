@@ -230,7 +230,11 @@ export default function TextToPdfWidget({ entry }: Props) {
     setMeasure(null);
     createMeasureFn(settings.font)
       .then((m) => {
-        if (alive) setMeasure(m);
+        // NOTE: wrap in () => m — passing a function straight to a useState
+        // setter makes React call it as an updater with the previous state,
+        // so setMeasure(m) invoked the measure fn as m(null) and crashed
+        // the page ("Cannot read properties of null (reading 'replace')").
+        if (alive) setMeasure(() => m);
       })
       .catch(() => {
         if (alive) setError('The PDF font could not load. Reload the page and try again.');
