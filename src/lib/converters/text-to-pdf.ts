@@ -14,7 +14,7 @@
  * 100% on-device: pdf-lib builds the file in the visitor's browser.
  */
 
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type RGB } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFString, StandardFonts, rgb, type PDFFont, type PDFImage, type RGB } from 'pdf-lib';
 import { safeWinAnsi } from './pdf';
 
 export type TextPdfAlign = 'left' | 'center' | 'right' | 'justify';
@@ -75,13 +75,25 @@ export interface TextRun {
   italic?: boolean;
   underline?: boolean;
   code?: boolean;
+  /** Hyperlink target (http/https/mailto). Rendered clickable in the PDF. */
+  link?: string;
+  /** Strikethrough. */
+  strike?: boolean;
+  /** Per-selection text colour (#hex or rgb()), overrides the document colour. */
+  color?: string;
+  /** Per-selection highlight colour (#hex or rgb()). */
+  highlight?: string;
 }
 
-export type BlockKind = 'para' | 'h1' | 'h2' | 'bullet' | 'number';
+export type BlockKind = 'para' | 'h1' | 'h2' | 'bullet' | 'number' | 'image';
 
 export interface Block {
   kind: BlockKind;
   runs: TextRun[];
+  /** Per-paragraph alignment (Word-style toolbar); defaults to the document setting. */
+  align?: TextPdfAlign;
+  /** For kind === 'image': the picture, sized in points at its natural size. */
+  image?: { src: string; width: number; height: number };
 }
 
 export interface PdfWord {
@@ -106,6 +118,10 @@ export interface PdfLine {
   isTitle?: boolean;
   /** Last visual line of its paragraph (justify does not stretch it). */
   lastInPara: boolean;
+  /** Effective alignment of this line (block setting, else document setting). */
+  align: TextPdfAlign;
+  /** For kind === 'image': the picture, already scaled to fit the text width. */
+  image?: { src: string; width: number; height: number };
 }
 
 export interface PdfPage {
@@ -269,6 +285,7 @@ export function paginateBlocks(
     lineH: size * settings.lineHeight,
     indent: 0,
     lastInPara: true,
+    align: settings.align,
   });
 
   // Document title first.
@@ -277,7 +294,13 @@ export function paginateBlocks(
     const titleSize = bodySize + 8;
     const titleBlocks = textToBlocks(title);
     const tBlock = titleBlocks[0] ?? { kind: 'para' as BlockKind, runs: [{ text: title }] };
-    const words = blockWords({ ...tBlock, runs: tBlock.runs.map((r) => ({ ...r, bold: true })) }, titleSize, measure);
+    const rawTitleWords = blockWords({ ...tBlock, runs: tBlock.runs.map((r) => ({ ...r, bold: true })) }, titleSize, measure);
+    // Long title words (e.g. a URL) get hard-split like body words.
+    const words: PdfWord[] = [];
+    for (const w of rawTitleWords) {
+      if (w.width > maxW) words.push(...splitWord(w, titleSize, maxW, measure));
+      else words.push(w);
+    }
     const spaceW = measure(' ', titleSize, 'bold');
     let line: PdfWord[] = [];
     let lineW = 0;
@@ -292,6 +315,7 @@ export function paginateBlocks(
         indent: 0,
         isTitle: true,
         lastInPara: last,
+        align: 'center',
       });
       line = [];
       lineW = 0;
@@ -316,6 +340,34 @@ export function paginateBlocks(
 
     if (block.kind === 'number') listNumber += 1;
     else if (!isList) listNumber = 0;
+
+    // Image block: one line carrying the picture, scaled to the text width.
+    if (block.kind === 'image' && block.image) {
+      const availW = maxW;
+      let iw = block.image.width;
+      let ih = block.image.height;
+      if (iw > 0 && ih > 0) {
+        const s = Math.min(1, availW / iw, (maxH * 0.85) / ih);
+        iw = Math.round(iw * s);
+        ih = Math.round(ih * s);
+      } else {
+        iw = availW;
+        ih = 300;
+      }
+      pushLine({
+        words: [],
+        width: 0,
+        blank: false,
+        kind: 'image',
+        size,
+        lineH: ih + 6,
+        indent: 0,
+        lastInPara: true,
+        align: block.align ?? settings.align,
+        image: { src: block.image.src, width: iw, height: ih },
+      });
+      continue;
+    }
 
     if (block.runs.length === 0 || block.runs.every((r) => !r.text.trim())) {
       pushLine(blankLine(size));
@@ -360,6 +412,7 @@ export function paginateBlocks(
     let line: PdfWord[] = [];
     let lineW = 0;
     let first = true;
+    const blockAlign = block.align ?? settings.align;
     const flush = (last: boolean) => {
       pushLine({
         words: line,
@@ -371,6 +424,7 @@ export function paginateBlocks(
         indent: isList ? LIST_INDENT : 0,
         prefix: first ? prefix : undefined,
         lastInPara: last,
+        align: blockAlign,
       });
       line = [];
       lineW = 0;
@@ -454,6 +508,46 @@ function hexToRgb(hex: string): RGB {
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
+/** Accept #rgb / #rrggbb / rgb(r,g,b) / rgba(...) (alpha ignored). Null when unparseable. */
+export function parseColor(value: string | undefined): RGB | null {
+  if (!value) return null;
+  const v = value.trim().toLowerCase();
+  if (v.startsWith('#')) {
+    const h = v.slice(1);
+    if (!/^[0-9a-f]{3}$|^[0-9a-f]{6}$/.test(h)) return null;
+    return hexToRgb(v);
+  }
+  const m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(v);
+  if (m) {
+    return rgb(
+      Math.min(255, Number(m[1])) / 255,
+      Math.min(255, Number(m[2])) / 255,
+      Math.min(255, Number(m[3])) / 255,
+    );
+  }
+  return null;
+}
+
+/** Embed a data-URL image (PNG or JPEG only — other formats return null). */
+async function embedDataImage(
+  doc: PDFDocument,
+  src: string,
+): Promise<PDFImage | null> {
+  const m = /^data:(image\/(png|jpeg|jpg));base64,(.*)$/s.exec(src);
+  if (!m) return null;
+  let bytes: Uint8Array;
+  try {
+    bytes = Uint8Array.from(Buffer.from(m[3], 'base64'));
+  } catch {
+    return null;
+  }
+  try {
+    return m[2] === 'png' ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+  } catch {
+    return null;
+  }
+}
+
 /** Build the PDF bytes with the same pagination the preview shows. */
 export async function buildTextPdf(blocks: Block[], settings: TextPdfSettings): Promise<Blob> {
   const doc = await PDFDocument.create();
@@ -471,18 +565,41 @@ export async function buildTextPdf(blocks: Block[], settings: TextPdfSettings): 
   const textColor = hexToRgb(settings.color);
   const gray = rgb(0.45, 0.45, 0.45);
   const spaceW = measure(' ', settings.fontSize, 'regular');
+  // Embed every picture once, before drawing (embedding is async).
+  const imageCache = new Map<string, PDFImage | null>();
+  for (const pg of pages) {
+    for (const line of pg.lines) {
+      if (line.image && !imageCache.has(line.image.src)) {
+        imageCache.set(line.image.src, await embedDataImage(doc, line.image.src));
+      }
+    }
+  }
 
   pages.forEach((pg, pi) => {
     const page = doc.addPage([pageW, pageH]);
     let y = pageH - settings.margin;
     for (const line of pg.lines) {
       const ls = line.size;
+      if (line.image) {
+        // Picture line: draw the embedded image, honouring the line's alignment.
+        const img = imageCache.get(line.image.src);
+        if (img) {
+          const iw = line.image.width;
+          const ih = line.image.height;
+          let ix = settings.margin;
+          if (line.align === 'center') ix = settings.margin + (maxW - iw) / 2;
+          else if (line.align === 'right') ix = settings.margin + maxW - iw;
+          page.drawImage(img, { x: ix, y: y - ih, width: iw, height: ih });
+        }
+        y -= line.lineH;
+        continue;
+      }
       if (!line.blank) {
         const textAreaW = maxW - line.indent;
         let x = settings.margin + line.indent;
-        if (settings.align === 'center' || line.isTitle) {
+        if (line.align === 'center' || line.isTitle) {
           x = settings.margin + line.indent + (textAreaW - line.width) / 2;
-        } else if (settings.align === 'right') {
+        } else if (line.align === 'right') {
           x = settings.margin + line.indent + textAreaW - line.width;
         }
         // List prefix sits in the indent gutter.
@@ -499,7 +616,7 @@ export async function buildTextPdf(blocks: Block[], settings: TextPdfSettings): 
         // Justify: stretch the gaps on non-last paragraph lines.
         let extraGap = 0;
         if (
-          settings.align === 'justify' &&
+          line.align === 'justify' &&
           !line.lastInPara &&
           !line.isTitle &&
           line.kind === 'para' &&
@@ -514,14 +631,53 @@ export async function buildTextPdf(blocks: Block[], settings: TextPdfSettings): 
             const font = fonts.get(runStyle(run)) ?? fonts.get('regular')!;
             const safe = safeWinAnsi(run.text);
             const rw = measure(run.text, ls, runStyle(run));
-            page.drawText(safe, { x: cx, y: y - ls, size: ls, font, color: textColor });
+            const runColor = parseColor(run.color) ?? textColor;
+            // Highlight wash behind the run.
+            if (run.highlight) {
+              const hl = parseColor(run.highlight);
+              if (hl) {
+                page.drawRectangle({
+                  x: cx,
+                  y: y - ls - 2,
+                  width: rw,
+                  height: ls + 3,
+                  color: hl,
+                  opacity: 0.35,
+                  borderWidth: 0,
+                });
+              }
+            }
+            page.drawText(safe, { x: cx, y: y - ls, size: ls, font, color: runColor });
             if (run.underline) {
               page.drawLine({
                 start: { x: cx, y: y - ls - 1.5 },
                 end: { x: cx + rw, y: y - ls - 1.5 },
                 thickness: Math.max(0.5, ls / 14),
-                color: textColor,
+                color: runColor,
               });
+            }
+            if (run.strike) {
+              const midY = y - ls + ls * 0.35;
+              page.drawLine({
+                start: { x: cx, y: midY },
+                end: { x: cx + rw, y: midY },
+                thickness: Math.max(0.5, ls / 14),
+                color: runColor,
+              });
+            }
+            if (run.link) {
+              // Clickable link annotation over exactly this run.
+              const annot = doc.context.obj({
+                Type: PDFName.of('Annot'),
+                Subtype: PDFName.of('Link'),
+                Rect: doc.context.obj([cx, y - ls - 2, cx + rw, y + 2]),
+                Border: doc.context.obj([0, 0, 0]),
+                A: doc.context.obj({
+                  S: PDFName.of('URI'),
+                  URI: PDFString.of(run.link),
+                }),
+              });
+              page.node.addAnnot(doc.context.register(annot));
             }
             cx += rw;
           }
