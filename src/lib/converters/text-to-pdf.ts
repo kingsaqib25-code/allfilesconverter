@@ -15,10 +15,15 @@
  */
 
 import { PDFDocument, PDFName, PDFString, StandardFonts, rgb, type PDFFont, type PDFImage, type RGB } from 'pdf-lib';
-import { safeWinAnsi } from './pdf';
+// fontkit's Indic (Devanagari/Bengali) shaper needs the regenerator runtime
+// as a global; without it, shaping throws and those scripts fall back to '?'.
+import 'regenerator-runtime/runtime';
+import { safeWinAnsi, sanitizeDrawText } from './pdf';
+import { getFontDef } from '../fonts';
 
 export type TextPdfAlign = 'left' | 'center' | 'right' | 'justify';
-export type TextPdfFont = 'helvetica' | 'times' | 'courier';
+/** Font id from the registry (src/lib/fonts.ts) — e.g. 'helvetica', 'roboto', 'urdu'. */
+export type TextPdfFont = string;
 export type TextPdfPageSize = 'a4' | 'letter';
 export type TextPdfOrientation = 'portrait' | 'landscape';
 
@@ -453,7 +458,7 @@ export function paginateText(
   return paginateBlocks(textToBlocks(text), settings, measure);
 }
 
-const FONT_MAP: Record<TextPdfFont, Record<RunStyle, StandardFonts>> = {
+const STANDARD_FONT_MAP: Record<string, Record<RunStyle, StandardFonts>> = {
   helvetica: {
     regular: StandardFonts.Helvetica,
     bold: StandardFonts.HelveticaBold,
@@ -480,16 +485,150 @@ const FONT_MAP: Record<TextPdfFont, Record<RunStyle, StandardFonts>> = {
   },
 };
 
+const FONT_STYLES = ['regular', 'bold', 'italic', 'boldItalic', 'code', 'codeBold'] as RunStyle[];
+
+/** TTF bytes fetched from /fonts/, cached per file for the session. */
+const fontBytesCache = new Map<string, Uint8Array>();
+async function fetchFontBytes(file: string): Promise<Uint8Array | null> {
+  const cached = fontBytesCache.get(file);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`/fonts/${file}`);
+    if (!res.ok) return null;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    // Smallest real font here is ~46 KB (Thai/Hebrew); anything under 10 KB
+    // is a truncated download or an error page, not a font.
+    if (buf.length < 10_000) return null;
+    fontBytesCache.set(file, buf);
+    return buf;
+  } catch {
+    return null;
+  }
+}
+
+export interface LoadedFontSet {
+  fonts: Map<RunStyle, PDFFont>;
+  /** Styles whose font really is an embedded TTF (those may draw Unicode). */
+  embedded: Set<RunStyle>;
+  /** Fallback family (e.g. Urdu -> Arabic Naskh) for text the primary font cannot shape. */
+  fallbackFonts?: Map<RunStyle, PDFFont>;
+  fallbackEmbedded?: Set<RunStyle>;
+  /** Helvetica standard fonts — last resort, always available. */
+  helvFonts: Map<RunStyle, PDFFont>;
+}
+
+/**
+ * Embed one family's fonts into a pdf-lib document. Standard families use
+ * the built-in fonts; embedded families load their TTFs. A missing style
+ * falls back to the family's regular TTF, then to Helvetica — so a missing
+ * file can never throw or silently turn text into '?'.
+ */
+async function loadFontSet(doc: PDFDocument, fontId: string): Promise<LoadedFontSet> {
+  const def = getFontDef(fontId);
+  const fonts = new Map<RunStyle, PDFFont>();
+  const embedded = new Set<RunStyle>();
+  const helvFonts = new Map<RunStyle, PDFFont>();
+  const std = STANDARD_FONT_MAP[def.id] ?? STANDARD_FONT_MAP.helvetica;
+  for (const style of FONT_STYLES) helvFonts.set(style, await doc.embedFont(STANDARD_FONT_MAP.helvetica[style]));
+  if (def.kind !== 'embedded' || !def.files) {
+    for (const style of FONT_STYLES) fonts.set(style, await doc.embedFont(std[style]));
+    return { fonts, embedded, helvFonts };
+  }
+  try {
+    const { default: fontkit } = await import('@pdf-lib/fontkit');
+    doc.registerFontkit(fontkit);
+  } catch {
+    // TTF embeds below fail-soft to Helvetica.
+  }
+  const embedTtf = async (bytes: Uint8Array | null): Promise<PDFFont | null> => {
+    if (!bytes) return null;
+    try {
+      return await doc.embedFont(bytes);
+    } catch {
+      return null;
+    }
+  };
+  const regularBytes = def.files.regular ? await fetchFontBytes(def.files.regular) : null;
+  const regularFont = await embedTtf(regularBytes);
+  const styleFile: Record<RunStyle, string | undefined> = {
+    regular: def.files.regular,
+    bold: def.files.bold ?? def.files.regular,
+    italic: def.files.italic ?? def.files.regular,
+    boldItalic: def.files.boldItalic ?? def.files.bold ?? def.files.regular,
+    code: undefined,
+    codeBold: undefined,
+  };
+  for (const style of FONT_STYLES) {
+    if (style === 'code' || style === 'codeBold') {
+      fonts.set(style, await doc.embedFont(std[style]));
+      continue;
+    }
+    let font: PDFFont | null = null;
+    if (style !== 'regular') {
+      const file = styleFile[style];
+      if (file && file !== def.files.regular) font = await embedTtf(await fetchFontBytes(file));
+    }
+    if (!font) font = regularFont;
+    if (font) {
+      fonts.set(style, font);
+      embedded.add(style);
+    } else {
+      fonts.set(style, await doc.embedFont(std[style]));
+    }
+  }
+  // Fallback family (Urdu Nastaliq cannot be shaped by fontkit, so its
+  // runs fall back to Arabic Naskh — same script, correctly joined).
+  let fallbackFonts: Map<RunStyle, PDFFont> | undefined;
+  let fallbackEmbedded: Set<RunStyle> | undefined;
+  if (def.pdfFallback) {
+    const fb = await loadFontSet(doc, def.pdfFallback);
+    fallbackFonts = fb.fonts;
+    fallbackEmbedded = fb.embedded;
+  }
+  return { fonts, embedded, fallbackFonts, fallbackEmbedded, helvFonts };
+}
+
+/**
+ * Pick the font for one run, probing whether the primary font can actually
+ * shape this text. Some embedded fonts throw in fontkit on text they cannot
+ * shape (Nastaliq, Devanagari, Bengali); the probe catches that and the run
+ * falls back to the fallback family, then Helvetica — so a download can
+ * never crash on a script. Latin text skips the probe (it always works).
+ */
+function makeFontPicker(set: LoadedFontSet): (style: RunStyle, text: string) => { font: PDFFont; embedded: boolean } {
+  return (style, text) => {
+    const primary = set.fonts.get(style) ?? set.fonts.get('regular')!;
+    const primaryEmbedded = set.embedded.has(style);
+    if (!primaryEmbedded || !/[^\x00-\xFF]/.test(text)) return { font: primary, embedded: primaryEmbedded };
+    const candidates: Array<{ font: PDFFont; embedded: boolean }> = [{ font: primary, embedded: primaryEmbedded }];
+    if (set.fallbackFonts) {
+      const ff = set.fallbackFonts.get(style) ?? set.fallbackFonts.get('regular')!;
+      candidates.push({ font: ff, embedded: set.fallbackEmbedded?.has(style) ?? false });
+    }
+    const hf = set.helvFonts.get(style) ?? set.helvFonts.get('regular')!;
+    candidates.push({ font: hf, embedded: false });
+    for (const c of candidates) {
+      try {
+        const clean = c.embedded ? sanitizeDrawText(text) : safeWinAnsi(text);
+        c.font.widthOfTextAtSize(clean, 10);
+        return c;
+      } catch {
+        // Try the next candidate.
+      }
+    }
+    return candidates[candidates.length - 1];
+  };
+}
+
 /** Live-preview measurement: embed the family's fonts once and measure with them. */
 export async function createMeasureFn(font: TextPdfFont): Promise<MeasureFn> {
   const doc = await PDFDocument.create();
-  const map = FONT_MAP[font];
-  const fonts = new Map<RunStyle, PDFFont>();
-  for (const style of ['regular', 'bold', 'italic', 'boldItalic', 'code', 'codeBold'] as RunStyle[]) {
-    fonts.set(style, await doc.embedFont(map[style]));
-  }
-  return (t, size, style) =>
-    (fonts.get(style) ?? fonts.get('regular')!).widthOfTextAtSize(safeWinAnsi(t), size);
+  const set = await loadFontSet(doc, font);
+  const pick = makeFontPicker(set);
+  return (t, size, style) => {
+    const { font: f, embedded: emb } = pick(style, t);
+    return f.widthOfTextAtSize(emb ? sanitizeDrawText(t) : safeWinAnsi(t), size);
+  };
 }
 
 export function textPdfFilename(title: string): string {
@@ -551,13 +690,13 @@ async function embedDataImage(
 /** Build the PDF bytes with the same pagination the preview shows. */
 export async function buildTextPdf(blocks: Block[], settings: TextPdfSettings): Promise<Blob> {
   const doc = await PDFDocument.create();
-  const map = FONT_MAP[settings.font];
-  const fonts = new Map<RunStyle, PDFFont>();
-  for (const style of ['regular', 'bold', 'italic', 'boldItalic', 'code', 'codeBold'] as RunStyle[]) {
-    fonts.set(style, await doc.embedFont(map[style]));
-  }
-  const measure: MeasureFn = (t, size, style) =>
-    (fonts.get(style) ?? fonts.get('regular')!).widthOfTextAtSize(safeWinAnsi(t), size);
+  const set = await loadFontSet(doc, settings.font);
+  const pick = makeFontPicker(set);
+  const fonts = set.fonts;
+  const measure: MeasureFn = (t, size, style) => {
+    const { font: f, embedded: emb } = pick(style, t);
+    return f.widthOfTextAtSize(emb ? sanitizeDrawText(t) : safeWinAnsi(t), size);
+  };
 
   const pages = paginateBlocks(blocks, settings, measure);
   const { width: pageW, height: pageH } = pageDimensions(settings);
@@ -628,8 +767,9 @@ export async function buildTextPdf(blocks: Block[], settings: TextPdfSettings): 
         for (let wi = 0; wi < line.words.length; wi++) {
           const word = line.words[wi];
           for (const run of word.runs) {
-            const font = fonts.get(runStyle(run)) ?? fonts.get('regular')!;
-            const safe = safeWinAnsi(run.text);
+            const picked = pick(runStyle(run), run.text);
+            const font = picked.font;
+            const safe = picked.embedded ? sanitizeDrawText(run.text) : safeWinAnsi(run.text);
             const rw = measure(run.text, ls, runStyle(run));
             const runColor = parseColor(run.color) ?? textColor;
             // Highlight wash behind the run.

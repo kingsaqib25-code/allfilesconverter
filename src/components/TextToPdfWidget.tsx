@@ -2,6 +2,7 @@
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { ConverterEntry } from '@/lib/converters/registry';
+import { FONT_REGISTRY, ensureWebFont, getFontDef } from '@/lib/fonts';
 import {
   DEFAULT_TEXT_PDF_SETTINGS,
   MARGIN_CHOICES,
@@ -58,12 +59,6 @@ const SAMPLE_BLOCKS: Block[] = [
   { kind: 'number', runs: [{ text: 'Style it with the toolbar' }] },
   { kind: 'number', runs: [{ text: 'Download the PDF' }] },
 ];
-
-const FONT_CSS: Record<TextPdfFont, string> = {
-  helvetica: 'Arial, Helvetica, sans-serif',
-  times: "'Times New Roman', Times, serif",
-  courier: "'Courier New', Courier, monospace",
-};
 
 const COLOR_SWATCHES = ['#000000', '#1e3a5f', '#0f766e', '#7c2d12', '#444444', '#1d4ed8'];
 
@@ -180,8 +175,10 @@ function parseEditorHtml(html: string): Block[] {
   // <br> inside a block splits it into separate blocks.
   const pushKind = (kind: Block['kind'], runs: TextRun[], align?: TextPdfAlign, image?: Block['image']) => {
     let cur: TextRun[] = [];
+    let pushed = false;
     const flush = () => {
       blocks.push({ kind, runs: cur, align, image });
+      pushed = true;
       cur = [];
     };
     for (const r of runs) {
@@ -191,7 +188,11 @@ function parseEditorHtml(html: string): Block[] {
         if (p) cur.push({ ...r, text: p });
       });
     }
-    flush();
+    // Final flush: never leave a second empty block behind a trailing line
+    // break — one <p><br></p> is ONE blank line, not two. (Before this, every
+    // empty line in an imported .txt doubled in the PDF and inflated the
+    // page count the user saw in the editor.)
+    if (cur.length > 0 || !pushed) flush();
   };
 
   /** text-align set by the toolbar's alignment buttons (execCommand justify*). */
@@ -309,6 +310,22 @@ export default function TextToPdfWidget({ entry }: Props) {
   const [fmt, setFmt] = useState<FmtState>({ bold: false, italic: false, underline: false, strike: false, block: 'p', ul: false, ol: false, align: 'left', link: null });
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  // MS Word-style ribbon: collapsed to the tab bar by default; a tab click
+  // (or scrolling back up) expands it, scrolling down into the document
+  // collapses it again so the editor gets the room.
+  const [ribbonTab, setRibbonTab] = useState<'home' | 'insert'>('home');
+  const [ribbonOpen, setRibbonOpen] = useState(false);
+  const lastScrollY = useRef(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > lastScrollY.current + 60 && y > 200) setRibbonOpen(false);
+      else if (y < lastScrollY.current - 60) setRibbonOpen(true);
+      lastScrollY.current = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   const imgRef = useRef<HTMLInputElement>(null);
   // Editor/preview split: editor width in % of the row (draggable divider).
   const [split, setSplit] = useState(50);
@@ -323,10 +340,12 @@ export default function TextToPdfWidget({ entry }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const deferredHtml = useDeferredValue(html);
 
-  // (Re)embed the selected font family for live measurement.
+  // (Re)embed the selected font family for live measurement, and load the
+  // same TTFs as webfonts so the preview shows the real glyphs.
   useEffect(() => {
     let alive = true;
     setMeasure(null);
+    void ensureWebFont(getFontDef(settings.font));
     createMeasureFn(settings.font)
       .then((m) => {
         // NOTE: wrap in () => m — passing a function straight to a useState
@@ -562,200 +581,408 @@ export default function TextToPdfWidget({ entry }: Props) {
 
   return (
     <div className="widget widget-wide ttp-widget">
-      {/* ---------- formatting toolbar ---------- */}
-      <div className="ttp-formatbar" role="toolbar" aria-label="Text formatting">
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.bold ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('bold')}
-          aria-pressed={fmt.bold}
-          title="Bold (Ctrl+B)"
-        >
-          <b>B</b>
-        </button>
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.italic ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('italic')}
-          aria-pressed={fmt.italic}
-          title="Italic (Ctrl+I)"
-        >
-          <i>I</i>
-        </button>
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.underline ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('underline')}
-          aria-pressed={fmt.underline}
-          title="Underline (Ctrl+U)"
-        >
-          <u>U</u>
-        </button>
-        <span className="ttp-fmt-sep" />
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.block === 'h1' ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => toggleHeading('h1')}
-          aria-pressed={fmt.block === 'h1'}
-          title="Heading 1"
-        >
-          H1
-        </button>
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.block === 'h2' ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => toggleHeading('h2')}
-          aria-pressed={fmt.block === 'h2'}
-          title="Heading 2"
-        >
-          H2
-        </button>
-        <span className="ttp-fmt-sep" />
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.ul ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('insertUnorderedList')}
-          aria-pressed={fmt.ul}
-          title="Bulleted list"
-        >
-          • List
-        </button>
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.ol ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('insertOrderedList')}
-          aria-pressed={fmt.ol}
-          title="Numbered list"
-        >
-          1. List
-        </button>
-        <span className="ttp-fmt-sep" />
-        <button
-          type="button"
-          className="ttp-fmt-btn"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={clearFormatting}
-          title="Clear formatting"
-        >
-          Clear format
-        </button>
-        <span className="ttp-fmt-sep" />
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.strike ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('strikeThrough')}
-          aria-pressed={fmt.strike}
-          title="Strikethrough"
-        >
-          <span style={{ textDecoration: 'line-through' }}>S</span>
-        </button>
-        <button
-          type="button"
-          className="ttp-fmt-btn"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={openLinkBox}
-          title="Add a link to the selected text"
-        >
-          🔗 Link
-        </button>
-        <button
-          type="button"
-          className="ttp-fmt-btn"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => imgRef.current?.click()}
-          title="Insert an image"
-        >
-          🖼 Image
-        </button>
-        <input
-          ref={imgRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void insertImage(f);
-            e.target.value = '';
-          }}
-        />
-        <span className="ttp-fmt-sep" />
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.align === 'left' ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('justifyLeft')}
-          aria-pressed={fmt.align === 'left'}
-          title="Align left"
-        >
-          Left
-        </button>
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.align === 'center' ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('justifyCenter')}
-          aria-pressed={fmt.align === 'center'}
-          title="Align center"
-        >
-          Center
-        </button>
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.align === 'right' ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('justifyRight')}
-          aria-pressed={fmt.align === 'right'}
-          title="Align right"
-        >
-          Right
-        </button>
-        <button
-          type="button"
-          className={`ttp-fmt-btn ${fmt.align === 'justify' ? 'active' : ''}`}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('justifyFull')}
-          aria-pressed={fmt.align === 'justify'}
-          title="Justify"
-        >
-          Justify
-        </button>
-        <span className="ttp-fmt-sep" />
-        <label className="ttp-fmt-color" title="Text colour — applies to the selected text">
-          A
-          <input
-            type="color"
-            defaultValue="#000000"
-            aria-label="Text colour for selected text"
-            onChange={(e) => exec('foreColor', e.target.value)}
-          />
-        </label>
-        <label className="ttp-fmt-color" title="Highlight — applies to the selected text">
-          ✎
-          <input
-            type="color"
-            defaultValue="#ffff00"
-            aria-label="Highlight colour for selected text"
-            onChange={(e) => exec('hiliteColor', e.target.value)}
-          />
-        </label>
-        <button
-          type="button"
-          className="ttp-fmt-btn"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => exec('hiliteColor', 'transparent')}
-          title="Clear highlight"
-        >
-          ✕ HL
-        </button>
+      {/* ---------- MS Word-style ribbon ---------- */}
+      <div className={`ttp-ribbon ${ribbonOpen ? 'open' : 'closed'}`}>
+        <div className="ttp-ribbon-tabs" role="tablist" aria-label="Editor ribbon">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={ribbonTab === 'home' && ribbonOpen}
+            className={`ttp-ribbon-tab ${ribbonTab === 'home' && ribbonOpen ? 'active' : ''}`}
+            onClick={() => {
+              if (ribbonTab === 'home' && ribbonOpen) setRibbonOpen(false);
+              else {
+                setRibbonTab('home');
+                setRibbonOpen(true);
+              }
+            }}
+          >
+            Home
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={ribbonTab === 'insert' && ribbonOpen}
+            className={`ttp-ribbon-tab ${ribbonTab === 'insert' && ribbonOpen ? 'active' : ''}`}
+            onClick={() => {
+              if (ribbonTab === 'insert' && ribbonOpen) setRibbonOpen(false);
+              else {
+                setRibbonTab('insert');
+                setRibbonOpen(true);
+              }
+            }}
+          >
+            Insert
+          </button>
+          <button
+            type="button"
+            className="ttp-ribbon-toggle"
+            onClick={() => setRibbonOpen((o) => !o)}
+            aria-label={ribbonOpen ? 'Collapse ribbon' : 'Expand ribbon'}
+            title={ribbonOpen ? 'Collapse ribbon' : 'Expand ribbon'}
+          >
+            {ribbonOpen ? '⌃' : '⌄'}
+          </button>
+        </div>
+        {ribbonOpen && ribbonTab === 'home' ? (
+          <div className="ttp-ribbon-body" role="tabpanel">
+            <div className="ttp-ribbon-group">
+              <div className="ttp-ribbon-row">
+                <select
+                  className="ttp-ribbon-select ttp-ribbon-font"
+                  value={settings.font}
+                  onChange={(e) => set('font', e.target.value as TextPdfFont)}
+                  aria-label="Font"
+                  title="Font"
+                >
+                  <optgroup label="Famous fonts">
+                    {FONT_REGISTRY.filter((f) => f.group === 'famous').map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="World languages">
+                    {FONT_REGISTRY.filter((f) => f.group === 'world').map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                <select
+                  className="ttp-ribbon-select"
+                  value={settings.fontSize}
+                  onChange={(e) => set('fontSize', Number(e.target.value))}
+                  aria-label="Text size"
+                  title="Text size"
+                >
+                  {[10, 11, 12, 14, 16, 18].map((n) => (
+                    <option key={n} value={n}>
+                      {n} pt
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.bold ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('bold')}
+                  aria-pressed={fmt.bold}
+                  title="Bold (Ctrl+B)"
+                >
+                  <b>B</b>
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.italic ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('italic')}
+                  aria-pressed={fmt.italic}
+                  title="Italic (Ctrl+I)"
+                >
+                  <i>I</i>
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.underline ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('underline')}
+                  aria-pressed={fmt.underline}
+                  title="Underline (Ctrl+U)"
+                >
+                  <u>U</u>
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.strike ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('strikeThrough')}
+                  aria-pressed={fmt.strike}
+                  title="Strikethrough"
+                >
+                  <span style={{ textDecoration: 'line-through' }}>S</span>
+                </button>
+                <label className="ttp-fmt-color" title="Text colour — applies to the selected text">
+                  A
+                  <input
+                    type="color"
+                    defaultValue="#000000"
+                    aria-label="Text colour for selected text"
+                    onChange={(e) => exec('foreColor', e.target.value)}
+                  />
+                </label>
+                <label className="ttp-fmt-color" title="Highlight — applies to the selected text">
+                  ✎
+                  <input
+                    type="color"
+                    defaultValue="#ffff00"
+                    aria-label="Highlight colour for selected text"
+                    onChange={(e) => exec('hiliteColor', e.target.value)}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="ttp-fmt-btn"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('hiliteColor', 'transparent')}
+                  title="Clear highlight"
+                >
+                  ✕ HL
+                </button>
+                <button
+                  type="button"
+                  className="ttp-fmt-btn"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={clearFormatting}
+                  title="Clear formatting"
+                >
+                  Clear format
+                </button>
+              </div>
+              <div className="ttp-ribbon-row">
+                <span className="ttp-ribbon-mini-label">Document colour</span>
+                <input
+                  type="color"
+                  value={settings.color}
+                  onChange={(e) => set('color', e.target.value)}
+                  aria-label="Document text colour"
+                  className="ttp-ribbon-color"
+                />
+                {COLOR_SWATCHES.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`ttp-swatch ${settings.color.toLowerCase() === c ? 'active' : ''}`}
+                    style={{ background: c }}
+                    onClick={() => set('color', c)}
+                    aria-label={`Colour ${c}`}
+                  />
+                ))}
+              </div>
+              <div className="ttp-ribbon-label">Font</div>
+            </div>
+            <div className="ttp-ribbon-group">
+              <div className="ttp-ribbon-row">
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.block === 'h1' ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => toggleHeading('h1')}
+                  aria-pressed={fmt.block === 'h1'}
+                  title="Heading 1"
+                >
+                  H1
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.block === 'h2' ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => toggleHeading('h2')}
+                  aria-pressed={fmt.block === 'h2'}
+                  title="Heading 2"
+                >
+                  H2
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.ul ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('insertUnorderedList')}
+                  aria-pressed={fmt.ul}
+                  title="Bulleted list"
+                >
+                  • List
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.ol ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('insertOrderedList')}
+                  aria-pressed={fmt.ol}
+                  title="Numbered list"
+                >
+                  1. List
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.align === 'left' ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('justifyLeft')}
+                  aria-pressed={fmt.align === 'left'}
+                  title="Align left"
+                >
+                  Left
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.align === 'center' ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('justifyCenter')}
+                  aria-pressed={fmt.align === 'center'}
+                  title="Align center"
+                >
+                  Center
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.align === 'right' ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('justifyRight')}
+                  aria-pressed={fmt.align === 'right'}
+                  title="Align right"
+                >
+                  Right
+                </button>
+                <button
+                  type="button"
+                  className={`ttp-fmt-btn ${fmt.align === 'justify' ? 'active' : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => exec('justifyFull')}
+                  aria-pressed={fmt.align === 'justify'}
+                  title="Justify"
+                >
+                  Justify
+                </button>
+              </div>
+              <div className="ttp-ribbon-row">
+                <label className="ttp-ribbon-field">
+                  <span>Line spacing</span>
+                  <select
+                    className="ttp-ribbon-select"
+                    value={settings.lineHeight}
+                    onChange={(e) => set('lineHeight', Number(e.target.value))}
+                    aria-label="Line spacing"
+                  >
+                    <option value={1.15}>Single</option>
+                    <option value={1.5}>1.5 lines</option>
+                    <option value={2}>Double</option>
+                  </select>
+                </label>
+                <label className="ttp-ribbon-field">
+                  <span>Default align</span>
+                  <select
+                    className="ttp-ribbon-select"
+                    value={settings.align}
+                    onChange={(e) => set('align', e.target.value as TextPdfAlign)}
+                    aria-label="Default alignment"
+                  >
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                    <option value="justify">Justified</option>
+                  </select>
+                </label>
+              </div>
+              <div className="ttp-ribbon-label">Paragraph</div>
+            </div>
+            <div className="ttp-ribbon-group">
+              <div className="ttp-ribbon-row">
+                <input
+                  type="text"
+                  className="ttp-ribbon-title"
+                  value={settings.title}
+                  onChange={(e) => set('title', e.target.value)}
+                  placeholder="Document title — appears at the top of page 1"
+                  aria-label="Document title"
+                />
+              </div>
+              <div className="ttp-ribbon-row">
+                <label className="ttp-ribbon-field">
+                  <span>Page size</span>
+                  <select
+                    className="ttp-ribbon-select"
+                    value={settings.pageSize}
+                    onChange={(e) => set('pageSize', e.target.value as TextPdfPageSize)}
+                    aria-label="Page size"
+                  >
+                    <option value="a4">A4</option>
+                    <option value="letter">Letter (US)</option>
+                  </select>
+                </label>
+                <label className="ttp-ribbon-field">
+                  <span>Orientation</span>
+                  <select
+                    className="ttp-ribbon-select"
+                    value={settings.orientation}
+                    onChange={(e) => set('orientation', e.target.value as TextPdfOrientation)}
+                    aria-label="Orientation"
+                  >
+                    <option value="portrait">Portrait</option>
+                    <option value="landscape">Landscape</option>
+                  </select>
+                </label>
+                <label className="ttp-ribbon-field">
+                  <span>Margins</span>
+                  <select
+                    className="ttp-ribbon-select"
+                    value={settings.margin}
+                    onChange={(e) => set('margin', Number(e.target.value))}
+                    aria-label="Margins"
+                  >
+                    {MARGIN_CHOICES.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="ttp-ribbon-check">
+                  <input
+                    type="checkbox"
+                    checked={settings.pageNumbers}
+                    onChange={(e) => set('pageNumbers', e.target.checked)}
+                  />
+                  Page numbers
+                </label>
+              </div>
+              <div className="ttp-ribbon-label">Page</div>
+            </div>
+          </div>
+        ) : null}
+        {ribbonOpen && ribbonTab === 'insert' ? (
+          <div className="ttp-ribbon-body" role="tabpanel">
+            <div className="ttp-ribbon-group">
+              <div className="ttp-ribbon-row">
+                <button
+                  type="button"
+                  className="ttp-fmt-btn"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={openLinkBox}
+                  title="Add a link to the selected text"
+                >
+                  🔗 Link
+                </button>
+                <button
+                  type="button"
+                  className="ttp-fmt-btn"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => imgRef.current?.click()}
+                  title="Insert an image"
+                >
+                  🖼 Image
+                </button>
+                <input
+                  ref={imgRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void insertImage(f);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+              <div className="ttp-ribbon-label">Links &amp; Images</div>
+            </div>
+          </div>
+        ) : null}
+        {getFontDef(settings.font).note ? (
+          <p className="ttp-font-note">{getFontDef(settings.font).note}</p>
+        ) : null}
       </div>
+
 
       {/* ---------- link popover ---------- */}
       {linkOpen ? (
@@ -796,127 +1023,6 @@ export default function TextToPdfWidget({ entry }: Props) {
         </div>
       ) : null}
 
-      {/* ---------- document settings ---------- */}
-      <div className="ttp-toolbar">
-        <label className="ttp-field">
-          <span>Document title</span>
-          <input
-            type="text"
-            value={settings.title}
-            onChange={(e) => set('title', e.target.value)}
-            placeholder="Optional — appears at the top of page 1"
-            aria-label="Document title"
-          />
-        </label>
-        <label className="ttp-field">
-          <span>Font</span>
-          <select value={settings.font} onChange={(e) => set('font', e.target.value as TextPdfFont)} aria-label="Font">
-            <option value="helvetica">Helvetica (clean)</option>
-            <option value="times">Times (classic)</option>
-            <option value="courier">Courier (typewriter)</option>
-          </select>
-        </label>
-        <label className="ttp-field">
-          <span>Text size</span>
-          <select
-            value={settings.fontSize}
-            onChange={(e) => set('fontSize', Number(e.target.value))}
-            aria-label="Text size"
-          >
-            {[10, 11, 12, 14, 16, 18].map((n) => (
-              <option key={n} value={n}>
-                {n} pt
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ttp-field">
-          <span>Line spacing</span>
-          <select
-            value={settings.lineHeight}
-            onChange={(e) => set('lineHeight', Number(e.target.value))}
-            aria-label="Line spacing"
-          >
-            <option value={1.15}>Single</option>
-            <option value={1.5}>1.5 lines</option>
-            <option value={2}>Double</option>
-          </select>
-        </label>
-        <label className="ttp-field">
-          <span>Align</span>
-          <select value={settings.align} onChange={(e) => set('align', e.target.value as TextPdfAlign)} aria-label="Alignment">
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
-            <option value="justify">Justified</option>
-          </select>
-        </label>
-        <label className="ttp-field">
-          <span>Margins</span>
-          <select
-            value={settings.margin}
-            onChange={(e) => set('margin', Number(e.target.value))}
-            aria-label="Margins"
-          >
-            {MARGIN_CHOICES.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ttp-field">
-          <span>Page size</span>
-          <select
-            value={settings.pageSize}
-            onChange={(e) => set('pageSize', e.target.value as TextPdfPageSize)}
-            aria-label="Page size"
-          >
-            <option value="a4">A4</option>
-            <option value="letter">Letter (US)</option>
-          </select>
-        </label>
-        <label className="ttp-field">
-          <span>Orientation</span>
-          <select
-            value={settings.orientation}
-            onChange={(e) => set('orientation', e.target.value as TextPdfOrientation)}
-            aria-label="Orientation"
-          >
-            <option value="portrait">Portrait</option>
-            <option value="landscape">Landscape</option>
-          </select>
-        </label>
-        <div className="ttp-field">
-          <span>Text colour</span>
-          <div className="ttp-color-row">
-            <input
-              type="color"
-              value={settings.color}
-              onChange={(e) => set('color', e.target.value)}
-              aria-label="Text colour"
-            />
-            {COLOR_SWATCHES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`ttp-swatch ${settings.color.toLowerCase() === c ? 'active' : ''}`}
-                style={{ background: c }}
-                onClick={() => set('color', c)}
-                aria-label={`Colour ${c}`}
-              />
-            ))}
-          </div>
-        </div>
-        <label className="ttp-check">
-          <input
-            type="checkbox"
-            checked={settings.pageNumbers}
-            onChange={(e) => set('pageNumbers', e.target.checked)}
-          />
-          Page numbers
-        </label>
-      </div>
 
       {/* ---------- editor + live preview ---------- */}
       <div className="ttp-grid" ref={gridRef}>
@@ -1021,7 +1127,7 @@ export default function TextToPdfWidget({ entry }: Props) {
                     width: pageW,
                     height: pageH,
                     padding: `${Math.round(settings.margin * scale)}px`,
-                    fontFamily: FONT_CSS[settings.font],
+                    fontFamily: getFontDef(settings.font).css,
                     color: settings.color,
                   }}
                 >
@@ -1134,7 +1240,7 @@ export default function TextToPdfWidget({ entry }: Props) {
       {done ? <p className="ttp-done">Your PDF downloaded — check your downloads folder.</p> : null}
 
       <button type="button" className="btn block ttp-download" onClick={() => void download()} disabled={working || !hasContent}>
-        {working ? 'Building your PDF…' : '⬇ Download PDF'}
+        {working ? 'Building your PDF…' : `⬇ Download PDF${hasContent ? ` — ${pages.length} page${pages.length === 1 ? '' : 's'}` : ''}`}
       </button>
       <p className="ttp-privacy">
         Free forever · No sign-up · Your text never leaves your device — the PDF is built in your browser.
